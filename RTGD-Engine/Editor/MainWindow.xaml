@@ -1,0 +1,21 @@
+﻿<Window x:Class="Editor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Editor"
+        Title="RTGD Editor" Height="600" Width="900">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="250"/>
+        </Grid.ColumnDefinitions>
+
+        <local:EngineViewport x:Name="Viewport" 
+                              Grid.Column="0" 
+                              Background="#FF2D2D30"/>
+    
+        <StackPanel Grid.Column="1" Margin="10">
+            <Button Content="Load Game" Click="Button_LoadGame_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

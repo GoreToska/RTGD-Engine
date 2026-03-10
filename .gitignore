@@ -1,41 +1,103 @@
-# Prerequisites
-*.d
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vs/
+*.VC.db
+*.VC.VC.opendb
 
-# Precompiled Headers
-*.gch
-*.pch
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-# Linker files
-*.ilk
 
-# Debugger Files
+*.aps
+*.idr
+*.ipdb
+*.iobj
 *.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
+*.ilk
+*.res
+*.ncb
+*.opt
+*.sdf
+*.cache
+*.db
+*.exp
 *.lib
-
-# Executables
+*.dll
 *.exe
-*.out
-*.app
+*.obj
+*.pch
+*.tlog
+*.lastbuildstate
+*.props
+*.tmp
 
-# debug information files
-*.dwo
+*_i.c
+*_p.c
+*_h.h
+*.manifest
+*.idb
+
+
+bin/
+obj/
+publish/
+
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# Resharper / Rider
+*.sln.iml
+_ReSharper*/
+*.DotSettings.user
+
+*.pidb
+*.userprefs
+
+
+Deploy/
+deploy/
+
+ThirdParty/ 
+
+*.pid
+*.tmp
+*.temp
+
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+
+
+*.key
+*.pem
+*.pfx
+*.password
+*.secrets.json
+appsettings.*.local.json
+
+
+# !*.dll  
+# !*.lib
