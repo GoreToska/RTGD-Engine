@@ -74,9 +74,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;ENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;ENGINE_EXPORTS;%(PreprocessorDefinitions);NOMINMAX;FLECS_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;;$(SolutionDir)ThirdParty\flecs\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -95,11 +95,11 @@ xcopy "$(OutDir)Engine.pdb" "$(SolutionDir)Editor\bin\$(Configuration)\net8.0-wi
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;ENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;ENGINE_EXPORTS;%(PreprocessorDefinitions);NOMINMAX;FLECS_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>Include;Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;Include;%(AdditionalIncludeDirectories);$(SolutionDir)ThirdParty\flecs\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -114,9 +114,9 @@ xcopy "$(OutDir)Engine.pdb" "$(SolutionDir)Editor\bin\$(Configuration)\net8.0-wi
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ENGINE_EXPORTS;NOMINMAX;flecs_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;;$(SolutionDir)ThirdParty\flecs\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -135,11 +135,11 @@ xcopy "$(OutDir)Engine.pdb" "$(SolutionDir)Editor\bin\$(Configuration)\net8.0-wi
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ENGINE_EXPORTS;%(PreprocessorDefinitions);NOMINMAX;FLECS_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>Include;Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;Include;%(AdditionalIncludeDirectories);$(SolutionDir)ThirdParty\flecs\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -151,11 +151,14 @@ xcopy "$(OutDir)Engine.pdb" "$(SolutionDir)Editor\bin\$(Configuration)\net8.0-wi
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Thirdparty\flecs\distr\flecs.c" />
     <ClCompile Include="Source\Engine\Engine.cpp" />
     <ClCompile Include="Source\Engine\IEngineInterface.cpp" />
     <ClCompile Include="Source\Engine\IGameModule.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Components\EcsTest.h" />
+    <ClInclude Include="Include\Components\TransformComponent.h" />
     <ClInclude Include="Include\Engine\Engine.h" />
     <ClInclude Include="Include\Engine\IEngineInterface.h" />
     <ClInclude Include="Include\Engine\IGameModule.h" />

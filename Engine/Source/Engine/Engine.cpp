@@ -3,6 +3,7 @@
 #include <libloaderapi.h>
 
 #include "Engine/Engine.h"
+#include "Components/EcsTest.h"
 
 namespace Engine
 {
@@ -14,8 +15,11 @@ namespace Engine
 
     bool Engine::Initialize(void* hwnd)
     {
+
         m_hwnd = hwnd;
         std::cout << "Engine initialized with HWND: " << hwnd << std::endl;
+
+        Test();
         return true; 
 
     }
