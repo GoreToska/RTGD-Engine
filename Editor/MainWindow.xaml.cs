@@ -12,7 +12,6 @@ namespace Editor
             Console.WriteLine("[Editor] WPF Editor started!");
         }
 
-        // ✅ ОБЯЗАТЕЛЬНО: Этот метод должен существовать для Button_LoadGame_Click
         private void Button_LoadGame_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new OpenFileDialog

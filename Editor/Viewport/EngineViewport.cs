@@ -11,7 +11,6 @@ namespace Editor
         private IntPtr _hwnd;
         private bool _isInitialized = false;
 
-        // === DependencyProperty для Background ===
         public static readonly DependencyProperty BackgroundProperty =
             DependencyProperty.Register(
                 nameof(Background),
@@ -25,7 +24,6 @@ namespace Editor
             set => SetValue(BackgroundProperty, value);
         }
 
-        // === Win32 API импорты ===
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr CreateWindowEx(
             int dwExStyle, string lpClassName, string lpWindowName,
@@ -44,14 +42,12 @@ namespace Editor
         [DllImport("user32.dll")]
         private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
 
-        // === Константы стилей ===
         private const int GWL_STYLE = -16;
         private const int WS_CHILD = 0x40000000;
         private const int WS_VISIBLE = 0x10000000;
         private const int WS_CLIPCHILDREN = 0x02000000;
         private const int WS_CLIPSIBLINGS = 0x04000000;
 
-        // === Обязательные переопределения HwndHost ===
         protected override int VisualChildrenCount => 1;
 
         protected override Visual GetVisualChild(int index)
@@ -64,7 +60,6 @@ namespace Editor
 
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
         {
-            // 1. Создаём нативное окно для рендеринга
             _hwnd = CreateWindowEx(
                 0,                              // dwExStyle
                 "STATIC",                       // lpClassName
@@ -81,22 +76,18 @@ namespace Editor
                 return new HandleRef(this, IntPtr.Zero);
             }
 
-            // 2. 🔥 КЛЮЧЕВОЙ ШАГ: Явно устанавливаем стиль WS_CHILD через SetWindowLong
-            // Это требование WPF для HwndHost
+
             int currentStyle = GetWindowLong(_hwnd, GWL_STYLE);
             int newStyle = currentStyle | WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
             SetWindowLong(_hwnd, GWL_STYLE, (uint)newStyle);
 
-            // 3. Привязываем окно к родителю WPF
             SetParent(_hwnd, hwndParent.Handle);
 
-            // 4. Инициализируем движок с этим окном
             _isInitialized = NativeInterop.Engine_Initialize(_hwnd);
             if (_isInitialized)
             {
                 Console.WriteLine("[Editor] Engine initialized successfully!");
 
-                // Автозагрузка игры
                 string gamePath = System.IO.Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "Game.dll");
 
@@ -140,7 +131,6 @@ namespace Editor
             return new Size(ActualWidth, ActualHeight);
         }
 
-        // === Вспомогательный класс для интеграции с визуальным деревом WPF ===
         private class HwndSourceVisualWrapper : Visual
         {
             private readonly HwndSource _source;
