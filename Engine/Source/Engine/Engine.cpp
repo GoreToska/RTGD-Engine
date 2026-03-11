@@ -4,8 +4,9 @@
 
 #include "Engine/Engine.h"
 #include "Components/EcsTest.h"
+#include "Render/RenderSystem.h"
 
-namespace Engine
+namespace RTGDEngine
 {
     Engine& Engine::Instance()
     {
@@ -20,6 +21,10 @@ namespace Engine
         std::cout << "Engine initialized with HWND: " << hwnd << std::endl;
 
         Test();
+
+        RTGDRenderSystem render;
+        render.Initialize(hwnd, 100, 100);
+
         return true; 
 
     }
@@ -86,26 +91,26 @@ namespace Engine
 extern "C"
 {
     ENGINE_API bool Engine_Initialize(void* hwnd) {
-        return Engine::Engine::Instance().Initialize(hwnd);
+        return RTGDEngine::Engine::Instance().Initialize(hwnd);
     }
 
     ENGINE_API void Engine_Run() {
-        Engine::Engine::Instance().Run();
+        RTGDEngine::Engine::Instance().Run();
     }
 
     ENGINE_API void Engine_Shutdown() {
-        Engine::Engine::Instance().Shutdown();
+        RTGDEngine::Engine::Instance().Shutdown();
     }
 
     ENGINE_API bool Engine_LoadGameModule(const char* dllPath) {
-        return Engine::Engine::Instance().LoadGameModule(dllPath);
+        return RTGDEngine::Engine::Instance().LoadGameModule(dllPath);
     }
 
     ENGINE_API void Engine_Update(float deltaTime) {
-        Engine::Engine::Instance().Update(deltaTime);
+        RTGDEngine::Engine::Instance().Update(deltaTime);
     }
 
     ENGINE_API void Engine_Render() {
-        Engine::Engine::Instance().Render();
+        RTGDEngine::Engine::Instance().Render();
     }
 }

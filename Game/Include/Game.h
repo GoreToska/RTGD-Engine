@@ -3,7 +3,7 @@
 
 #include "Engine/IGameModule.h"
 
-class Game : public Engine::IGameModule
+class Game : public RTGDEngine::IGameModule
 {
 public:
     static Game& Instance();

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Engine
+namespace RTGDEngine
 {
 	class PhysicsSystem {};
 	class RenderSystem {};

@@ -68,7 +68,11 @@ _ReSharper*/
 Deploy/
 deploy/
 
-ThirdParty/ 
+ThirdParty/
+
+!ThirdParty/
+!ThirdParty/filament/
+!ThirdParty/filament/**/*
 
 *.pid
 *.tmp

@@ -27,13 +27,12 @@ void Game::Shutdown()
 
 extern "C"
 {
-	__declspec(dllexport) Engine::IGameModule* CreateGameModule()
+	__declspec(dllexport) RTGDEngine::IGameModule* CreateGameModule()
 	{
-
 		return &Game::Instance();
 	}
 
-	__declspec(dllexport) void DestroyGameModule(Engine::IGameModule* module)
+	__declspec(dllexport) void DestroyGameModule(RTGDEngine::IGameModule* module)
 	{
 		module->Shutdown();
 	}

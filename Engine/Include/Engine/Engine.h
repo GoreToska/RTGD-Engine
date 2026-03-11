@@ -34,7 +34,7 @@ extern "C" {
 }
 #endif
 
-namespace Engine
+namespace RTGDEngine
 {
 	class Engine : public IEngineInterface
 	{

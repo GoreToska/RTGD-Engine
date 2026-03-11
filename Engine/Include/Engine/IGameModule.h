@@ -6,7 +6,7 @@
 #define ENGINE_API __declspec(dllimport)
 #endif
 
-namespace Engine
+namespace RTGDEngine
 {
 	class IGameModule
 	{
