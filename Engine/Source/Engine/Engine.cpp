@@ -16,7 +16,6 @@ namespace RTGDEngine
 
     bool Engine::Initialize(void* hwnd)
     {
-
         m_hwnd = hwnd;
         std::cout << "Engine initialized with HWND: " << hwnd << std::endl;
 
@@ -25,8 +24,7 @@ namespace RTGDEngine
         RTGDRenderSystem render;
         render.Initialize(hwnd, 100, 100);
 
-        return true; 
-
+        return true;
     }
 
     void Engine::Run()
@@ -55,8 +53,8 @@ namespace RTGDEngine
             return false;
         }
 
-        m_createFunc = (CreateGameModuleFunc)GetProcAddress(m_dllHandle, "CreateGameModule");
-        m_destroyFunc = (DestroyGameModuleFunc)GetProcAddress(m_dllHandle, "DestroyGameModule");
+        m_createFunc = (CreateGameModuleFunc) GetProcAddress(m_dllHandle, "CreateGameModule");
+        m_destroyFunc = (DestroyGameModuleFunc) GetProcAddress(m_dllHandle, "DestroyGameModule");
 
         if (!m_createFunc || !m_destroyFunc)
         {
@@ -83,34 +81,5 @@ namespace RTGDEngine
     {
         if (m_gameModule)
             m_gameModule->Render();
-        // TODO: рендеринг через Filament
-    }
-}
-
-
-extern "C"
-{
-    ENGINE_API bool Engine_Initialize(void* hwnd) {
-        return RTGDEngine::Engine::Instance().Initialize(hwnd);
-    }
-
-    ENGINE_API void Engine_Run() {
-        RTGDEngine::Engine::Instance().Run();
-    }
-
-    ENGINE_API void Engine_Shutdown() {
-        RTGDEngine::Engine::Instance().Shutdown();
-    }
-
-    ENGINE_API bool Engine_LoadGameModule(const char* dllPath) {
-        return RTGDEngine::Engine::Instance().LoadGameModule(dllPath);
-    }
-
-    ENGINE_API void Engine_Update(float deltaTime) {
-        RTGDEngine::Engine::Instance().Update(deltaTime);
-    }
-
-    ENGINE_API void Engine_Render() {
-        RTGDEngine::Engine::Instance().Render();
     }
 }

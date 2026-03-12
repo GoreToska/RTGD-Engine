@@ -8,157 +8,125 @@ namespace Editor
 {
     public class EngineViewport : HwndHost
     {
-        private IntPtr _hwnd;
-        private bool _isInitialized = false;
+        private IntPtr _hwndChild = IntPtr.Zero;
+        private IntPtr _engineHandle = IntPtr.Zero;
 
-        public static readonly DependencyProperty BackgroundProperty =
-            DependencyProperty.Register(
-                nameof(Background),
-                typeof(Brush),
-                typeof(EngineViewport),
-                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+        private int _width;
+        private int _height;
 
-        public Brush Background
+        public EngineViewport(int width, int height)
         {
-            get => (Brush)GetValue(BackgroundProperty);
-            set => SetValue(BackgroundProperty, value);
+            _width = width;
+            _height = height;
         }
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr CreateWindowEx(
-            int dwExStyle, string lpClassName, string lpWindowName,
-            int dwStyle, int x, int y, int nWidth, int nHeight,
-            IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, int lpParam);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool DestroyWindow(IntPtr hwnd);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, uint dwNewLong);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
-
-        private const int GWL_STYLE = -16;
-        private const int WS_CHILD = 0x40000000;
-        private const int WS_VISIBLE = 0x10000000;
-        private const int WS_CLIPCHILDREN = 0x02000000;
-        private const int WS_CLIPSIBLINGS = 0x04000000;
-
-        protected override int VisualChildrenCount => 1;
-
-        protected override Visual GetVisualChild(int index)
-        {
-            if (index != 0) throw new ArgumentOutOfRangeException(nameof(index));
-            return _visualWrapper ??= new HwndSourceVisualWrapper(_hwnd);
-        }
-
-        private HwndSourceVisualWrapper _visualWrapper;
 
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
         {
-            _hwnd = CreateWindowEx(
-                0,                              // dwExStyle
-                "STATIC",                       // lpClassName
-                "",                             // lpWindowName
-                WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, // dwStyle
-                0, 0, (int)ActualWidth, (int)ActualHeight,
-                hwndParent.Handle,              // hWndParent
-                IntPtr.Zero, IntPtr.Zero, 0
-            );
+            _hwndChild = CreateChildWindow(hwndParent.Handle, _width, _height);
 
-            if (_hwnd == IntPtr.Zero)
+            if (_hwndChild == IntPtr.Zero)
             {
-                Console.WriteLine("[Editor] Failed to create native window!");
-                return new HandleRef(this, IntPtr.Zero);
+                int error = Marshal.GetLastWin32Error();
+                throw new InvalidOperationException(
+                    $"CreateWindowEx failed. Win32 error: {error} — {GetWin32ErrorMessage(error)}");
             }
 
+            _engineHandle = NativeInterop.Engine_Create();
+            if (_engineHandle == IntPtr.Zero)
+                throw new InvalidOperationException("Engine_Create returned null");
 
-            int currentStyle = GetWindowLong(_hwnd, GWL_STYLE);
-            int newStyle = currentStyle | WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-            SetWindowLong(_hwnd, GWL_STYLE, (uint)newStyle);
+            bool ok = NativeInterop.Engine_Initialize(_engineHandle, _hwndChild, _width, _height);
+            if (!ok)
+                throw new InvalidOperationException("Engine_Initialize failed");
 
-            SetParent(_hwnd, hwndParent.Handle);
+            System.Windows.Media.CompositionTarget.Rendering += OnRendering;
 
-            _isInitialized = NativeInterop.Engine_Initialize(_hwnd);
-            if (_isInitialized)
-            {
-                Console.WriteLine("[Editor] Engine initialized successfully!");
+            return new HandleRef(this, _hwndChild);
+        }
 
-                string gamePath = System.IO.Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "Game.dll");
-
-                if (System.IO.File.Exists(gamePath))
-                {
-                    bool loaded = NativeInterop.Engine_LoadGameModule(gamePath);
-                    Console.WriteLine(loaded ? "[Editor] Game module loaded!" : "[Editor] Failed to load Game!");
-                }
-            }
-
-            return new HandleRef(this, _hwnd);
+        private static string GetWin32ErrorMessage(int code)
+        {
+            return new System.ComponentModel.Win32Exception(code).Message;
         }
 
         protected override void DestroyWindowCore(HandleRef hwnd)
         {
-            if (_isInitialized)
+            System.Windows.Media.CompositionTarget.Rendering -= OnRendering;
+
+            if (_engineHandle != IntPtr.Zero)
             {
-                NativeInterop.Engine_Shutdown();
-                Console.WriteLine("[Editor] Engine shutdown.");
-                _isInitialized = false;
+                NativeInterop.Engine_Shutdown(_engineHandle);
+                NativeInterop.Engine_Destroy(_engineHandle);
+                _engineHandle = IntPtr.Zero;
             }
 
-            if (_hwnd != IntPtr.Zero)
-            {
-                DestroyWindow(_hwnd);
-                _hwnd = IntPtr.Zero;
-            }
+            NativeInterop.DestroyWindow(hwnd.Handle);
         }
 
-        protected override void OnRender(DrawingContext drawingContext)
+        private void OnRendering(object sender, EventArgs e)
         {
-            if (Background != null)
-            {
-                drawingContext.DrawRectangle(Background, null, new Rect(0, 0, ActualWidth, ActualHeight));
-            }
-            base.OnRender(drawingContext);
+            if (_engineHandle != IntPtr.Zero)
+                NativeInterop.Engine_Render(_engineHandle);
         }
 
-        protected override Size MeasureOverride(Size constraint)
+        public void Resize(int width, int height)
         {
-            return new Size(ActualWidth, ActualHeight);
+            _width = width;
+            _height = height;
+
+            if (_hwndChild != IntPtr.Zero)
+                NativeInterop.SetWindowPos(_hwndChild, IntPtr.Zero, 0, 0, width, height,
+                    NativeInterop.SWP_NOZORDER | NativeInterop.SWP_NOACTIVATE);
+
+            if (_engineHandle != IntPtr.Zero)
+                NativeInterop.Engine_Resize(_engineHandle, width, height);
         }
 
-        private class HwndSourceVisualWrapper : Visual
-        {
-            private readonly HwndSource _source;
+        private static bool _classRegistered = false;
+        private const string ClassName = "DiligentChildWindow";
 
-            public HwndSourceVisualWrapper(IntPtr hwnd)
+        private static IntPtr CreateChildWindow(IntPtr hwndParent, int width, int height)
+        {
+            if (!_classRegistered)
             {
-                if (hwnd != IntPtr.Zero)
+                var wc = new NativeInterop.WNDCLASSEX
                 {
-                    _source = new HwndSource(
-                        new HwndSourceParameters
-                        {
-                            PositionX = 0,
-                            PositionY = 0,
-                            Width = 1,
-                            Height = 1,
-                            ParentWindow = hwnd,
-                            WindowStyle = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN
-                        });
-                    _source.AddHook(WndProc);
+                    cbSize = Marshal.SizeOf<NativeInterop.WNDCLASSEX>(),
+                    style = NativeInterop.CS_HREDRAW | NativeInterop.CS_VREDRAW,
+                    lpfnWndProc = Marshal.GetFunctionPointerForDelegate(NativeInterop._wndProcDelegate),
+                    hInstance = NativeInterop.GetModuleHandle(null),
+                    lpszClassName = ClassName,
+                    hbrBackground = (IntPtr)(NativeInterop.COLOR_WINDOW + 1),
+                };
+
+                ushort atom = NativeInterop.RegisterClassEx(ref wc);
+                if (atom == 0)
+                {
+                    int err = Marshal.GetLastWin32Error();
+                    if (err != 1410)
+                        throw new InvalidOperationException(
+                            $"RegisterClassEx failed: {err}");
                 }
+                _classRegistered = true;
             }
 
-            private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-            {
-                return IntPtr.Zero;
-            }
 
-            protected override int VisualChildrenCount => 0;
+            IntPtr hwnd = NativeInterop.CreateWindowEx(
+                0,
+                ClassName,
+                "",
+                NativeInterop.WS_CHILD | NativeInterop.WS_VISIBLE | NativeInterop.WS_CLIPCHILDREN | NativeInterop.WS_CLIPSIBLINGS,
+                0, 0,
+                width > 0 ? width : 100,
+                height > 0 ? height : 100,
+                hwndParent,
+                IntPtr.Zero,
+                NativeInterop.GetModuleHandle(null),
+                IntPtr.Zero
+            );
+
+            return hwnd;
         }
     }
 }

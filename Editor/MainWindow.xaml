@@ -1,21 +1,25 @@
 ﻿<Window x:Class="Editor.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:Editor"
-        Title="RTGD Editor" Height="600" Width="900">
+        Title="RTGD Engine Editor" Width="1280" Height="720"
+        SizeChanged="Window_SizeChanged">
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="250"/>
-        </Grid.ColumnDefinitions>
+    <DockPanel>
+        <!-- Toolbar сверху -->
+        <ToolBar DockPanel.Dock="Top" Height="30">
+            <Button Content="Play"/>
+            <Button Content="Stop"/>
+        </ToolBar>
 
-        <local:EngineViewport x:Name="Viewport" 
-                              Grid.Column="0" 
-                              Background="#FF2D2D30"/>
-    
-        <StackPanel Grid.Column="1" Margin="10">
-            <Button Content="Load Game" Click="Button_LoadGame_Click"/>
-        </StackPanel>
-    </Grid>
+        <!-- Viewport — сюда встраивается движок -->
+        <Border x:Name="ViewportBorder"
+                DockPanel.Dock="Left"
+                Width="900"
+                Background="Black">
+        </Border>
+
+        <Grid Background="#1E1E1E">
+            <TextBlock Text="Properties" Foreground="White" Margin="10"/>
+        </Grid>
+    </DockPanel>
 </Window>

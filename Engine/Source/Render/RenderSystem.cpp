@@ -1,124 +1,206 @@
 #include "Render/RenderSystem.h"
+
+#include <filesystem>
 #include <iostream>
 
-#include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/StringView.h>
-#include <Corrade/Utility/Assert.h>
-#include <Corrade/PluginManager/Manager.h>
-#include <Magnum/Magnum.h>
-#include <Magnum/Mesh.h>
-#include <Magnum/ImageView.h>
-#include <Magnum/PixelFormat.h>
-#include <Magnum/VertexFormat.h>
-#include <Magnum/Math/Color.h>
-#include <Magnum/Math/Range.h>
-#include <Magnum/ShaderTools/AbstractConverter.h>
-#include <Magnum/Trade/AbstractImageConverter.h>
-#include <Magnum/Vk/BufferCreateInfo.h>
-#include <Magnum/Vk/CommandBuffer.h>
-#include <Magnum/Vk/CommandPoolCreateInfo.h>
-#include <Magnum/Vk/DeviceCreateInfo.h>
-#include <Magnum/Vk/DeviceProperties.h>
-#include <Magnum/Vk/Fence.h>
-#include <Magnum/Vk/FramebufferCreateInfo.h>
-#include <Magnum/Vk/ImageCreateInfo.h>
-#include <Magnum/Vk/ImageViewCreateInfo.h>
-#include <Magnum/Vk/InstanceCreateInfo.h>
-#include <Magnum/Vk/Memory.h>
-#include <Magnum/Vk/Mesh.h>
-#include <Magnum/Vk/Pipeline.h>
-#include <Magnum/Vk/PipelineLayoutCreateInfo.h>
-#include <Magnum/Vk/Queue.h>
-#include <Magnum/Vk/RasterizationPipelineCreateInfo.h>
-#include <Magnum/Vk/RenderPassCreateInfo.h>
-#include <Magnum/Vk/ShaderCreateInfo.h>
-#include <Magnum/Vk/ShaderSet.h>
+#include "Render/ShaderLoader.h"
 
+#include <EngineFactoryD3D12.h>
+#include <GraphicsTypes.h>
+#include <RenderDevice.h>
+#include <DeviceContext.h>
+#include <SwapChain.h>
+#include <PipelineState.h>
+#include <Buffer.h>
+#include <Shader.h>
 
 namespace RTGDEngine
 {
     bool RTGDRenderSystem::Initialize(void* hwnd, int width, int height)
     {
+        using namespace Diligent;
+
         m_width = width;
         m_height = height;
 
-        m_hdc = GetDC((HWND) hwnd);
-        if (!m_hdc)
+
+        auto* GetEngineFactoryD3D12 = LoadGraphicsEngineD3D12();
+        if (!GetEngineFactoryD3D12)
         {
-            std::cerr << "[Renderer] Failed to get DC!" << std::endl;
+            std::cerr << "Failed to load GraphicsEngineD3D12.dll\n";
             return false;
         }
 
-        PIXELFORMATDESCRIPTOR pfd = {
-            sizeof(PIXELFORMATDESCRIPTOR),
-            1,
-            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-            PFD_TYPE_RGBA,
-            32, // Цветовые биты
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            24, // Z-буфер
-            8, // Stencil
-            0,
-            PFD_MAIN_PLANE,
-            0, 0, 0, 0
-        };
+        auto* pFactoryD3D12 = GetEngineFactoryD3D12();
 
-        int format = ChoosePixelFormat(m_hdc, &pfd);
-        if (!format)
+        EngineD3D12CreateInfo engineCI;
+        engineCI.GraphicsAPIVersion = {12, 0};
+
+#ifdef _DEBUG
+        engineCI.SetValidationLevel(VALIDATION_LEVEL_2);
+#endif
+
+        SwapChainDesc scDesc;
+        scDesc.Width = width;
+        scDesc.Height = height;
+        scDesc.ColorBufferFormat = TEX_FORMAT_RGBA8_UNORM_SRGB;
+        scDesc.DepthBufferFormat = TEX_FORMAT_D32_FLOAT;
+
+        Win32NativeWindow window{static_cast<HWND>(hwnd)};
+
+        pFactoryD3D12->CreateDeviceAndContextsD3D12(
+            engineCI, &m_pDevice, &m_pImmediateContext);
+
+        pFactoryD3D12->CreateSwapChainD3D12(
+            m_pDevice, m_pImmediateContext,
+            scDesc, FullScreenModeDesc{}, window, &m_pSwapChain);
+
+        if (!m_pDevice || !m_pImmediateContext || !m_pSwapChain)
         {
-            std::cerr << "[Renderer] Failed to choose pixel format!" << std::endl;
+            std::cerr << "Failed to create Diligent device/swapchain\n";
             return false;
         }
 
-        if (!SetPixelFormat(m_hdc, format, &pfd))
-        {
-            std::cerr << "[Renderer] Failed to set pixel format!" << std::endl;
-            return false;
-        }
+        m_pFactory = pFactoryD3D12;
 
-        m_hglrc = wglCreateContext(m_hdc);
-        if (!m_hglrc)
-        {
-            std::cerr << "[Renderer] Failed to create OpenGL context!" << std::endl;
-            return false;
-        }
-
-        if (!wglMakeCurrent(m_hdc, m_hglrc))
-        {
-            std::cerr << "[Renderer] Failed to make context current!" << std::endl;
-            return false;
-        }
-
-        m_glContext = new Magnum::GL::Context(m_hdc);
+        CreateTriangleVertexBuffer();
+        CreateTrianglePipeline();
 
 
-        // === 3. Настройка рендерера ===
-        Magnum::GL::Renderer::enable(Magnum::GL::Renderer::Feature::DepthTest);
-        Magnum::GL::Renderer::enable(Magnum::GL::Renderer::Feature::FaceCulling);
-        Magnum::GL::Renderer::setClearColor(Magnum::Color4{0.1f, 0.2f, 0.4f, 1.0f}); // Синий фон
-
-        std::cout << "[Renderer] Magnum initialized with FIXED camera!" << std::endl;
         m_initialized = true;
         return true;
-
-        std::cout << "[Renderer] Initialized with FIXED camera!" << std::endl;
-        return true;
     }
 
-    void RTGDEngine::RTGDRenderSystem::CreateHelloTriangle()
+    struct TriangleVertex
     {
-    }
+        float x, y;
+        float r, g, b;
+    };
 
-    void RTGDRenderSystem::Resize(int width, int height)
+    static const TriangleVertex kVerts[] = {
+        {0.0f, 0.5f, 1.0f, 0.0f, 0.0f},
+        {-0.5f, -0.5f, 0.0f, 1.0f, 0.0f},
+        {0.5f, -0.5f, 0.0f, 0.0f, 1.0f},
+    };
+
+    void RTGDRenderSystem::CreateTrianglePipeline()
     {
+        using namespace Diligent;
+
+        RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderSourceFactory;
+        m_pFactory->CreateDefaultShaderSourceStreamFactory(
+            "Shaders", &pShaderSourceFactory);
+
+        ShaderCreateInfo shaderCI;
+        shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
+        shaderCI.pShaderSourceStreamFactory = pShaderSourceFactory;
+        shaderCI.Desc.UseCombinedTextureSamplers = true;
+
+        RefCntAutoPtr<IShader> pVS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_VERTEX;
+        shaderCI.Desc.Name = "Triangle VS";
+        shaderCI.FilePath = "TriangleVS.hlsl";
+        m_pDevice->CreateShader(shaderCI, &pVS);
+
+        RefCntAutoPtr<IShader> pPS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_PIXEL;
+        shaderCI.Desc.Name = "Triangle PS";
+        shaderCI.FilePath = "TrianglePS.hlsl";
+        m_pDevice->CreateShader(shaderCI, &pPS);
+
+        GraphicsPipelineStateCreateInfo psoCI;
+        psoCI.PSODesc.Name = "Triangle PSO";
+        psoCI.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
+        psoCI.pVS = pVS;
+        psoCI.pPS = pPS;
+
+        LayoutElement layout[] = {
+            {0, 0, 2, VT_FLOAT32, False}, // float2 Position
+            {1, 0, 3, VT_FLOAT32, False}, // float3 Color
+        };
+        psoCI.GraphicsPipeline.InputLayout.LayoutElements = layout;
+        psoCI.GraphicsPipeline.InputLayout.NumElements = 2;
+
+        psoCI.GraphicsPipeline.NumRenderTargets = 1;
+        psoCI.GraphicsPipeline.RTVFormats[0] = m_pSwapChain->GetDesc().ColorBufferFormat;
+        psoCI.GraphicsPipeline.DSVFormat = m_pSwapChain->GetDesc().DepthBufferFormat;
+
+        psoCI.GraphicsPipeline.PrimitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        psoCI.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_NONE;
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthEnable = False;
+
+        m_pDevice->CreateGraphicsPipelineState(psoCI, &m_pTrianglePSO);
     }
 
-    void RTGDRenderSystem::Render()
+    void RTGDRenderSystem::CreateTriangleVertexBuffer()
+    {
+        using namespace Diligent;
+
+        BufferDesc vbDesc;
+        vbDesc.Name = "Triangle VB";
+        vbDesc.Size = sizeof(kVerts);
+        vbDesc.Usage = USAGE_IMMUTABLE;
+        vbDesc.BindFlags = BIND_VERTEX_BUFFER;
+
+        BufferData vbData;
+        vbData.pData = kVerts;
+        vbData.DataSize = sizeof(kVerts);
+
+        m_pDevice->CreateBuffer(vbDesc, &vbData, &m_pTriangleVB);
+    }
+
+    void RTGDRenderSystem::CreateShaders()
     {
     }
 
     void RTGDRenderSystem::Shutdown()
     {
+        m_pTriangleVB.Release();
+        m_pTrianglePSO.Release();
+        m_pImmediateContext->Flush();
+    }
+
+    void RTGDRenderSystem::BeginFrame()
+    {
+        using namespace Diligent;
+
+        auto* pRTV = m_pSwapChain->GetCurrentBackBufferRTV();
+        auto* pDSV = m_pSwapChain->GetDepthBufferDSV();
+
+        const float clearColor[] = {0.1f, 0.1f, 0.1f, 1.0f};
+
+        m_pImmediateContext->SetRenderTargets(
+            1, &pRTV, pDSV, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+        m_pImmediateContext->ClearRenderTarget(
+            pRTV, clearColor, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+        m_pImmediateContext->ClearDepthStencil(
+            pDSV, CLEAR_DEPTH_FLAG, 1.0f, 0, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+        // Triangle, remove later
+        m_pImmediateContext->SetPipelineState(m_pTrianglePSO);
+
+        IBuffer* pVBs[] = {m_pTriangleVB};
+        Uint64 offsets[] = {0};
+        m_pImmediateContext->SetVertexBuffers(
+            0, 1, pVBs, offsets,
+            RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
+            SET_VERTEX_BUFFERS_FLAG_RESET);
+
+        DrawAttribs draw;
+        draw.NumVertices = 3;
+        draw.Flags = DRAW_FLAG_VERIFY_ALL;
+        m_pImmediateContext->Draw(draw);
+    }
+
+    void RTGDRenderSystem::EndFrame()
+    {
+        m_pSwapChain->Present();
+    }
+
+    void RTGDRenderSystem::Resize(int width, int height)
+    {
+        m_width = width;
+        m_height = height;
+        m_pSwapChain->Resize(width, height);
     }
 }
