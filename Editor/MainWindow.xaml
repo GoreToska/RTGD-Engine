@@ -5,21 +5,13 @@
         SizeChanged="Window_SizeChanged">
 
     <DockPanel>
-        <!-- Toolbar сверху -->
-        <ToolBar DockPanel.Dock="Top" Height="30">
-            <Button Content="Play"/>
-            <Button Content="Stop"/>
-        </ToolBar>
 
-        <!-- Viewport — сюда встраивается движок -->
         <Border x:Name="ViewportBorder"
                 DockPanel.Dock="Left"
                 Width="900"
                 Background="Black">
         </Border>
 
-        <Grid Background="#1E1E1E">
-            <TextBlock Text="Properties" Foreground="White" Margin="10"/>
-        </Grid>
+
     </DockPanel>
 </Window>

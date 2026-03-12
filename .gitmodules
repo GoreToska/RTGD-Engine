@@ -19,3 +19,9 @@
 [submodule "ThirdParty/DiligentEngine"]
 	path = ThirdParty/DiligentEngine
 	url = https://github.com/DiligentGraphics/DiligentEngine.git
+[submodule "ThirdParty/CppLogging"]
+	path = ThirdParty/CppLogging
+	url = https://github.com/chronoxor/CppLogging.git
+[submodule "ThirdParty/spdlog"]
+	path = ThirdParty/spdlog
+	url = https://github.com/gabime/spdlog.git

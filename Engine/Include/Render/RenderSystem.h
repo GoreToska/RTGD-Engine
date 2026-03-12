@@ -15,6 +15,8 @@ namespace RTGDEngine
     class ENGINE_API RTGDRenderSystem
     {
     public:
+        static RTGDRenderSystem& Instance();
+
         bool Initialize(void* hwnd, int width, int height);
 
         void Shutdown();

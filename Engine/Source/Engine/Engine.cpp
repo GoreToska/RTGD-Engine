@@ -1,10 +1,9 @@
 #include <Windows.h>
-#include <iostream>
 #include <libloaderapi.h>
 
 #include "Engine/Engine.h"
-#include "Components/EcsTest.h"
 #include "Render/RenderSystem.h"
+#include "Tools/Logger.h"
 
 namespace RTGDEngine
 {
@@ -17,12 +16,11 @@ namespace RTGDEngine
     bool Engine::Initialize(void* hwnd)
     {
         m_hwnd = hwnd;
-        std::cout << "Engine initialized with HWND: " << hwnd << std::endl;
+        Logger::Instance().Initialize();
 
-        Test();
+        RTGDRenderSystem::Instance().Initialize(hwnd, 100, 100);
 
-        RTGDRenderSystem render;
-        render.Initialize(hwnd, 100, 100);
+        LogInfo("Engine initialized with HWND: {}", m_hwnd);
 
         return true;
     }
@@ -42,6 +40,8 @@ namespace RTGDEngine
             FreeLibrary(m_dllHandle);
             m_dllHandle = nullptr;
         }
+
+        RTGDRenderSystem::Instance().Shutdown();
     }
 
     bool Engine::LoadGameModule(const std::string& dllPath)
@@ -49,16 +49,16 @@ namespace RTGDEngine
         m_dllHandle = LoadLibraryA(dllPath.c_str());
         if (!m_dllHandle)
         {
-            std::cerr << "Failed to load DLL: " << dllPath << std::endl;
+            LogError("Failed to load DLL: {}", dllPath);
             return false;
         }
 
-        m_createFunc = (CreateGameModuleFunc) GetProcAddress(m_dllHandle, "CreateGameModule");
-        m_destroyFunc = (DestroyGameModuleFunc) GetProcAddress(m_dllHandle, "DestroyGameModule");
+        m_createFunc = reinterpret_cast<CreateGameModuleFunc>(GetProcAddress(m_dllHandle, "CreateGameModule"));
+        m_destroyFunc = reinterpret_cast<DestroyGameModuleFunc>(GetProcAddress(m_dllHandle, "DestroyGameModule"));
 
         if (!m_createFunc || !m_destroyFunc)
         {
-            std::cerr << "Failed to get exported functions" << std::endl;
+            LogError("Failed to get exported functions");
             FreeLibrary(m_dllHandle);
             m_dllHandle = nullptr;
             return false;
@@ -79,7 +79,10 @@ namespace RTGDEngine
 
     void Engine::Render()
     {
-        if (m_gameModule)
-            m_gameModule->Render();
+        RTGDRenderSystem::Instance().BeginFrame();
+        RTGDRenderSystem::Instance().EndFrame();
+
+        /*if (m_gameModule)
+            m_gameModule->Render();*/
     }
 }

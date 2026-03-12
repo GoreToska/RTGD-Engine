@@ -11,7 +11,7 @@
 
 namespace RTGDEngine
 {
-    class Engine : public IEngineInterface
+    class ENGINE_API  Engine : public IEngineInterface
     {
     public:
         static Engine& Instance();

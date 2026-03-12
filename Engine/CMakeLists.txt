@@ -7,6 +7,8 @@ add_library(Engine SHARED
         Include/Render/ShaderLoader.h
         Include/Engine/EngineExport.h
         Source/Engine/EngineExport.cpp
+        Source/Tools/Logger.cpp
+        Include/Tools/Logger.h
 )
 
 target_include_directories(Engine PUBLIC
@@ -20,6 +22,7 @@ target_link_libraries(Engine PUBLIC
         Diligent-GraphicsEngineD3D12-shared
         Diligent-GraphicsTools
         flecs_static
+        spdlog::spdlog
 )
 
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)

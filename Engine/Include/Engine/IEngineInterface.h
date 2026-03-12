@@ -2,10 +2,6 @@
 
 namespace RTGDEngine
 {
-	class PhysicsSystem {};
-	class RenderSystem {};
-	class InputSystem {};
-
 	class IEngineInterface
 	{
 	public:

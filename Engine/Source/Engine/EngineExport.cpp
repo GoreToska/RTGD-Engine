@@ -4,6 +4,7 @@
 
 #include "Engine/EngineExport.h"
 
+#include "Engine/Engine.h"
 #include "Render/RenderSystem.h"
 
 
@@ -13,29 +14,28 @@ extern "C"
 {
 void* Engine_Create()
 {
-    return new RTGDRenderSystem();
+    return new Engine();
 }
 
 void Engine_Destroy(void* engine)
 {
-    delete static_cast<RTGDRenderSystem*>(engine);
+    delete static_cast<Engine*>(engine);
 }
 
 bool Engine_Initialize(void* engine, void* hwnd, int w, int h)
 {
-    return static_cast<RTGDRenderSystem*>(engine)->Initialize(hwnd, w, h);
+    return static_cast<Engine*>(engine)->Initialize(hwnd);
 }
 
 void Engine_Render(void* engine)
 {
-    auto* rs = static_cast<RTGDRenderSystem*>(engine);
-    rs->BeginFrame();
-    rs->EndFrame();
+    auto* en = static_cast<Engine*>(engine);
+    en->Instance().Render();
 }
 
 void Engine_Resize(void* engine, int w, int h)
 {
-    static_cast<RTGDRenderSystem*>(engine)->Resize(w, h);
+    RTGDRenderSystem::Instance().Resize(w, h);
 }
 
 void Engine_Shutdown(void* engine)

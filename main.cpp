@@ -4,10 +4,11 @@
 
 #include <iostream>
 
+#include "Engine/Engine.h"
 #include "Engine/include/Render/RenderSystem.h"
+#include "Tools/Logger.h"
 
 
-static RTGDEngine::RTGDRenderSystem* g_renderSystem = nullptr;
 static bool g_running = true;
 static HWND g_hwnd = nullptr;
 
@@ -24,11 +25,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
 
         case WM_SIZE:
-            if (g_renderSystem && wParam != SIZE_MINIMIZED)
+            if (wParam != SIZE_MINIMIZED)
             {
                 int width = LOWORD(lParam);
                 int height = HIWORD(lParam);
-                g_renderSystem->Resize(width, height);
+                RTGDEngine::RTGDRenderSystem::Instance().Resize(width, height);
             }
             return 0;
 
@@ -64,7 +65,7 @@ HWND CreateWindowHandle(HINSTANCE hInstance, int width, int height)
     AdjustWindowRect(&rect, style, FALSE);
 
     return CreateWindowEx(
-        0, className, "Magnum Vulkan Triangle Test",
+        0, className, "Triangle Test",
         style,
         CW_USEDEFAULT, CW_USEDEFAULT,
         rect.right - rect.left, rect.bottom - rect.top,
@@ -81,23 +82,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     HWND hwnd = CreateWindowHandle(hInstance, width, height);
     if (!hwnd)
     {
-        std::cerr << "Failed to create window!" << std::endl;
+        LogError("Window Creation Failed!");
         return 1;
     }
     g_hwnd = hwnd;
 
-    ShowWindow(hwnd, nCmdShow);
-    UpdateWindow(hwnd);
-
-    g_renderSystem = new RTGDEngine::RTGDRenderSystem();
-
-    if (!g_renderSystem->Initialize((void*) hwnd, width, height))
+    if (!RTGDEngine::Engine::Instance().Initialize(hwnd))
     {
-        std::cerr << "Failed to initialize renderer!" << std::endl;
-        delete g_renderSystem;
+        LogError("Failed to initialize engine!");
         return 1;
     }
 
+    ShowWindow(hwnd, nCmdShow);
+    UpdateWindow(hwnd);
 
     MSG msg = {};
     while (g_running)
@@ -113,19 +110,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
             DispatchMessage(&msg);
         }
 
-        if (g_running && g_renderSystem)
+        if (g_running)
         {
-            g_renderSystem->BeginFrame();
-            g_renderSystem->EndFrame();
+            RTGDEngine::Engine::Instance().Render();
         }
     }
 
-    if (g_renderSystem)
-    {
-        g_renderSystem->Shutdown();
-        delete g_renderSystem;
-        g_renderSystem = nullptr;
-    }
+
+    RTGDEngine::Engine::Instance().Shutdown();
 
     DestroyWindow(hwnd);
     return 0;

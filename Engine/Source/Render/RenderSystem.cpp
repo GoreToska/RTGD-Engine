@@ -1,7 +1,6 @@
 #include "Render/RenderSystem.h"
 
 #include <filesystem>
-#include <iostream>
 
 #include "Render/ShaderLoader.h"
 
@@ -14,8 +13,16 @@
 #include <Buffer.h>
 #include <Shader.h>
 
+#include "Tools/Logger.h"
+
 namespace RTGDEngine
 {
+    RTGDRenderSystem& RTGDRenderSystem::Instance()
+    {
+        static RTGDRenderSystem render;
+        return render;
+    }
+
     bool RTGDRenderSystem::Initialize(void* hwnd, int width, int height)
     {
         using namespace Diligent;
@@ -27,7 +34,7 @@ namespace RTGDEngine
         auto* GetEngineFactoryD3D12 = LoadGraphicsEngineD3D12();
         if (!GetEngineFactoryD3D12)
         {
-            std::cerr << "Failed to load GraphicsEngineD3D12.dll\n";
+            LogError("Failed to load GraphicsEngineD3D12.dll");
             return false;
         }
 
@@ -57,7 +64,7 @@ namespace RTGDEngine
 
         if (!m_pDevice || !m_pImmediateContext || !m_pSwapChain)
         {
-            std::cerr << "Failed to create Diligent device/swapchain\n";
+            LogError("Failed to create Diligent device/swapchain");
             return false;
         }
 
@@ -155,6 +162,8 @@ namespace RTGDEngine
 
     void RTGDRenderSystem::Shutdown()
     {
+        LogInfo("Render System Shutdown");
+
         m_pTriangleVB.Release();
         m_pTrianglePSO.Release();
         m_pImmediateContext->Flush();
@@ -199,6 +208,9 @@ namespace RTGDEngine
 
     void RTGDRenderSystem::Resize(int width, int height)
     {
+        if (!m_pSwapChain)
+            return;
+
         m_width = width;
         m_height = height;
         m_pSwapChain->Resize(width, height);

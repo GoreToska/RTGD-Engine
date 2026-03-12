@@ -10,6 +10,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 add_subdirectory(ThirdParty/flecs)
 add_subdirectory(ThirdParty/DiligentEngine)
+add_subdirectory(ThirdParty/spdlog)
 
 add_subdirectory(Engine)
 add_subdirectory(Game)
