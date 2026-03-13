@@ -1,5 +1,5 @@
 struct VSInput {
-    float2 Position : ATTRIB0;
+    float3 Position : ATTRIB0;
     float3 Color    : ATTRIB1;
 };
 
@@ -9,6 +9,6 @@ struct PSInput {
 };
 
 void main(in VSInput IN, out PSInput OUT) {
-    OUT.Position = float4(IN.Position, 0.0, 1.0);
+    OUT.Position = float4(IN.Position, 1.0);
     OUT.Color    = IN.Color;
 }

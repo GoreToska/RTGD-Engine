@@ -3,6 +3,7 @@
 
 #include "Engine/Engine.h"
 #include "Render/RenderSystem.h"
+#include "Scene/RTGDEntityFactory.h"
 #include "Tools/Logger.h"
 
 namespace RTGDEngine
@@ -18,9 +19,17 @@ namespace RTGDEngine
         m_hwnd = hwnd;
         Logger::Instance().Initialize();
 
-        RTGDRenderSystem::Instance().Initialize(hwnd, 100, 100);
+        RECT rect;
+        GetClientRect(static_cast<HWND>(hwnd), &rect);
+        int width = rect.right - rect.left;
+        int height = rect.bottom - rect.top;
+
+        RTGDRenderSystem::Instance().Initialize(hwnd, width, height);
 
         LogInfo("Engine initialized with HWND: {}", m_hwnd);
+
+        RTGDEntityFactory::CreateTriangle(m_world, RTGDRenderSystem::Instance().GetDevice(),
+                                          RTGDRenderSystem::Instance().GetSwapChain(), "Shaders");
 
         return true;
     }
@@ -35,10 +44,11 @@ namespace RTGDEngine
         {
             m_destroyFunc(m_gameModule.release());
         }
-        if (m_dllHandle)
+
+        if (m_gameDllHandle)
         {
-            FreeLibrary(m_dllHandle);
-            m_dllHandle = nullptr;
+            FreeLibrary(m_gameDllHandle);
+            m_gameDllHandle = nullptr;
         }
 
         RTGDRenderSystem::Instance().Shutdown();
@@ -46,21 +56,21 @@ namespace RTGDEngine
 
     bool Engine::LoadGameModule(const std::string& dllPath)
     {
-        m_dllHandle = LoadLibraryA(dllPath.c_str());
-        if (!m_dllHandle)
+        m_gameDllHandle = LoadLibraryA(dllPath.c_str());
+        if (!m_gameDllHandle)
         {
             LogError("Failed to load DLL: {}", dllPath);
             return false;
         }
 
-        m_createFunc = reinterpret_cast<CreateGameModuleFunc>(GetProcAddress(m_dllHandle, "CreateGameModule"));
-        m_destroyFunc = reinterpret_cast<DestroyGameModuleFunc>(GetProcAddress(m_dllHandle, "DestroyGameModule"));
+        m_createFunc = reinterpret_cast<CreateGameModuleFunc>(GetProcAddress(m_gameDllHandle, "CreateGameModule"));
+        m_destroyFunc = reinterpret_cast<DestroyGameModuleFunc>(GetProcAddress(m_gameDllHandle, "DestroyGameModule"));
 
         if (!m_createFunc || !m_destroyFunc)
         {
             LogError("Failed to get exported functions");
-            FreeLibrary(m_dllHandle);
-            m_dllHandle = nullptr;
+            FreeLibrary(m_gameDllHandle);
+            m_gameDllHandle = nullptr;
             return false;
         }
 
@@ -80,9 +90,18 @@ namespace RTGDEngine
     void Engine::Render()
     {
         RTGDRenderSystem::Instance().BeginFrame();
+        RTGDRenderSystem::Instance().RenderScene(m_world);
         RTGDRenderSystem::Instance().EndFrame();
 
         /*if (m_gameModule)
             m_gameModule->Render();*/
+    }
+
+    void Engine::CreateConsole()
+    {
+        AllocConsole();
+        FILE* f;
+        freopen_s(&f, "CONOUT$", "w", stdout);
+        freopen_s(&f, "CONOUT$", "w", stderr);
     }
 }

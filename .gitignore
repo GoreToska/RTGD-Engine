@@ -105,4 +105,4 @@ appsettings.*.local.json
 
 # !*.dll  
 # !*.lib
-/.idea
+.idea/

@@ -13,6 +13,10 @@
 #include <Buffer.h>
 #include <Shader.h>
 
+#include "Components/MeshComponent.h"
+#include "Components/RenderComponent.h"
+#include "Components/TransformComponent.h"
+#include "Render/RenderResourceManager.h"
 #include "Tools/Logger.h"
 
 namespace RTGDEngine
@@ -70,10 +74,8 @@ namespace RTGDEngine
 
         m_pFactory = pFactoryD3D12;
 
-        CreateTriangleVertexBuffer();
-        CreateTrianglePipeline();
 
-
+        LogInfo("Render system initialized.");
         m_initialized = true;
         return true;
     }
@@ -90,72 +92,6 @@ namespace RTGDEngine
         {0.5f, -0.5f, 0.0f, 0.0f, 1.0f},
     };
 
-    void RTGDRenderSystem::CreateTrianglePipeline()
-    {
-        using namespace Diligent;
-
-        RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderSourceFactory;
-        m_pFactory->CreateDefaultShaderSourceStreamFactory(
-            "Shaders", &pShaderSourceFactory);
-
-        ShaderCreateInfo shaderCI;
-        shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
-        shaderCI.pShaderSourceStreamFactory = pShaderSourceFactory;
-        shaderCI.Desc.UseCombinedTextureSamplers = true;
-
-        RefCntAutoPtr<IShader> pVS;
-        shaderCI.Desc.ShaderType = SHADER_TYPE_VERTEX;
-        shaderCI.Desc.Name = "Triangle VS";
-        shaderCI.FilePath = "TriangleVS.hlsl";
-        m_pDevice->CreateShader(shaderCI, &pVS);
-
-        RefCntAutoPtr<IShader> pPS;
-        shaderCI.Desc.ShaderType = SHADER_TYPE_PIXEL;
-        shaderCI.Desc.Name = "Triangle PS";
-        shaderCI.FilePath = "TrianglePS.hlsl";
-        m_pDevice->CreateShader(shaderCI, &pPS);
-
-        GraphicsPipelineStateCreateInfo psoCI;
-        psoCI.PSODesc.Name = "Triangle PSO";
-        psoCI.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
-        psoCI.pVS = pVS;
-        psoCI.pPS = pPS;
-
-        LayoutElement layout[] = {
-            {0, 0, 2, VT_FLOAT32, False}, // float2 Position
-            {1, 0, 3, VT_FLOAT32, False}, // float3 Color
-        };
-        psoCI.GraphicsPipeline.InputLayout.LayoutElements = layout;
-        psoCI.GraphicsPipeline.InputLayout.NumElements = 2;
-
-        psoCI.GraphicsPipeline.NumRenderTargets = 1;
-        psoCI.GraphicsPipeline.RTVFormats[0] = m_pSwapChain->GetDesc().ColorBufferFormat;
-        psoCI.GraphicsPipeline.DSVFormat = m_pSwapChain->GetDesc().DepthBufferFormat;
-
-        psoCI.GraphicsPipeline.PrimitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        psoCI.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_NONE;
-        psoCI.GraphicsPipeline.DepthStencilDesc.DepthEnable = False;
-
-        m_pDevice->CreateGraphicsPipelineState(psoCI, &m_pTrianglePSO);
-    }
-
-    void RTGDRenderSystem::CreateTriangleVertexBuffer()
-    {
-        using namespace Diligent;
-
-        BufferDesc vbDesc;
-        vbDesc.Name = "Triangle VB";
-        vbDesc.Size = sizeof(kVerts);
-        vbDesc.Usage = USAGE_IMMUTABLE;
-        vbDesc.BindFlags = BIND_VERTEX_BUFFER;
-
-        BufferData vbData;
-        vbData.pData = kVerts;
-        vbData.DataSize = sizeof(kVerts);
-
-        m_pDevice->CreateBuffer(vbDesc, &vbData, &m_pTriangleVB);
-    }
-
     void RTGDRenderSystem::CreateShaders()
     {
     }
@@ -164,9 +100,67 @@ namespace RTGDEngine
     {
         LogInfo("Render System Shutdown");
 
-        m_pTriangleVB.Release();
-        m_pTrianglePSO.Release();
         m_pImmediateContext->Flush();
+    }
+
+    void RTGDRenderSystem::RenderScene(flecs::world& world)
+    {
+        using namespace Diligent;
+
+        auto& rm = RenderResourceManager::Instance();
+
+        world.each([&](const MeshComponent& mesh,
+                       const RenderComponent& render,
+                       const TransformComponent& transform)
+        {
+            if (!render.IsVisible)
+                return;
+
+            const MeshData& meshData = rm.GetMesh(mesh.mesh);
+            const MaterialData& matData = rm.GetMaterial(mesh.material);
+
+            if (!meshData.VertexBuffer || !matData.PSO)
+            {
+                LogWarn("Mesh or material GPU resources are null");
+                return;
+            }
+
+            m_pImmediateContext->SetPipelineState(matData.PSO);
+
+            if (matData.SRB)
+            {
+                m_pImmediateContext->CommitShaderResources(
+                    matData.SRB,
+                    RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            }
+
+            IBuffer* vbs[] = {meshData.VertexBuffer};
+            Uint64 offsets[] = {0};
+            m_pImmediateContext->SetVertexBuffers(
+                0, 1, vbs, offsets,
+                RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
+                SET_VERTEX_BUFFERS_FLAG_RESET);
+
+            if (meshData.IndexBuffer && meshData.IndexCount > 0)
+            {
+                m_pImmediateContext->SetIndexBuffer(
+                    meshData.IndexBuffer, 0,
+                    RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+                DrawIndexedAttribs draw;
+                draw.NumIndices = meshData.IndexCount;
+                draw.IndexType = VT_UINT32;
+                draw.Flags = DRAW_FLAG_VERIFY_ALL;
+                m_pImmediateContext->DrawIndexed(draw);
+            }
+            else
+            {
+                DrawAttribs draw;
+                draw.NumVertices = meshData.VertexCount;
+                draw.Flags = DRAW_FLAG_VERIFY_ALL;
+                m_pImmediateContext->Draw(draw);
+            }
+        });
     }
 
     void RTGDRenderSystem::BeginFrame()
@@ -184,21 +178,6 @@ namespace RTGDEngine
             pRTV, clearColor, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
         m_pImmediateContext->ClearDepthStencil(
             pDSV, CLEAR_DEPTH_FLAG, 1.0f, 0, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-
-        // Triangle, remove later
-        m_pImmediateContext->SetPipelineState(m_pTrianglePSO);
-
-        IBuffer* pVBs[] = {m_pTriangleVB};
-        Uint64 offsets[] = {0};
-        m_pImmediateContext->SetVertexBuffers(
-            0, 1, pVBs, offsets,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
-            SET_VERTEX_BUFFERS_FLAG_RESET);
-
-        DrawAttribs draw;
-        draw.NumVertices = 3;
-        draw.Flags = DRAW_FLAG_VERIFY_ALL;
-        m_pImmediateContext->Draw(draw);
     }
 
     void RTGDRenderSystem::EndFrame()

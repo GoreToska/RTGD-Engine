@@ -7,6 +7,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
+#include "spdlog/sinks/msvc_sink.h"
+
 namespace RTGDEngine
 {
     Logger& Logger::Instance()
@@ -33,6 +35,8 @@ namespace RTGDEngine
         m_logger->flush_on(spdlog::level::warn);
 
         m_isInitialized = true;
+
+        LogInfo("Logger initialized");
     }
 
     void Logger::SetLevel(const spdlog::level::level_enum level)

@@ -31,13 +31,11 @@ extern "C"
 {
 ENGINE_API void* Engine_Create();
 
-ENGINE_API void Engine_Destroy(void* engine);
+ENGINE_API bool Engine_Initialize(void* hwnd);
 
-ENGINE_API bool Engine_Initialize(void* engine, void* hwnd, int w, int h);
+ENGINE_API void Engine_Render();
 
-ENGINE_API void Engine_Render(void* engine);
+ENGINE_API void Engine_Resize(int w, int h);
 
-ENGINE_API void Engine_Resize(void* engine, int w, int h);
-
-ENGINE_API void Engine_Shutdown(void* engine);
+ENGINE_API void Engine_Shutdown();
 }

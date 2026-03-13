@@ -9,11 +9,23 @@ add_library(Engine SHARED
         Source/Engine/EngineExport.cpp
         Source/Tools/Logger.cpp
         Include/Tools/Logger.h
+        Include/Tools/Alias.h
+        Include/Render/Vertex.h
+        Include/Components/MeshComponent.h
+        Include/Components/RenderComponent.h
+        Source/Render/RenderResourceManager.cpp
+        Include/Render/RenderResourceManager.h
+        Include/Render/RenderHandle.h
+        Include/Render/SimpleMeshFactory.h
+        Source/Render/SimpleMeshFactory.cpp
+        Source/Scene/RTGDEntityFactory.cpp
+        Source/Render/PipelineFactory.cpp
+        Include/Render/PipelineFactory.h
 )
 
 target_include_directories(Engine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/ThirdParty/flecs/include
+        ${CMAKE_SOURCE_DIR}/ThirdParty/gainput/lib/include
 )
 
 target_link_libraries(Engine PUBLIC
@@ -23,6 +35,7 @@ target_link_libraries(Engine PUBLIC
         Diligent-GraphicsTools
         flecs_static
         spdlog::spdlog
+        gainput
 )
 
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)

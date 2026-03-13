@@ -1,13 +1,9 @@
-﻿//
-// Created by gorev on 11.03.2026.
-//
-
-#include <iostream>
+﻿#include <iostream>
+#include <Windows.h>
 
 #include "Engine/Engine.h"
 #include "Engine/include/Render/RenderSystem.h"
 #include "Tools/Logger.h"
-
 
 static bool g_running = true;
 static HWND g_hwnd = nullptr;
@@ -43,15 +39,15 @@ HWND CreateWindowHandle(HINSTANCE hInstance, int width, int height)
     const char* className = "TriangleTestClass";
 
     WNDCLASSEX wc = {
-        .cbSize = sizeof(WNDCLASSEX),
-        .style = CS_HREDRAW | CS_VREDRAW,
-        .lpfnWndProc = WndProc,
-        .hInstance = hInstance,
-        .hIcon = LoadIcon(nullptr, IDI_APPLICATION),
-        .hCursor = LoadCursor(nullptr, IDC_ARROW),
-        .hbrBackground = (HBRUSH) (COLOR_WINDOW + 1),
+        .cbSize        = sizeof(WNDCLASSEX),
+        .style         = CS_HREDRAW | CS_VREDRAW,
+        .lpfnWndProc   = WndProc,
+        .hInstance     = hInstance,
+        .hIcon         = LoadIcon(nullptr, IDI_APPLICATION),
+        .hCursor       = LoadCursor(nullptr, IDC_ARROW),
+        .hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
         .lpszClassName = className,
-        .hIconSm = LoadIcon(nullptr, IDI_APPLICATION)
+        .hIconSm       = LoadIcon(nullptr, IDI_APPLICATION)
     };
 
     if (!RegisterClassEx(&wc))
@@ -61,7 +57,7 @@ HWND CreateWindowHandle(HINSTANCE hInstance, int width, int height)
     }
 
     DWORD style = WS_OVERLAPPEDWINDOW;
-    RECT rect = {0, 0, width, height};
+    RECT rect = { 0, 0, width, height };
     AdjustWindowRect(&rect, style, FALSE);
 
     return CreateWindowEx(
@@ -73,11 +69,12 @@ HWND CreateWindowHandle(HINSTANCE hInstance, int width, int height)
     );
 }
 
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
+int main()
 {
-    const int width = 1280;
+    const int width  = 1280;
     const int height = 720;
+
+    HINSTANCE hInstance = GetModuleHandle(nullptr);
 
     HWND hwnd = CreateWindowHandle(hInstance, width, height);
     if (!hwnd)
@@ -93,7 +90,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         return 1;
     }
 
-    ShowWindow(hwnd, nCmdShow);
+    ShowWindow(hwnd, SW_SHOWDEFAULT);
     UpdateWindow(hwnd);
 
     MSG msg = {};
@@ -111,14 +108,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         }
 
         if (g_running)
-        {
             RTGDEngine::Engine::Instance().Render();
-        }
     }
 
-
     RTGDEngine::Engine::Instance().Shutdown();
-
     DestroyWindow(hwnd);
     return 0;
 }

@@ -16,11 +16,11 @@ namespace Editor
         public const int COLOR_WINDOW = 5;
 
         [DllImport("Engine.dll")] public static extern IntPtr Engine_Create();
-        [DllImport("Engine.dll")] public static extern void Engine_Destroy(IntPtr engine);
-        [DllImport("Engine.dll")] public static extern bool Engine_Initialize(IntPtr engine, IntPtr hwnd, int w, int h);
-        [DllImport("Engine.dll")] public static extern void Engine_Render(IntPtr engine);
-        [DllImport("Engine.dll")] public static extern void Engine_Resize(IntPtr engine, int w, int h);
-        [DllImport("Engine.dll")] public static extern void Engine_Shutdown(IntPtr engine);
+        [DllImport("Engine.dll")] public static extern void Engine_Destroy();
+        [DllImport("Engine.dll")] public static extern bool Engine_Initialize(IntPtr hwnd);
+        [DllImport("Engine.dll")] public static extern void Engine_Render();
+        [DllImport("Engine.dll")] public static extern void Engine_Resize(int w, int h);
+        [DllImport("Engine.dll")] public static extern void Engine_Shutdown();
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern ushort RegisterClassEx(ref WNDCLASSEX lpwcx);

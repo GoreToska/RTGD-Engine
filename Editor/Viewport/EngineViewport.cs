@@ -36,7 +36,7 @@ namespace Editor
             if (_engineHandle == IntPtr.Zero)
                 throw new InvalidOperationException("Engine_Create returned null");
 
-            bool ok = NativeInterop.Engine_Initialize(_engineHandle, _hwndChild, _width, _height);
+            bool ok = NativeInterop.Engine_Initialize(_hwndChild);
             if (!ok)
                 throw new InvalidOperationException("Engine_Initialize failed");
 
@@ -56,8 +56,7 @@ namespace Editor
 
             if (_engineHandle != IntPtr.Zero)
             {
-                NativeInterop.Engine_Shutdown(_engineHandle);
-                NativeInterop.Engine_Destroy(_engineHandle);
+                NativeInterop.Engine_Shutdown();
                 _engineHandle = IntPtr.Zero;
             }
 
@@ -67,7 +66,7 @@ namespace Editor
         private void OnRendering(object sender, EventArgs e)
         {
             if (_engineHandle != IntPtr.Zero)
-                NativeInterop.Engine_Render(_engineHandle);
+                NativeInterop.Engine_Render();
         }
 
         public void Resize(int width, int height)
@@ -80,7 +79,7 @@ namespace Editor
                     NativeInterop.SWP_NOZORDER | NativeInterop.SWP_NOACTIVATE);
 
             if (_engineHandle != IntPtr.Zero)
-                NativeInterop.Engine_Resize(_engineHandle, width, height);
+                NativeInterop.Engine_Resize(width, height);
         }
 
         private static bool _classRegistered = false;

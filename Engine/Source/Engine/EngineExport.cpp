@@ -14,32 +14,26 @@ extern "C"
 {
 void* Engine_Create()
 {
-    return new Engine();
+    return &Engine::Instance();
 }
 
-void Engine_Destroy(void* engine)
+bool Engine_Initialize(void* hwnd)
 {
-    delete static_cast<Engine*>(engine);
+    return Engine::Instance().Initialize(hwnd);
 }
 
-bool Engine_Initialize(void* engine, void* hwnd, int w, int h)
+void Engine_Render()
 {
-    return static_cast<Engine*>(engine)->Initialize(hwnd);
+    Engine::Instance().Render();
 }
 
-void Engine_Render(void* engine)
-{
-    auto* en = static_cast<Engine*>(engine);
-    en->Instance().Render();
-}
-
-void Engine_Resize(void* engine, int w, int h)
+void Engine_Resize(const int w, const int h)
 {
     RTGDRenderSystem::Instance().Resize(w, h);
 }
 
-void Engine_Shutdown(void* engine)
+void Engine_Shutdown()
 {
-    static_cast<RTGDRenderSystem*>(engine)->Shutdown();
+    Engine::Instance().Shutdown();
 }
 } // extern "C"

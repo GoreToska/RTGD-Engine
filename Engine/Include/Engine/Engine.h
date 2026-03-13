@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <memory>
 #include <string>
+#include <flecs.h>
 
 #include "Engine/IGameModule.h"
 #include "Engine/IEngineInterface.h"
@@ -11,7 +12,7 @@
 
 namespace RTGDEngine
 {
-    class ENGINE_API  Engine : public IEngineInterface
+    class ENGINE_API Engine : public IEngineInterface
     {
     public:
         static Engine& Instance();
@@ -28,11 +29,15 @@ namespace RTGDEngine
 
         void Render();
 
+        void CreateConsole();
+
     private:
         void* m_hwnd = nullptr;
         std::unique_ptr<IGameModule> m_gameModule;
 
-        HMODULE m_dllHandle = nullptr;
+        flecs::world m_world;
+
+        HMODULE m_gameDllHandle = nullptr;
         CreateGameModuleFunc m_createFunc = nullptr;
         DestroyGameModuleFunc m_destroyFunc = nullptr;
     };

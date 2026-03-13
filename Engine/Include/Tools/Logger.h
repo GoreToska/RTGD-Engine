@@ -14,7 +14,7 @@ namespace RTGDEngine
     public:
         static Logger& Instance();
 
-        void Initialize(const std::string& logFile = "engine.log");
+        void Initialize(const std::string& logFile = "Log/Engine.log");
 
         void SetLevel(spdlog::level::level_enum level);
 
