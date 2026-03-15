@@ -2,8 +2,16 @@
 #include <libloaderapi.h>
 
 #include "Engine/Engine.h"
+
+#include "Components/CameraComponent.h"
+#include "Components/TransformComponent.h"
+#include "Components/VelocityComponent.h"
+#include "Input/InputSystem.h"
 #include "Render/RenderSystem.h"
 #include "Scene/RTGDEntityFactory.h"
+#include "Systems/CameraSystem.h"
+#include "Systems/EditorCameraSystem.h"
+#include "Systems/MovementSystem.h"
 #include "Tools/Logger.h"
 
 namespace RTGDEngine
@@ -14,19 +22,29 @@ namespace RTGDEngine
         return instance;
     }
 
-    bool Engine::Initialize(void* hwnd)
+    bool Engine::Initialize(HWND hwnd)
     {
         m_hwnd = hwnd;
         Logger::Instance().Initialize();
 
         RECT rect;
-        GetClientRect(static_cast<HWND>(hwnd), &rect);
+        GetClientRect(hwnd, &rect);
         int width = rect.right - rect.left;
         int height = rect.bottom - rect.top;
 
         RTGDRenderSystem::Instance().Initialize(hwnd, width, height);
+        InputSystem::Instance().Initialize(hwnd, width, height);
 
         LogInfo("Engine initialized with HWND: {}", m_hwnd);
+
+        CameraComponent cam;
+        cam.AspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
+        m_world.entity("EditorCamera")
+                .set(TransformComponent{{0.0f, 0.0f, -3.0f}})
+                .set(cam)
+                .set(EditorCameraMovementComponent{})
+                .set(VelocityComponent{});
 
         RTGDEntityFactory::CreateTriangle(m_world, RTGDRenderSystem::Instance().GetDevice(),
                                           RTGDRenderSystem::Instance().GetSwapChain(), "Shaders");
@@ -81,10 +99,17 @@ namespace RTGDEngine
         return true;
     }
 
-    void Engine::Update(float deltaTime)
+    void Engine::Update(const float deltaTime)
     {
+        UpdateSystems(m_world, deltaTime);
+
         if (m_gameModule)
             m_gameModule->Update(deltaTime);
+    }
+
+    void Engine::PostUpdate(float deltaTime)
+    {
+        PostUpdateSystems(m_world, deltaTime);
     }
 
     void Engine::Render()
@@ -103,5 +128,18 @@ namespace RTGDEngine
         FILE* f;
         freopen_s(&f, "CONOUT$", "w", stdout);
         freopen_s(&f, "CONOUT$", "w", stderr);
+    }
+
+    void Engine::UpdateSystems(const flecs::world& world, float deltaTime)
+    {
+        InputSystem::Instance().Update();
+        CameraSystem::Update(world, deltaTime);
+        EditorCameraSystem::Update(world, deltaTime);
+        MovementSystem::Update(world, deltaTime);
+    }
+
+    void Engine::PostUpdateSystems(const flecs::world& world, float deltaTime)
+    {
+        InputSystem::Instance().PostUpdate();
     }
 }

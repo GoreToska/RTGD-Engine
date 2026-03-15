@@ -17,7 +17,7 @@ namespace RTGDEngine
     public:
         static Engine& Instance();
 
-        bool Initialize(void* hwnd);
+        bool Initialize(HWND hwnd);
 
         void Run();
 
@@ -26,6 +26,8 @@ namespace RTGDEngine
         bool LoadGameModule(const std::string& dllPath);
 
         void Update(float deltaTime);
+
+        void PostUpdate(float deltaTime);
 
         void Render();
 
@@ -36,9 +38,11 @@ namespace RTGDEngine
         std::unique_ptr<IGameModule> m_gameModule;
 
         flecs::world m_world;
-
         HMODULE m_gameDllHandle = nullptr;
         CreateGameModuleFunc m_createFunc = nullptr;
         DestroyGameModuleFunc m_destroyFunc = nullptr;
+
+        void UpdateSystems(const flecs::world& world, float deltaTime);
+        void PostUpdateSystems(const flecs::world& world, float deltaTime);
     };
 }

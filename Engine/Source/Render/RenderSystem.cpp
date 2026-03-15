@@ -13,9 +13,11 @@
 #include <Buffer.h>
 #include <Shader.h>
 
+#include "Components/CameraComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
+#include "Render/ConstBuffers.h"
 #include "Render/RenderResourceManager.h"
 #include "Tools/Logger.h"
 
@@ -27,13 +29,12 @@ namespace RTGDEngine
         return render;
     }
 
-    bool RTGDRenderSystem::Initialize(void* hwnd, int width, int height)
+    bool RTGDRenderSystem::Initialize(HWND hwnd, int width, int height)
     {
         using namespace Diligent;
 
         m_width = width;
         m_height = height;
-
 
         auto* GetEngineFactoryD3D12 = LoadGraphicsEngineD3D12();
         if (!GetEngineFactoryD3D12)
@@ -57,7 +58,7 @@ namespace RTGDEngine
         scDesc.ColorBufferFormat = TEX_FORMAT_RGBA8_UNORM_SRGB;
         scDesc.DepthBufferFormat = TEX_FORMAT_D32_FLOAT;
 
-        Win32NativeWindow window{static_cast<HWND>(hwnd)};
+        Win32NativeWindow window{hwnd};
 
         pFactoryD3D12->CreateDeviceAndContextsD3D12(
             engineCI, &m_pDevice, &m_pImmediateContext);
@@ -74,9 +75,10 @@ namespace RTGDEngine
 
         m_pFactory = pFactoryD3D12;
 
+        m_initialized = true;
+        InitializeConstantBuffers();
 
         LogInfo("Render system initialized.");
-        m_initialized = true;
         return true;
     }
 
@@ -96,6 +98,56 @@ namespace RTGDEngine
     {
     }
 
+    void RTGDRenderSystem::InitializeConstantBuffers()
+    {
+        using namespace Diligent;
+
+        BufferDesc cbDesc;
+        cbDesc.Usage = USAGE_DYNAMIC;
+        cbDesc.BindFlags = BIND_UNIFORM_BUFFER;
+        cbDesc.CPUAccessFlags = CPU_ACCESS_WRITE;
+
+        cbDesc.Name = "Camera CB";
+        cbDesc.Size = sizeof(CameraConstantBuffer);
+        m_pDevice->CreateBuffer(cbDesc, nullptr, &m_cameraCB);
+
+        cbDesc.Name = "Object CB";
+        cbDesc.Size = sizeof(CameraConstantBuffer);
+        m_pDevice->CreateBuffer(cbDesc, nullptr, &m_objectCB);
+
+        LogInfo("Constant buffers initialized");
+    }
+
+    void RTGDRenderSystem::UpdateCameraConstantBuffer(const CameraConstantBuffer& data)
+    {
+        using namespace Diligent;
+
+        void* pMapped = nullptr;
+        m_pImmediateContext->MapBuffer(m_cameraCB, MAP_WRITE, MAP_FLAG_DISCARD, pMapped);
+        if (pMapped)
+        {
+            auto* dst = static_cast<CameraConstantBuffer*>(pMapped);
+            dst->View = data.View.Transpose();
+            dst->Projection = data.Projection.Transpose();
+            dst->CameraPosition = data.CameraPosition;
+            m_pImmediateContext->UnmapBuffer(m_cameraCB, MAP_WRITE);
+        }
+    }
+
+    void RTGDRenderSystem::UpdateObjectConstantBuffer(const ObjectConstantBuffer& data)
+    {
+        using namespace Diligent;
+
+        void* pMapped = nullptr;
+        m_pImmediateContext->MapBuffer(m_objectCB, MAP_WRITE, MAP_FLAG_DISCARD, pMapped);
+        if (pMapped)
+        {
+            auto* dst = static_cast<ObjectConstantBuffer*>(pMapped);
+            dst->Model = data.Model.Transpose();
+            m_pImmediateContext->UnmapBuffer(m_objectCB, Diligent::MAP_WRITE);
+        }
+    }
+
     void RTGDRenderSystem::Shutdown()
     {
         LogInfo("Render System Shutdown");
@@ -109,57 +161,76 @@ namespace RTGDEngine
 
         auto& rm = RenderResourceManager::Instance();
 
-        world.each([&](const MeshComponent& mesh,
-                       const RenderComponent& render,
-                       const TransformComponent& transform)
+        world.each([&](const CameraComponent& cam,
+                       const TransformComponent& camTransform)
         {
-            if (!render.IsVisible)
-                return;
+            CameraConstantBuffer cb;
+            cb.View = cam.ViewMatrix;
+            cb.Projection = cam.ProjectionMatrix;
+            cb.CameraPosition = {
+                camTransform.Position.x,
+                camTransform.Position.y,
+                camTransform.Position.z, 1.0f
+            };
 
-            const MeshData& meshData = rm.GetMesh(mesh.mesh);
-            const MaterialData& matData = rm.GetMaterial(mesh.material);
+            UpdateCameraConstantBuffer(cb);
 
-            if (!meshData.VertexBuffer || !matData.PSO)
+            world.each([&](const MeshComponent& mesh,
+                           const RenderComponent& render,
+                           const TransformComponent& transform)
             {
-                LogWarn("Mesh or material GPU resources are null");
-                return;
-            }
+                if (!render.IsVisible)
+                    return;
 
-            m_pImmediateContext->SetPipelineState(matData.PSO);
+                const MeshData& meshData = rm.GetMesh(mesh.mesh);
+                const MaterialData& matData = rm.GetMaterial(mesh.material);
 
-            if (matData.SRB)
-            {
-                m_pImmediateContext->CommitShaderResources(
-                    matData.SRB,
-                    RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-            }
+                if (!meshData.VertexBuffer || !matData.PSO)
+                {
+                    LogWarn("Mesh or material GPU resources are null");
+                    return;
+                }
 
-            IBuffer* vbs[] = {meshData.VertexBuffer};
-            Uint64 offsets[] = {0};
-            m_pImmediateContext->SetVertexBuffers(
-                0, 1, vbs, offsets,
-                RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
-                SET_VERTEX_BUFFERS_FLAG_RESET);
+                ObjectConstantBuffer objCB;
+                objCB.Model = transform.GetWorldMatrix();
+                UpdateObjectConstantBuffer(objCB);
 
-            if (meshData.IndexBuffer && meshData.IndexCount > 0)
-            {
-                m_pImmediateContext->SetIndexBuffer(
-                    meshData.IndexBuffer, 0,
-                    RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                m_pImmediateContext->SetPipelineState(matData.PSO);
 
-                DrawIndexedAttribs draw;
-                draw.NumIndices = meshData.IndexCount;
-                draw.IndexType = VT_UINT32;
-                draw.Flags = DRAW_FLAG_VERIFY_ALL;
-                m_pImmediateContext->DrawIndexed(draw);
-            }
-            else
-            {
-                DrawAttribs draw;
-                draw.NumVertices = meshData.VertexCount;
-                draw.Flags = DRAW_FLAG_VERIFY_ALL;
-                m_pImmediateContext->Draw(draw);
-            }
+                if (matData.SRB)
+                {
+                    m_pImmediateContext->CommitShaderResources(
+                        matData.SRB,
+                        RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                }
+
+                IBuffer* vbs[] = {meshData.VertexBuffer};
+                Uint64 offsets[] = {0};
+                m_pImmediateContext->SetVertexBuffers(
+                    0, 1, vbs, offsets,
+                    RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
+                    SET_VERTEX_BUFFERS_FLAG_RESET);
+
+                if (meshData.IndexBuffer && meshData.IndexCount > 0)
+                {
+                    m_pImmediateContext->SetIndexBuffer(
+                        meshData.IndexBuffer, 0,
+                        RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+                    DrawIndexedAttribs draw;
+                    draw.NumIndices = meshData.IndexCount;
+                    draw.IndexType = VT_UINT32;
+                    draw.Flags = DRAW_FLAG_NONE;
+                    m_pImmediateContext->DrawIndexed(draw);
+                }
+                else
+                {
+                    DrawAttribs draw;
+                    draw.NumVertices = meshData.VertexCount;
+                    draw.Flags = DRAW_FLAG_NONE;
+                    m_pImmediateContext->Draw(draw);
+                }
+            });
         });
     }
 

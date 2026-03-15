@@ -21,6 +21,18 @@ add_library(Engine SHARED
         Source/Scene/RTGDEntityFactory.cpp
         Source/Render/PipelineFactory.cpp
         Include/Render/PipelineFactory.h
+        Source/Input/InputSystem.cpp
+        Include/Input/InputSystem.h
+        Include/Input/EInputAction.h
+        Include/Components/CameraComponent.h
+        Source/Systems/EditorCameraSystem.cpp
+        Include/Systems/EditorCameraSystem.h
+        Include/Components/VelocityComponent.h
+        Source/Systems/MovementSystem.cpp
+        Include/Systems/MovementSystem.h
+        Source/Systems/CameraSystem.cpp
+        Include/Systems/CameraSystem.h
+        Include/Render/ConstBuffers.h
 )
 
 target_include_directories(Engine PUBLIC

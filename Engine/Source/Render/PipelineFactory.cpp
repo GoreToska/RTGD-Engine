@@ -68,6 +68,10 @@ namespace RTGDEngine
         psoCI.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_NONE;
         psoCI.GraphicsPipeline.DepthStencilDesc.DepthEnable = False;
 
+        auto vars = GetStandardVariableDescs();
+        psoCI.PSODesc.ResourceLayout.Variables = vars.data();
+        psoCI.PSODesc.ResourceLayout.NumVariables = static_cast<uint32_t>(vars.size());
+
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
 
@@ -79,6 +83,44 @@ namespace RTGDEngine
 
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
 
+        BindStandardConstantBuffers(*data.SRB);
+
         return RenderResourceManager::Instance().RegisterMaterial("triangle", std::move(data));
+    }
+
+    void PipelineFactory::BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb)
+    {
+        using namespace Diligent;
+
+        auto& rs = RTGDRenderSystem::Instance();
+
+        struct Binding
+        {
+            const char* name;
+            IBuffer* buffer;
+        };
+
+        const Binding bindings[] =
+        {
+            {"CameraConstants", &rs.GetCameraCB()},
+            {"ObjectConstants", &rs.GetObjectCB()},
+        };
+
+        for (const auto& [name, buffer]: bindings)
+        {
+            if (!buffer)
+                continue;
+
+            for (auto shaderType: {SHADER_TYPE_VERTEX, SHADER_TYPE_PIXEL})
+            {
+                auto* var = srb.GetVariableByName(shaderType, name);
+                if (var)
+                {
+                    var->Set(buffer);
+                    LogInfo("Bound '{}' to shader stage {}", name,
+                            shaderType == SHADER_TYPE_VERTEX ? "VS" : "PS");
+                }
+            }
+        }
     }
 } // RTGDEngine

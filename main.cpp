@@ -3,6 +3,7 @@
 
 #include "Engine/Engine.h"
 #include "Engine/include/Render/RenderSystem.h"
+#include "Input/InputSystem.h"
 #include "Tools/Logger.h"
 
 static bool g_running = true;
@@ -10,6 +11,8 @@ static HWND g_hwnd = nullptr;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    RTGDEngine::InputSystem::Instance().HandleMessage(hwnd, msg, wParam, lParam);
+
     switch (msg)
     {
         case WM_CLOSE:
@@ -39,15 +42,15 @@ HWND CreateWindowHandle(HINSTANCE hInstance, int width, int height)
     const char* className = "TriangleTestClass";
 
     WNDCLASSEX wc = {
-        .cbSize        = sizeof(WNDCLASSEX),
-        .style         = CS_HREDRAW | CS_VREDRAW,
-        .lpfnWndProc   = WndProc,
-        .hInstance     = hInstance,
-        .hIcon         = LoadIcon(nullptr, IDI_APPLICATION),
-        .hCursor       = LoadCursor(nullptr, IDC_ARROW),
-        .hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
+        .cbSize = sizeof(WNDCLASSEX),
+        .style = CS_HREDRAW | CS_VREDRAW,
+        .lpfnWndProc = WndProc,
+        .hInstance = hInstance,
+        .hIcon = LoadIcon(nullptr, IDI_APPLICATION),
+        .hCursor = LoadCursor(nullptr, IDC_ARROW),
+        .hbrBackground = (HBRUSH) (COLOR_WINDOW + 1),
         .lpszClassName = className,
-        .hIconSm       = LoadIcon(nullptr, IDI_APPLICATION)
+        .hIconSm = LoadIcon(nullptr, IDI_APPLICATION)
     };
 
     if (!RegisterClassEx(&wc))
@@ -57,7 +60,7 @@ HWND CreateWindowHandle(HINSTANCE hInstance, int width, int height)
     }
 
     DWORD style = WS_OVERLAPPEDWINDOW;
-    RECT rect = { 0, 0, width, height };
+    RECT rect = {0, 0, width, height};
     AdjustWindowRect(&rect, style, FALSE);
 
     return CreateWindowEx(
@@ -71,7 +74,7 @@ HWND CreateWindowHandle(HINSTANCE hInstance, int width, int height)
 
 int main()
 {
-    const int width  = 1280;
+    const int width = 1280;
     const int height = 720;
 
     HINSTANCE hInstance = GetModuleHandle(nullptr);
@@ -94,6 +97,9 @@ int main()
     UpdateWindow(hwnd);
 
     MSG msg = {};
+
+    using Clock = std::chrono::high_resolution_clock;
+    auto lastTime = Clock::now();
     while (g_running)
     {
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -107,8 +113,18 @@ int main()
             DispatchMessage(&msg);
         }
 
-        if (g_running)
-            RTGDEngine::Engine::Instance().Render();
+        if (!g_running)
+            break;
+
+        auto now = Clock::now();
+        float deltaTime = std::chrono::duration<float>(now - lastTime).count();
+        lastTime = now;
+
+        RTGDEngine::Engine::Instance().Update(deltaTime);
+
+        RTGDEngine::Engine::Instance().PostUpdate(deltaTime);
+
+        RTGDEngine::Engine::Instance().Render();
     }
 
     RTGDEngine::Engine::Instance().Shutdown();

@@ -19,7 +19,7 @@ void* Engine_Create()
 
 bool Engine_Initialize(void* hwnd)
 {
-    return Engine::Instance().Initialize(hwnd);
+    return Engine::Instance().Initialize(static_cast<HWND>(hwnd));
 }
 
 void Engine_Render()
