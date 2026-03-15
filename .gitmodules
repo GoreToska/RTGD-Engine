@@ -1,27 +1,9 @@
-[submodule "magnum-integration"]
-	path = magnum-integration
-	url = https://github.com/mosra/magnum-integration.git
-[submodule "magnum"]
-	path = magnum
-	url = https://github.com/mosra/magnum.git
-[submodule "ThirdParty/magnum"]
-	path = ThirdParty/magnum
-	url = https://github.com/mosra/magnum.git
-[submodule "ThirdParty/magnum-integration"]
-	path = ThirdParty/magnum-integration
-	url = https://github.com/mosra/magnum-integration.git
-[submodule "ThirdParty/corrade"]
-	path = ThirdParty/corrade
-	url = https://github.com/mosra/corrade.git
 [submodule "ThirdParty/flecs"]
 	path = ThirdParty/flecs
 	url = https://github.com/SanderMertens/flecs.git
 [submodule "ThirdParty/DiligentEngine"]
 	path = ThirdParty/DiligentEngine
 	url = https://github.com/DiligentGraphics/DiligentEngine.git
-[submodule "ThirdParty/CppLogging"]
-	path = ThirdParty/CppLogging
-	url = https://github.com/chronoxor/CppLogging.git
 [submodule "ThirdParty/spdlog"]
 	path = ThirdParty/spdlog
 	url = https://github.com/gabime/spdlog.git
