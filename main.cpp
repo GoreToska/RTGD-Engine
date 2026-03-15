@@ -121,10 +121,6 @@ int main()
         lastTime = now;
 
         RTGDEngine::Engine::Instance().Update(deltaTime);
-
-        RTGDEngine::Engine::Instance().PostUpdate(deltaTime);
-
-        RTGDEngine::Engine::Instance().Render();
     }
 
     RTGDEngine::Engine::Instance().Shutdown();

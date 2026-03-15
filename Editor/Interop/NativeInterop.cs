@@ -15,12 +15,13 @@ namespace Editor
         public const int CS_VREDRAW = 0x0001;
         public const int COLOR_WINDOW = 5;
 
-        [DllImport("Engine.dll")] public static extern IntPtr Engine_Create();
-        [DllImport("Engine.dll")] public static extern void Engine_Destroy();
         [DllImport("Engine.dll")] public static extern bool Engine_Initialize(IntPtr hwnd);
-        [DllImport("Engine.dll")] public static extern void Engine_Render();
+        [DllImport("Engine.dll")] public static extern void Engine_Update(float deltaTime);
+        [DllImport("Engine.dll")] public static extern void Engine_HandleMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
         [DllImport("Engine.dll")] public static extern void Engine_Resize(int w, int h);
         [DllImport("Engine.dll")] public static extern void Engine_Shutdown();
+
+        [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr hWnd);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern ushort RegisterClassEx(ref WNDCLASSEX lpwcx);
@@ -48,9 +49,15 @@ namespace Editor
         public static extern IntPtr DefWindowProc(IntPtr hWnd, uint msg,
             IntPtr wParam, IntPtr lParam);
 
-        public static WndProcDelegate _wndProcDelegate = DefWindowProc;
+        public static WndProcDelegate _wndProcDelegate = CustomWndProc;
         public delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg,
             IntPtr wParam, IntPtr lParam);
+
+        private static IntPtr CustomWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+        {
+            Engine_HandleMessage(hWnd, msg, wParam, lParam);
+            return DefWindowProc(hWnd, msg, wParam, lParam);
+        }
 
         public struct WNDCLASSEX
         {

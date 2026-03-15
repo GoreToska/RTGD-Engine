@@ -56,10 +56,20 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:Engine>
         "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Engine.dll"
+
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_BINARY_DIR}/bin/GraphicsEngineD3D12_64d.dll"
         "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/GraphicsEngineD3D12_64d.dll"
+
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:gainput>
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/gainput.dll"
+
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:gainput>
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:gainput>"
 )
+
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

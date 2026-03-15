@@ -27,8 +27,6 @@ namespace RTGDEngine
 
         void Update(float deltaTime);
 
-        void PostUpdate(float deltaTime);
-
         void Render();
 
         void CreateConsole();

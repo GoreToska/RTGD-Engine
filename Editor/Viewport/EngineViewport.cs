@@ -14,12 +14,28 @@ namespace Editor
         private int _width;
         private int _height;
 
+        private DateTime _lastFrameTime = DateTime.Now;
+
+        private System.Threading.Thread _renderThread;
+        private volatile bool _running = false;
+
         public EngineViewport(int width, int height)
         {
             _width = width;
             _height = height;
         }
 
+        protected override IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const uint WM_LBUTTONDOWN = 0x0201;
+            const uint WM_RBUTTONDOWN = 0x0204;
+
+            if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN)
+                NativeInterop.SetFocus(hwnd);
+
+            NativeInterop.Engine_HandleMessage(hwnd, (uint)msg, wParam, lParam);
+            return NativeInterop.DefWindowProc(hwnd, (uint)msg, wParam, lParam);
+        }
 
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
         {
@@ -29,20 +45,46 @@ namespace Editor
             {
                 int error = Marshal.GetLastWin32Error();
                 throw new InvalidOperationException(
-                    $"CreateWindowEx failed. Win32 error: {error} — {GetWin32ErrorMessage(error)}");
+                    $"CreateWindowEx failed. Win32 error: {error}");
             }
 
-            _engineHandle = NativeInterop.Engine_Create();
-            if (_engineHandle == IntPtr.Zero)
-                throw new InvalidOperationException("Engine_Create returned null");
-
-            bool ok = NativeInterop.Engine_Initialize(_hwndChild);
-            if (!ok)
+            if (!NativeInterop.Engine_Initialize(_hwndChild))
                 throw new InvalidOperationException("Engine_Initialize failed");
 
-            System.Windows.Media.CompositionTarget.Rendering += OnRendering;
+            MouseDown += (s, e) => NativeInterop.SetFocus(_hwndChild);
+
+            _running = true;
+            _renderThread = new System.Threading.Thread(RenderLoop)
+            {
+                IsBackground = true,
+                Name = "EngineUpdateThread"
+            };
+            _renderThread.Start();
 
             return new HandleRef(this, _hwndChild);
+        }
+
+        protected override void DestroyWindowCore(HandleRef hwnd)
+        {
+            _running = false;
+            _renderThread?.Join(1000);
+
+            NativeInterop.Engine_Shutdown();
+            NativeInterop.DestroyWindow(hwnd.Handle);
+        }
+
+        private void RenderLoop()
+        {
+            var lastTime = DateTime.Now;
+
+            while (_running)
+            {
+                var now = DateTime.Now;
+                float deltaTime = (float)(now - lastTime).TotalSeconds;
+                lastTime = now;
+
+                NativeInterop.Engine_Update(deltaTime);
+            }
         }
 
         private static string GetWin32ErrorMessage(int code)
@@ -50,23 +92,13 @@ namespace Editor
             return new System.ComponentModel.Win32Exception(code).Message;
         }
 
-        protected override void DestroyWindowCore(HandleRef hwnd)
-        {
-            System.Windows.Media.CompositionTarget.Rendering -= OnRendering;
-
-            if (_engineHandle != IntPtr.Zero)
-            {
-                NativeInterop.Engine_Shutdown();
-                _engineHandle = IntPtr.Zero;
-            }
-
-            NativeInterop.DestroyWindow(hwnd.Handle);
-        }
-
         private void OnRendering(object sender, EventArgs e)
         {
-            if (_engineHandle != IntPtr.Zero)
-                NativeInterop.Engine_Render();
+            var now = DateTime.Now;
+            float deltaTime = (float)(now - _lastFrameTime).TotalSeconds;
+            _lastFrameTime = now;
+
+            NativeInterop.Engine_Update(deltaTime);
         }
 
         public void Resize(int width, int height)
@@ -78,8 +110,7 @@ namespace Editor
                 NativeInterop.SetWindowPos(_hwndChild, IntPtr.Zero, 0, 0, width, height,
                     NativeInterop.SWP_NOZORDER | NativeInterop.SWP_NOACTIVATE);
 
-            if (_engineHandle != IntPtr.Zero)
-                NativeInterop.Engine_Resize(width, height);
+            NativeInterop.Engine_Resize(width, height);
         }
 
         private static bool _classRegistered = false;

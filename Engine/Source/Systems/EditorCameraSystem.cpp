@@ -29,8 +29,6 @@ namespace RTGDEngine
             float dx = input.GetMouseDeltaX() * editorCam.RotationSpeed;
             float dy = input.GetMouseDeltaY() * editorCam.RotationSpeed;
 
-            LogInfo("Delta {} {}", dx, dy);
-
             if (dx != 0.0f)
                 transform.Rotate(TransformComponent::GlobalUp, dx, World);
 

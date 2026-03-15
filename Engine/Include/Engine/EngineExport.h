@@ -26,14 +26,16 @@
 #else
     #define ENGINE_API __attribute__((visibility("default")))
 #endif
+#include <cstdint>
 
 extern "C"
 {
-ENGINE_API void* Engine_Create();
-
 ENGINE_API bool Engine_Initialize(void* hwnd);
 
-ENGINE_API void Engine_Render();
+ENGINE_API void Engine_Update(float deltaTime);
+
+ENGINE_API void Engine_HandleMessage(void* hwnd, unsigned int msg,
+                                     uintptr_t wParam, intptr_t lParam);
 
 ENGINE_API void Engine_Resize(int w, int h);
 

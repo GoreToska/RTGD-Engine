@@ -43,6 +43,17 @@ namespace RTGDEngine
         m_map->MapFloat(ID(A::DeltaX), m_mouseRaw, gainput::MouseAxisX);
         m_map->MapFloat(ID(A::DeltaY), m_mouseRaw, gainput::MouseAxisY);
 
+        RAWINPUTDEVICE rid;
+        rid.usUsagePage = 0x01;
+        rid.usUsage = 0x02;
+        rid.dwFlags = RIDEV_INPUTSINK;
+        rid.hwndTarget = hwnd;
+
+        if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+            LogError("Failed to register Raw Input: {}", GetLastError());
+        else
+            LogInfo("Raw Input registered for HWND: {}", (void*)hwnd);
+
         LogInfo("InputSystem initialized ({}x{})", width, height);
     }
 
@@ -60,14 +71,12 @@ namespace RTGDEngine
 
         if (IsPressed(EInputAction::MouseRight))
         {
-            LogInfo("Mouse Right Pressed");
             CaptureMouse(true);
         }
 
         if (IsReleased(EInputAction::MouseRight) ||
             IsPressed(EInputAction::Escape))
         {
-            LogInfo("Mouse Right Released");
             CaptureMouse(false);
         }
     }
@@ -88,30 +97,34 @@ namespace RTGDEngine
         m_manager.HandleMessage({hwnd, msg, wParam, lParam});
 
         if (msg == WM_INPUT)
+        {
             ProcessRawMouseInput(lParam);
+        }
     }
 
     void InputSystem::ProcessRawMouseInput(LPARAM lParam)
     {
         UINT size = 0;
-        GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
-                        RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER));
+        UINT result = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
+                                      RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER));
 
         if (size == 0)
             return;
 
         std::vector<BYTE> buffer(size);
-        if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
-                            RID_INPUT, buffer.data(), &size, sizeof(RAWINPUTHEADER)) != size)
+        UINT bytesRead = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
+                                         RID_INPUT, buffer.data(), &size, sizeof(RAWINPUTHEADER));
+
+        if (bytesRead != size)
             return;
 
         const auto* raw = reinterpret_cast<const RAWINPUT*>(buffer.data());
+
         if (raw->header.dwType != RIM_TYPEMOUSE)
             return;
 
         m_mouseDeltaX += static_cast<float>(raw->data.mouse.lLastX);
         m_mouseDeltaY += static_cast<float>(raw->data.mouse.lLastY);
-        //LogInfo("Raw Input: {} {}", m_mouseDeltaX, m_mouseDeltaY);
     }
 
     bool InputSystem::IsDown(const EInputAction action) const

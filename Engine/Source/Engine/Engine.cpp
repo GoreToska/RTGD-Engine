@@ -105,11 +105,10 @@ namespace RTGDEngine
 
         if (m_gameModule)
             m_gameModule->Update(deltaTime);
-    }
 
-    void Engine::PostUpdate(float deltaTime)
-    {
         PostUpdateSystems(m_world, deltaTime);
+
+        Render();
     }
 
     void Engine::Render()
