@@ -16,3 +16,6 @@
 [submodule "ThirdParty/enkiTS"]
 	path = ThirdParty/enkiTS
 	url = https://github.com/dougbinks/enkiTS.git
+[submodule "ThirdParty/stb"]
+	path = ThirdParty/stb
+	url = https://github.com/nothings/stb.git

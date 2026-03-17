@@ -182,6 +182,13 @@ namespace RTGDEngine
                     return;
                 }
 
+                if (matData.DiffuseTexture != INVALID_TEXTURE_HANDLE)
+                {
+                    const TextureData& texData = rm.GetTexture(matData.DiffuseTexture);
+                    if (!texData.SRV)
+                        return;
+                }
+
                 ObjectConstantBuffer objCB;
                 objCB.Model = transform.GetWorldMatrix();
                 UpdateObjectConstantBuffer(objCB);

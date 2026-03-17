@@ -21,5 +21,10 @@ namespace RTGDEngine
             std::function<void(MeshHandle)> onComplete = nullptr);
 
         MeshHandle LoadMeshSync(const std::string& absolutePath);
+
+        TextureHandle LoadTextureAsync(const std::string& absolutePath, bool isSRGB = true,
+                                       std::function<void(TextureHandle)> onComplete = nullptr);
+
+        TextureHandle LoadTextureSync(const std::string& absolutePath, bool isSRGB = true);
     };
 } // RTGDEngine

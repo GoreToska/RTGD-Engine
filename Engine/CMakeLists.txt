@@ -40,11 +40,14 @@ add_library(Engine SHARED
         Include/AssetLoader/MeshImporter.h
         Source/AssetLoader/MeshImporter.cpp
         Include/Tools/RTGDMacros.h
+        Source/AssetLoader/TextureImporter.cpp
+        Include/AssetLoader/TextureImporter.h
 )
 
 target_include_directories(Engine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/ThirdParty/gainput/lib/include
+        ${CMAKE_SOURCE_DIR}/ThirdParty/stb
 )
 
 target_link_libraries(Engine PUBLIC

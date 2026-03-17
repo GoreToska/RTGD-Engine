@@ -32,6 +32,153 @@ namespace RTGDEngine
         return handle;
     }
 
+    TextureHandle RenderResourceManager::RegisterTexture(const std::string& name, TextureData data)
+    {
+        auto it = m_textureNames.find(name);
+        if (it != m_textureNames.end())
+            return it->second;
+
+        auto handle = static_cast<TextureHandle>(m_textures.size());
+        m_textures.push_back(std::move(data));
+        m_textureNames[name] = handle;
+        return handle;
+    }
+
+    const TextureData& RenderResourceManager::GetTexture(TextureHandle handle) const
+    {
+        return m_textures[handle];
+    }
+
+    void RenderResourceManager::QueueTextureUpload(TextureHandle handle, std::vector<uint8_t> pixels, uint32_t width,
+                                                   uint32_t height, uint32_t channels, bool isSRGB)
+    {
+        std::lock_guard lock(m_textureUploadMutex);
+        m_pendingTextureUploads.push_back({
+            handle, std::move(pixels), width, height, channels, isSRGB
+        });
+    }
+
+    void RenderResourceManager::QueueTextureBind(MaterialHandle mat, TextureHandle tex)
+    {
+        std::lock_guard lock(m_bindMutex);
+        m_pendingBinds.push_back({mat, tex});
+    }
+
+    void RenderResourceManager::FlushTextureUploads(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context)
+    {
+        using namespace Diligent;
+
+        std::vector<PendingTextureUpload> uploads; {
+            std::lock_guard lock(m_textureUploadMutex);
+            uploads = std::move(m_pendingTextureUploads);
+            m_pendingTextureUploads.clear();
+        }
+
+        if (uploads.empty())
+            return;
+
+        for (auto& upload: uploads)
+        {
+            TextureData data;
+
+            TextureDesc texDesc;
+            texDesc.Type = RESOURCE_DIM_TEX_2D;
+            texDesc.Width = upload.Width;
+            texDesc.Height = upload.Height;
+            texDesc.MipLevels = 1;
+            texDesc.Format = upload.IsSRGB
+                                 ? TEX_FORMAT_RGBA8_UNORM_SRGB
+                                 : TEX_FORMAT_RGBA8_UNORM;
+            texDesc.BindFlags = BIND_SHADER_RESOURCE;
+            texDesc.Usage = USAGE_DEFAULT;
+
+            TextureSubResData subRes;
+            subRes.pData = upload.Pixels.data();
+            subRes.Stride = upload.Width * upload.Channels;
+
+            Diligent::TextureData texData;
+            texData.pSubResources = &subRes;
+            texData.NumSubresources = 1;
+
+            device.CreateTexture(texDesc, &texData, &data.Texture);
+
+            if (!data.Texture)
+            {
+                LogError("FlushTextureUploads: failed to create texture for handle {}",
+                         upload.Handle);
+                continue;
+            }
+
+            data.SRV = data.Texture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
+
+            SamplerDesc samplerDesc;
+            samplerDesc.MinFilter = FILTER_TYPE_LINEAR;
+            samplerDesc.MagFilter = FILTER_TYPE_LINEAR;
+            samplerDesc.MipFilter = FILTER_TYPE_LINEAR;
+            samplerDesc.AddressU = TEXTURE_ADDRESS_WRAP;
+            samplerDesc.AddressV = TEXTURE_ADDRESS_WRAP;
+            samplerDesc.AddressW = TEXTURE_ADDRESS_WRAP;
+            samplerDesc.MaxAnisotropy = 8;
+            device.CreateSampler(samplerDesc, &data.Sampler);
+
+            UpdateTexture(upload.Handle, std::move(data));
+
+            LogInfo("FlushTextureUploads: done → handle {}, {}x{}",
+                    upload.Handle, upload.Width, upload.Height);
+
+            RebindPendingMaterials(upload.Handle);
+        }
+    }
+
+    void RenderResourceManager::UpdateTexture(TextureHandle handle, TextureData data)
+    {
+        if (handle == INVALID_TEXTURE_HANDLE || handle >= m_textures.size())
+            return;
+        m_textures[handle] = std::move(data);
+    }
+
+    void RenderResourceManager::BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle)
+    {
+        auto& mat = m_materials[matHandle];
+        auto& tex = m_textures[texHandle];
+
+        auto* texVar = mat.SRB->GetVariableByName(
+            Diligent::SHADER_TYPE_PIXEL, "g_Texture");
+        auto* samVar = mat.SRB->GetVariableByName(
+            Diligent::SHADER_TYPE_PIXEL, "g_Sampler");
+
+        if (texVar)
+        {
+            texVar->Set(tex.SRV);
+        }
+        if (samVar)
+        {
+            samVar->Set(tex.Sampler);
+        }
+
+        mat.DiffuseTexture = texHandle;
+    }
+
+    void RenderResourceManager::RebindPendingMaterials(TextureHandle texHandle)
+    {
+        std::vector<PendingTextureBind> toProcess; {
+            std::lock_guard lock(m_bindMutex);
+            for (auto it = m_pendingBinds.begin(); it != m_pendingBinds.end();)
+            {
+                if (it->TexHandle == texHandle)
+                {
+                    toProcess.push_back(*it);
+                    it = m_pendingBinds.erase(it);
+                }
+                else
+                    ++it;
+            }
+        }
+
+        for (auto& [MatHandle, TexHandle]: toProcess)
+            BindTextureToMaterial(MatHandle, TexHandle);
+    }
+
     const MeshData& RenderResourceManager::GetMesh(MeshHandle handle) const
     {
         return m_meshes[handle];
@@ -45,17 +192,17 @@ namespace RTGDEngine
     MeshHandle RenderResourceManager::GetMeshByName(const std::string& name) const
     {
         auto it = m_meshNames.find(name);
-        return it != m_meshNames.end() ? it->second : INVALID_HANDLE;
+        return it != m_meshNames.end() ? it->second : INVALID_MESH_HANDLE;
     }
 
     MaterialHandle RenderResourceManager::GetMaterialByName(const std::string& name) const
     {
         auto it = m_materialNames.find(name);
-        return it != m_materialNames.end() ? it->second : INVALID_HANDLE;
+        return it != m_materialNames.end() ? it->second : INVALID_MATERIAL_HANDLE;
     }
 
-    void RenderResourceManager::QueueGPUUpload(MeshHandle handle, std::vector<VertexPNUV> vertices,
-                                               std::vector<uint32_t> indices)
+    void RenderResourceManager::QueueMeshUpload(MeshHandle handle, std::vector<VertexPNUV> vertices,
+                                                std::vector<uint32_t> indices)
     {
         std::lock_guard lock(m_uploadMutex);
         m_pendingUploads.push_back({
@@ -67,7 +214,7 @@ namespace RTGDEngine
         LogInfo("RenderResourceManager: queued GPU upload → handle {}", handle);
     }
 
-    void RenderResourceManager::FlushGPUUploads(Diligent::IRenderDevice& device)
+    void RenderResourceManager::FlushMeshUploads(Diligent::IRenderDevice& device)
     {
         using namespace Diligent;
 
@@ -131,7 +278,7 @@ namespace RTGDEngine
 
     void RenderResourceManager::UpdateMesh(MeshHandle handle, MeshData data)
     {
-        if (handle == INVALID_HANDLE || handle >= m_meshes.size())
+        if (handle == INVALID_MESH_HANDLE || handle >= m_meshes.size())
         {
             LogError("RenderResourceManager::UpdateMesh — invalid handle {}", handle);
             return;

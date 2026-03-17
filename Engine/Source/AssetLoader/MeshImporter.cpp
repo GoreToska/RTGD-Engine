@@ -14,7 +14,7 @@
 
 namespace RTGDEngine
 {
-    MeshImportData MeshImporter::ImportMesh(const std::string& absolutePath)
+    MeshImportData MeshImporter::Import(const std::string& absolutePath)
     {
         MeshImportData result;
         Assimp::Importer importer;

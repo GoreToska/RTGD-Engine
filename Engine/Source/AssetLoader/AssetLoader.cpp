@@ -5,6 +5,7 @@
 #include "AssetLoader/AssetLoader.h"
 
 #include "AssetLoader/MeshImporter.h"
+#include "AssetLoader/TextureImporter.h"
 #include "JobSystem/JobSystem.h"
 #include "Render/RenderResourceManager.h"
 #include "Tools/Logger.h"
@@ -20,12 +21,12 @@ namespace RTGDEngine
 
         JobSystem::Instance().Submit([absolutePath, handle, onComplete]()
         {
-            MeshImportData data = MeshImporter::ImportMesh(absolutePath);
+            MeshImportData data = MeshImporter::Import(absolutePath);
 
             if (!data.Success)
                 return;
 
-            RenderResourceManager::Instance().QueueGPUUpload(
+            RenderResourceManager::Instance().QueueMeshUpload(
                 handle,
                 std::move(data.Vertices),
                 std::move(data.Indices));
@@ -42,17 +43,62 @@ namespace RTGDEngine
         MeshHandle handle = RenderResourceManager::Instance()
                 .RegisterMesh(absolutePath, MeshData{});
 
-        MeshImportData data = MeshImporter::ImportMesh(absolutePath);
+        MeshImportData data = MeshImporter::Import(absolutePath);
 
         if (!data.Success)
-            return INVALID_HANDLE;
+            return INVALID_MESH_HANDLE;
 
-        RenderResourceManager::Instance().QueueGPUUpload(
+        RenderResourceManager::Instance().QueueMeshUpload(
             handle,
             std::move(data.Vertices),
             std::move(data.Indices));
 
         LogInfo("AssetLoader: sync loaded '{}' → handle {}", absolutePath, handle);
+        return handle;
+    }
+
+    TextureHandle AssetLoader::LoadTextureAsync(const std::string& absolutePath, bool isSRGB,
+                                                std::function<void(TextureHandle)> onComplete)
+    {
+        TextureHandle handle = RenderResourceManager::Instance()
+                .RegisterTexture(absolutePath, TextureData{});
+
+        LogInfo("AssetLoader: async texture queued '{}' → handle {}", absolutePath, handle);
+
+        JobSystem::Instance().Submit([absolutePath, handle, isSRGB, onComplete]()
+        {
+            TextureImportData data = TextureImporter::Import(absolutePath);
+            if (!data.Success)
+                return;
+
+            RenderResourceManager::Instance().QueueTextureUpload(
+                handle,
+                std::move(data.Pixels),
+                data.Width, data.Height, data.Channels,
+                isSRGB);
+
+            if (onComplete)
+                onComplete(handle);
+        });
+
+        return handle;
+    }
+
+    TextureHandle AssetLoader::LoadTextureSync(const std::string& absolutePath, bool isSRGB)
+    {
+        TextureHandle handle = RenderResourceManager::Instance()
+                .RegisterTexture(absolutePath, TextureData{});
+
+        TextureImportData data = TextureImporter::Import(absolutePath);
+        if (!data.Success)
+            return INVALID_TEXTURE_HANDLE;
+
+        RenderResourceManager::Instance().QueueTextureUpload(
+            handle,
+            std::move(data.Pixels),
+            data.Width, data.Height, data.Channels,
+            isSRGB);
+
         return handle;
     }
 } // RTGDEngine

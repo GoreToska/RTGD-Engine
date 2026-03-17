@@ -55,16 +55,26 @@ namespace RTGDEngine
         RTGDEntityFactory::CreateTriangle(m_world, RTGDRenderSystem::Instance().GetDevice(),
                                           RTGDRenderSystem::Instance().GetSwapChain(), "Shaders");
 
-        MaterialHandle meshMaterial = PipelineFactory::CreateMeshPipeline(
+
+        MaterialHandle meshMat = PipelineFactory::CreateMeshPipeline(
             RTGDRenderSystem::Instance().GetDevice(),
             RTGDRenderSystem::Instance().GetSwapChain(),
             "Shaders");
 
-        MeshHandle meshHandle = AssetLoader::Instance().LoadMeshAsync("Assets/Box.gltf");
+        MeshHandle meshHandle = AssetLoader::Instance().LoadMeshAsync("Assets/BoxTextured.gltf");
+
+        AssetLoader::Instance().LoadTextureAsync(
+            "Assets/CesiumLogoFlat.png",
+            true,
+            [meshMat](TextureHandle t)
+            {
+                RenderResourceManager::Instance().QueueTextureBind(meshMat, t);
+                LogInfo("Texture queued for binding → tex={} mat={}", t, meshMat);
+            });
 
         m_world.entity("TestMesh")
                 .set(TransformComponent{{2.0f, 2.0f, 2.0f}})
-                .set(MeshComponent{meshHandle, meshMaterial})
+                .set(MeshComponent{meshHandle, meshMat}) // ← тот же meshMat
                 .set(RenderComponent{});
 
         return true;
@@ -133,7 +143,11 @@ namespace RTGDEngine
 
     void Engine::Render()
     {
-        RenderResourceManager::Instance().FlushGPUUploads(RTGDRenderSystem::Instance().GetDevice());
+        auto& device = RTGDRenderSystem::Instance().GetDevice();
+        auto& context = RTGDRenderSystem::Instance().GetContext();
+
+        RenderResourceManager::Instance().FlushMeshUploads(device);
+        RenderResourceManager::Instance().FlushTextureUploads(device, context);
 
         RTGDRenderSystem::Instance().BeginFrame();
         RTGDRenderSystem::Instance().RenderScene(m_world);

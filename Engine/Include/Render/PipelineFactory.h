@@ -38,6 +38,14 @@ namespace RTGDEngine
                     Diligent::SHADER_TYPE_VERTEX, "ObjectConstants",
                     Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE
                 },
+                {
+                    Diligent::SHADER_TYPE_PIXEL, "g_Texture",
+                    Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE
+                },
+                {
+                    Diligent::SHADER_TYPE_PIXEL, "g_Sampler",
+                    Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE
+                },
             };
         }
     };

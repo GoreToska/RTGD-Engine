@@ -23,6 +23,6 @@ namespace RTGDEngine
     class ENGINE_API MeshImporter
     {
     public:
-        static MeshImportData ImportMesh(const std::string& absolutePath);
+        static MeshImportData Import(const std::string& absolutePath);
     };
 } // RTGDEngine
