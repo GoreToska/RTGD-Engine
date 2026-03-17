@@ -33,6 +33,13 @@ add_library(Engine SHARED
         Source/Systems/CameraSystem.cpp
         Include/Systems/CameraSystem.h
         Include/Render/ConstBuffers.h
+        Source/JobSystem/JobSystem.cpp
+        Include/JobSystem/JobSystem.h
+        Source/AssetLoader/AssetLoader.cpp
+        Include/AssetLoader/AssetLoader.h
+        Include/AssetLoader/MeshImporter.h
+        Source/AssetLoader/MeshImporter.cpp
+        Include/Tools/RTGDMacros.h
 )
 
 target_include_directories(Engine PUBLIC
@@ -48,6 +55,8 @@ target_link_libraries(Engine PUBLIC
         flecs_static
         spdlog::spdlog
         gainput
+        assimp
+        enkiTS
 )
 
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
@@ -63,11 +72,11 @@ add_custom_command(TARGET Engine POST_BUILD
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:gainput>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/gainput.dll"
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:gainput>"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:gainput>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:gainput>"
+        $<TARGET_FILE:assimp>
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:assimp>"
 )
 
 
@@ -80,7 +89,21 @@ add_custom_command(TARGET Engine POST_BUILD
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Assets
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Assets
+        COMMENT "Copying Assets to output directory"
+)
+
+add_custom_command(TARGET Engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Shaders
         "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Shaders"
         COMMENT "Copying shaders to Editor directory"
+)
+
+add_custom_command(TARGET Engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Assets
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Assets"
+        COMMENT "Copying assets to Editor directory"
 )

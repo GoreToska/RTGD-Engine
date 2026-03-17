@@ -11,6 +11,13 @@ add_subdirectory(ThirdParty/flecs)
 add_subdirectory(ThirdParty/DiligentEngine)
 add_subdirectory(ThirdParty/spdlog)
 add_subdirectory(ThirdParty/gainput)
+add_subdirectory(ThirdParty/enkiTS)
+
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
+add_subdirectory(ThirdParty/assimp)
+
 
 add_subdirectory(Engine)
 add_subdirectory(Game)

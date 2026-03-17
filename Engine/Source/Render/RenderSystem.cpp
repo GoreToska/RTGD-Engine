@@ -23,12 +23,6 @@
 
 namespace RTGDEngine
 {
-    RTGDRenderSystem& RTGDRenderSystem::Instance()
-    {
-        static RTGDRenderSystem render;
-        return render;
-    }
-
     bool RTGDRenderSystem::Initialize(HWND hwnd, int width, int height)
     {
         using namespace Diligent;
@@ -94,9 +88,6 @@ namespace RTGDEngine
         {0.5f, -0.5f, 0.0f, 0.0f, 1.0f},
     };
 
-    void RTGDRenderSystem::CreateShaders()
-    {
-    }
 
     void RTGDRenderSystem::InitializeConstantBuffers()
     {
@@ -144,7 +135,7 @@ namespace RTGDEngine
         {
             auto* dst = static_cast<ObjectConstantBuffer*>(pMapped);
             dst->Model = data.Model.Transpose();
-            m_pImmediateContext->UnmapBuffer(m_objectCB, Diligent::MAP_WRITE);
+            m_pImmediateContext->UnmapBuffer(m_objectCB, MAP_WRITE);
         }
     }
 

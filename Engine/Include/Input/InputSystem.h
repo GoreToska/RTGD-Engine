@@ -10,14 +10,15 @@
 
 #include "EInputAction.h"
 #include "Engine/EngineExport.h"
+#include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine
 {
     class ENGINE_API InputSystem
     {
-    public:
-        static InputSystem& Instance();
+        DECLARE_SINGLETON(InputSystem);
 
+    public:
         void Initialize(HWND hwnd, int width, int height);
 
         void Update();
@@ -45,8 +46,6 @@ namespace RTGDEngine
         [[nodiscard]] float GetMouseDeltaY() const;
 
     private:
-        InputSystem() = default;
-
         void CaptureMouse(bool capture);
 
         void MoveMouseBack();
@@ -64,6 +63,6 @@ namespace RTGDEngine
         float m_lastMouseY = 0.0f;
         float m_mouseDeltaX = 0.0f;
         float m_mouseDeltaY = 0.0f;
-        POINT m_savedMousePos;
+        POINT m_savedMousePos = {0, 0};
     };
 }

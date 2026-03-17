@@ -8,15 +8,16 @@
 #include "Engine/IGameModule.h"
 #include "Engine/IEngineInterface.h"
 #include "Engine/EngineExport.h"
+#include "Tools/RTGDMacros.h"
 
 
 namespace RTGDEngine
 {
     class ENGINE_API Engine : public IEngineInterface
     {
-    public:
-        static Engine& Instance();
+        DECLARE_SINGLETON(Engine);
 
+    public:
         bool Initialize(HWND hwnd);
 
         void Run();
@@ -41,6 +42,7 @@ namespace RTGDEngine
         DestroyGameModuleFunc m_destroyFunc = nullptr;
 
         void UpdateSystems(const flecs::world& world, float deltaTime);
+
         void PostUpdateSystems(const flecs::world& world, float deltaTime);
     };
 }

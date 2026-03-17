@@ -10,6 +10,7 @@
 
 #include "EngineFactoryD3D12.h"
 #include "Engine/EngineExport.h"
+#include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine
 {
@@ -25,9 +26,9 @@ namespace RTGDEngine
 {
     class ENGINE_API RTGDRenderSystem
     {
-    public:
-        static RTGDRenderSystem& Instance();
+        DECLARE_SINGLETON(RTGDRenderSystem);
 
+    public:
         bool Initialize(HWND hwnd, int width, int height);
 
         void BeginFrame();
@@ -60,8 +61,6 @@ namespace RTGDEngine
 
         Diligent::RefCntAutoPtr<Diligent::IBuffer> m_cameraCB;
         Diligent::RefCntAutoPtr<Diligent::IBuffer> m_objectCB;
-
-        void CreateShaders();
 
         void InitializeConstantBuffers();
 

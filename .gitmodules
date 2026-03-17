@@ -10,3 +10,9 @@
 [submodule "ThirdParty/gainput"]
 	path = ThirdParty/gainput
 	url = https://github.com/jkuhlmann/gainput.git
+[submodule "ThirdParty/assimp"]
+	path = ThirdParty/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "ThirdParty/enkiTS"]
+	path = ThirdParty/enkiTS
+	url = https://github.com/dougbinks/enkiTS.git

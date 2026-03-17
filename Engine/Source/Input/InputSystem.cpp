@@ -8,12 +8,6 @@
 
 namespace RTGDEngine
 {
-    InputSystem& InputSystem::Instance()
-    {
-        static InputSystem instance;
-        return instance;
-    }
-
     void InputSystem::Initialize(HWND hwnd, const int width, const int height)
     {
         m_hwnd = hwnd;

@@ -20,6 +20,11 @@ namespace RTGDEngine
             Diligent::ISwapChain& swapChain,
             const std::string& shadersPath);
 
+        static MaterialHandle CreateMeshPipeline(
+            Diligent::IRenderDevice& device,
+            Diligent::ISwapChain& swapChain,
+            const std::string& shadersPath);
+
         static void BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb);
 
         static std::vector<Diligent::ShaderResourceVariableDesc> GetStandardVariableDescs()

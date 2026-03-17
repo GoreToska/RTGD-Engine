@@ -3,10 +3,18 @@
 
 #include "Engine/Engine.h"
 
+#include <filesystem>
+
+#include "AssetLoader/AssetLoader.h"
 #include "Components/CameraComponent.h"
+#include "Components/MeshComponent.h"
+#include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/VelocityComponent.h"
 #include "Input/InputSystem.h"
+#include "JobSystem/JobSystem.h"
+#include "Render/PipelineFactory.h"
+#include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
 #include "Scene/RTGDEntityFactory.h"
 #include "Systems/CameraSystem.h"
@@ -16,16 +24,14 @@
 
 namespace RTGDEngine
 {
-    Engine& Engine::Instance()
-    {
-        static Engine instance;
-        return instance;
-    }
+    constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
 
     bool Engine::Initialize(HWND hwnd)
     {
         m_hwnd = hwnd;
         Logger::Instance().Initialize();
+
+        JobSystem::Instance().Initialize();
 
         RECT rect;
         GetClientRect(hwnd, &rect);
@@ -48,6 +54,18 @@ namespace RTGDEngine
 
         RTGDEntityFactory::CreateTriangle(m_world, RTGDRenderSystem::Instance().GetDevice(),
                                           RTGDRenderSystem::Instance().GetSwapChain(), "Shaders");
+
+        MaterialHandle meshMaterial = PipelineFactory::CreateMeshPipeline(
+            RTGDRenderSystem::Instance().GetDevice(),
+            RTGDRenderSystem::Instance().GetSwapChain(),
+            "Shaders");
+
+        MeshHandle meshHandle = AssetLoader::Instance().LoadMeshAsync("Assets/Box.gltf");
+
+        m_world.entity("TestMesh")
+                .set(TransformComponent{{2.0f, 2.0f, 2.0f}})
+                .set(MeshComponent{meshHandle, meshMaterial})
+                .set(RenderComponent{});
 
         return true;
     }
@@ -101,6 +119,8 @@ namespace RTGDEngine
 
     void Engine::Update(const float deltaTime)
     {
+        JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
+
         UpdateSystems(m_world, deltaTime);
 
         if (m_gameModule)
@@ -113,6 +133,8 @@ namespace RTGDEngine
 
     void Engine::Render()
     {
+        RenderResourceManager::Instance().FlushGPUUploads(RTGDRenderSystem::Instance().GetDevice());
+
         RTGDRenderSystem::Instance().BeginFrame();
         RTGDRenderSystem::Instance().RenderScene(m_world);
         RTGDRenderSystem::Instance().EndFrame();

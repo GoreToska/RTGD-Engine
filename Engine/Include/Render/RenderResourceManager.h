@@ -13,9 +13,15 @@
 #include "RenderHandle.h"
 
 
+namespace Diligent
+{
+    struct IRenderDevice;
+}
 
 namespace RTGDEngine
 {
+    struct VertexPNUV;
+
     struct MeshData
     {
         Diligent::RefCntAutoPtr<Diligent::IBuffer> VertexBuffer;
@@ -30,6 +36,13 @@ namespace RTGDEngine
         Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> SRB;
     };
 
+    struct PendingGPUUpload
+    {
+        MeshHandle Handle;
+        std::vector<VertexPNUV> Vertices;
+        std::vector<uint32_t> Indices;
+    };
+
     class RenderResourceManager
     {
     public:
@@ -39,13 +52,19 @@ namespace RTGDEngine
 
         MaterialHandle RegisterMaterial(const std::string& name, MaterialData data);
 
-        const MeshData& GetMesh(MeshHandle handle) const;
+        [[nodiscard]] const MeshData& GetMesh(MeshHandle handle) const;
 
-        const MaterialData& GetMaterial(MaterialHandle handle) const;
+        [[nodiscard]] const MaterialData& GetMaterial(MaterialHandle handle) const;
 
-        MeshHandle GetMeshByName(const std::string& name) const;
+        [[nodiscard]] MeshHandle GetMeshByName(const std::string& name) const;
 
-        MaterialHandle GetMaterialByName(const std::string& name) const;
+        [[nodiscard]] MaterialHandle GetMaterialByName(const std::string& name) const;
+
+        void QueueGPUUpload(MeshHandle handle, std::vector<VertexPNUV> vertices, std::vector<uint32_t> indices);
+
+        void FlushGPUUploads(Diligent::IRenderDevice& device);
+
+        void UpdateMesh(MeshHandle handle, MeshData data);
 
     private:
         RenderResourceManager() = default;
@@ -55,5 +74,8 @@ namespace RTGDEngine
 
         std::unordered_map<std::string, MeshHandle> m_meshNames;
         std::unordered_map<std::string, MaterialHandle> m_materialNames;
+
+        std::mutex m_uploadMutex;
+        std::vector<PendingGPUUpload> m_pendingUploads;
     };
 } // RTGDEngine
