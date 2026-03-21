@@ -42,6 +42,12 @@ add_library(Engine SHARED
         Include/Tools/RTGDMacros.h
         Source/AssetLoader/TextureImporter.cpp
         Include/AssetLoader/TextureImporter.h
+        Include/Components/LightComponent.h
+        Source/Systems/LightSystem.cpp
+        Include/Systems/LightSystem.h
+        Include/Render/GBuffer.h
+        Source/Render/GBufferFactory.cpp
+        Include/Render/GBufferFactory.h
 )
 
 target_include_directories(Engine PUBLIC

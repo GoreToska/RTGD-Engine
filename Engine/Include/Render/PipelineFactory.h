@@ -12,6 +12,8 @@
 
 namespace RTGDEngine
 {
+    struct GBuffer;
+
     class ENGINE_API PipelineFactory
     {
     public:
@@ -21,6 +23,16 @@ namespace RTGDEngine
             const std::string& shadersPath);
 
         static MaterialHandle CreateMeshPipeline(
+            Diligent::IRenderDevice& device,
+            Diligent::ISwapChain& swapChain,
+            const std::string& shadersPath);
+
+        static MaterialHandle CreateGBufferPipeline(
+            Diligent::IRenderDevice& device,
+            const GBuffer& gbuffer,
+            const std::string& shadersPath);
+
+        static MaterialHandle CreateLightingPipeline(
             Diligent::IRenderDevice& device,
             Diligent::ISwapChain& swapChain,
             const std::string& shadersPath);
@@ -39,12 +51,16 @@ namespace RTGDEngine
                     Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE
                 },
                 {
-                    Diligent::SHADER_TYPE_PIXEL, "g_Texture",
+                    Diligent::SHADER_TYPE_PIXEL, "LightConstants",
                     Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE
                 },
                 {
+                    Diligent::SHADER_TYPE_PIXEL, "g_Texture",
+                    Diligent::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC
+                },
+                {
                     Diligent::SHADER_TYPE_PIXEL, "g_Sampler",
-                    Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE
+                    Diligent::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC
                 },
             };
         }

@@ -7,6 +7,7 @@
 #include <string>
 
 #include "Render/RenderHandle.h"
+#include "Render/RenderResourceManager.h"
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine
@@ -22,8 +23,12 @@ namespace RTGDEngine
 
         MeshHandle LoadMeshSync(const std::string& absolutePath);
 
-        TextureHandle LoadTextureAsync(const std::string& absolutePath, bool isSRGB = true,
-                                       std::function<void(TextureHandle)> onComplete = nullptr);
+        TextureHandle LoadTextureAsync(
+            const std::string& path,
+            MaterialHandle mat,
+            ETextureSlot slot,
+            bool isSRGB = true,
+            std::function<void(TextureHandle)> onComplete = nullptr);
 
         TextureHandle LoadTextureSync(const std::string& absolutePath, bool isSRGB = true);
     };

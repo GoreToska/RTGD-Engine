@@ -5,6 +5,7 @@
 #include "Render/RenderResourceManager.h"
 
 #include "RenderDevice.h"
+#include "Render/RenderSystem.h"
 #include "Render/Vertex.h"
 #include "Tools/Logger.h"
 
@@ -14,6 +15,79 @@ namespace RTGDEngine
     {
         static RenderResourceManager instance;
         return instance;
+    }
+
+    void RenderResourceManager::Initialize(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context)
+    {
+        using namespace Diligent;
+
+        m_device = &device;
+        m_context = &context;
+
+        uint8_t white[] = {255, 255, 255, 255};
+
+        TextureData data;
+
+        TextureDesc texDesc;
+        texDesc.Type = RESOURCE_DIM_TEX_2D;
+        texDesc.Width = 1;
+        texDesc.Height = 1;
+        texDesc.MipLevels = 1;
+        texDesc.Format = TEX_FORMAT_RGBA8_UNORM;
+        texDesc.BindFlags = BIND_SHADER_RESOURCE;
+        texDesc.Usage = USAGE_DEFAULT;
+
+        TextureSubResData subRes;
+        subRes.pData = white;
+        subRes.Stride = 4;
+
+        Diligent::TextureData texData;
+        texData.pSubResources = &subRes;
+        texData.NumSubresources = 1;
+
+        device.CreateTexture(texDesc, &texData, &data.Texture);
+        data.SRV = data.Texture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
+
+        SamplerDesc samplerDesc;
+        samplerDesc.MinFilter = FILTER_TYPE_LINEAR;
+        samplerDesc.MagFilter = FILTER_TYPE_LINEAR;
+        samplerDesc.MipFilter = FILTER_TYPE_LINEAR;
+        device.CreateSampler(samplerDesc, &data.Sampler);
+
+        m_defaultTexture = RegisterTexture("__default__", std::move(data));
+
+        TextureData normalData;
+        uint8_t flatNormal[] = {128, 128, 255, 255};
+
+        TextureDesc normalTexDesc;
+        normalTexDesc.Type = RESOURCE_DIM_TEX_2D;
+        normalTexDesc.Width = 1;
+        normalTexDesc.Height = 1;
+        normalTexDesc.MipLevels = 1;
+        normalTexDesc.Format = TEX_FORMAT_RGBA8_UNORM;
+        normalTexDesc.BindFlags = BIND_SHADER_RESOURCE;
+        normalTexDesc.Usage = USAGE_DEFAULT;
+
+        TextureSubResData normalSubRes;
+        normalSubRes.pData = flatNormal;
+        normalSubRes.Stride = 4;
+
+        Diligent::TextureData normalTexData;
+        normalTexData.pSubResources = &normalSubRes;
+        normalTexData.NumSubresources = 1;
+
+        device.CreateTexture(normalTexDesc, &normalTexData, &normalData.Texture);
+        normalData.SRV = normalData.Texture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
+
+        SamplerDesc normalSamplerDesc;
+        normalSamplerDesc.MinFilter = FILTER_TYPE_LINEAR;
+        normalSamplerDesc.MagFilter = FILTER_TYPE_LINEAR;
+        normalSamplerDesc.MipFilter = FILTER_TYPE_LINEAR;
+        device.CreateSampler(normalSamplerDesc, &normalData.Sampler);
+        m_defaultNormalTexture = RegisterTexture("__default_normal__", std::move(normalData));
+
+        LogInfo("Default white texture created → handle {}", m_defaultTexture);
+        LogInfo("Default normal texture created → handle {}", m_defaultNormalTexture);
     }
 
     MeshHandle RenderResourceManager::RegisterMesh(const std::string& name, MeshData data)
@@ -44,6 +118,47 @@ namespace RTGDEngine
         return handle;
     }
 
+    TextureHandle RenderResourceManager::RegisterTexture(const std::string& name, uint8_t r, uint8_t g, uint8_t b,
+                                                         uint8_t a)
+    {
+        using namespace Diligent;
+
+        if (auto it = m_textureNames.find(name); it != m_textureNames.end())
+            return it->second;
+
+        uint8_t pixels[] = {r, g, b, a};
+
+        TextureData data;
+
+        TextureDesc texDesc;
+        texDesc.Type = RESOURCE_DIM_TEX_2D;
+        texDesc.Width = 1;
+        texDesc.Height = 1;
+        texDesc.MipLevels = 1;
+        texDesc.Format = TEX_FORMAT_RGBA8_UNORM;
+        texDesc.BindFlags = BIND_SHADER_RESOURCE;
+        texDesc.Usage = USAGE_DEFAULT;
+
+        TextureSubResData subRes;
+        subRes.pData = pixels;
+        subRes.Stride = 4;
+
+        Diligent::TextureData texData;
+        texData.pSubResources = &subRes;
+        texData.NumSubresources = 1;
+
+        m_device->CreateTexture(texDesc, &texData, &data.Texture);
+        data.SRV = data.Texture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
+
+        SamplerDesc samplerDesc;
+        samplerDesc.MinFilter = FILTER_TYPE_POINT;
+        samplerDesc.MagFilter = FILTER_TYPE_POINT;
+        samplerDesc.MipFilter = FILTER_TYPE_POINT;
+        m_device->CreateSampler(samplerDesc, &data.Sampler);
+
+        return RegisterTexture(name, std::move(data));
+    }
+
     const TextureData& RenderResourceManager::GetTexture(TextureHandle handle) const
     {
         return m_textures[handle];
@@ -58,10 +173,10 @@ namespace RTGDEngine
         });
     }
 
-    void RenderResourceManager::QueueTextureBind(MaterialHandle mat, TextureHandle tex)
+    void RenderResourceManager::QueueTextureBind(MaterialHandle mat, TextureHandle tex, ETextureSlot slot)
     {
         std::lock_guard lock(m_bindMutex);
-        m_pendingBinds.push_back({mat, tex});
+        m_pendingBinds.push_back({mat, tex, slot});
     }
 
     void RenderResourceManager::FlushTextureUploads(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context)
@@ -123,10 +238,10 @@ namespace RTGDEngine
 
             UpdateTexture(upload.Handle, std::move(data));
 
+            RebindPendingMaterials(upload.Handle);
+
             LogInfo("FlushTextureUploads: done → handle {}, {}x{}",
                     upload.Handle, upload.Width, upload.Height);
-
-            RebindPendingMaterials(upload.Handle);
         }
     }
 
@@ -137,26 +252,46 @@ namespace RTGDEngine
         m_textures[handle] = std::move(data);
     }
 
-    void RenderResourceManager::BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle)
+    void RenderResourceManager::BindTexturesToMaterial(MaterialHandle matHandle, TextureHandle albedo,
+                                                       TextureHandle normal, TextureHandle metallicRoughness,
+                                                       TextureHandle ao)
     {
         auto& mat = m_materials[matHandle];
-        auto& tex = m_textures[texHandle];
 
-        auto* texVar = mat.SRB->GetVariableByName(
-            Diligent::SHADER_TYPE_PIXEL, "g_Texture");
-        auto* samVar = mat.SRB->GetVariableByName(
-            Diligent::SHADER_TYPE_PIXEL, "g_Sampler");
+        mat.DiffuseTexture = albedo;
+        mat.NormalTexture = normal;
+        mat.MetallicRoughnessTexture = metallicRoughness;
+        mat.AOTexture = ao;
+    }
 
-        if (texVar)
+    void RenderResourceManager::BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle,
+                                                      ETextureSlot slot)
+    {
+        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle >= m_materials.size())
+            return;
+        if (texHandle == INVALID_TEXTURE_HANDLE || texHandle >= m_textures.size())
+            return;
+
+        auto& mat = m_materials[matHandle];
+
+        switch (slot)
         {
-            texVar->Set(tex.SRV);
-        }
-        if (samVar)
-        {
-            samVar->Set(tex.Sampler);
+            case ETextureSlot::Diffuse:
+                mat.DiffuseTexture = texHandle;
+                break;
+            case ETextureSlot::Normal:
+                mat.NormalTexture = texHandle;
+                break;
+            case ETextureSlot::MetallicRoughness:
+                mat.MetallicRoughnessTexture = texHandle;
+                break;
+            case ETextureSlot::AO:
+                mat.AOTexture = texHandle;
+                break;
         }
 
-        mat.DiffuseTexture = texHandle;
+        LogInfo("BindTextureToMaterial: mat={} slot={} tex={}",
+                matHandle, static_cast<int>(slot), texHandle);
     }
 
     void RenderResourceManager::RebindPendingMaterials(TextureHandle texHandle)
@@ -175,8 +310,8 @@ namespace RTGDEngine
             }
         }
 
-        for (auto& [MatHandle, TexHandle]: toProcess)
-            BindTextureToMaterial(MatHandle, TexHandle);
+        for (auto& bind: toProcess)
+            BindTextureToMaterial(bind.MatHandle, bind.TexHandle, bind.Slot);
     }
 
     const MeshData& RenderResourceManager::GetMesh(MeshHandle handle) const

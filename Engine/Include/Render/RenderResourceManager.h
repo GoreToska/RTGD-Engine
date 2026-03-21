@@ -23,6 +23,14 @@ namespace RTGDEngine
 {
     struct VertexPNUV;
 
+    enum class ETextureSlot : uint8_t
+    {
+        Diffuse,
+        Normal,
+        MetallicRoughness,
+        AO
+    };
+
     struct MeshData
     {
         Diligent::RefCntAutoPtr<Diligent::IBuffer> VertexBuffer;
@@ -37,6 +45,13 @@ namespace RTGDEngine
         Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> SRB;
 
         TextureHandle DiffuseTexture = INVALID_TEXTURE_HANDLE;
+        TextureHandle NormalTexture = INVALID_TEXTURE_HANDLE;
+        TextureHandle MetallicRoughnessTexture = INVALID_TEXTURE_HANDLE;
+        TextureHandle AOTexture = INVALID_TEXTURE_HANDLE;
+
+        float Metallic = 0.0f;
+        float Roughness = 0.5f;
+        float AO = 1.0f;
     };
 
     struct PendingGPUUpload
@@ -66,7 +81,8 @@ namespace RTGDEngine
     struct PendingTextureBind
     {
         MaterialHandle MatHandle;
-        TextureHandle  TexHandle;
+        TextureHandle TexHandle;
+        ETextureSlot Slot = ETextureSlot::Diffuse;
     };
 
     class RenderResourceManager
@@ -74,17 +90,21 @@ namespace RTGDEngine
     public:
         static RenderResourceManager& Instance();
 
+        void Initialize(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context);
+
         MeshHandle RegisterMesh(const std::string& name, MeshData data);
 
         MaterialHandle RegisterMaterial(const std::string& name, MaterialData data);
 
         TextureHandle RegisterTexture(const std::string& name, TextureData data);
 
+        TextureHandle RegisterTexture(const std::string& name, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+
         [[nodiscard]] const MeshData& GetMesh(MeshHandle handle) const;
 
         [[nodiscard]] const MaterialData& GetMaterial(MaterialHandle handle) const;
 
-        const TextureData& GetTexture(TextureHandle handle) const;
+        [[nodiscard]] const TextureData& GetTexture(TextureHandle handle) const;
 
         [[nodiscard]] MeshHandle GetMeshByName(const std::string& name) const;
 
@@ -97,7 +117,7 @@ namespace RTGDEngine
                                 uint32_t channels,
                                 bool isSRGB = true);
 
-        void QueueTextureBind(MaterialHandle mat, TextureHandle tex);
+        void QueueTextureBind(MaterialHandle mat, TextureHandle tex, ETextureSlot slot = ETextureSlot::Diffuse);
 
         void FlushMeshUploads(Diligent::IRenderDevice& device);
 
@@ -107,12 +127,21 @@ namespace RTGDEngine
 
         void UpdateTexture(TextureHandle handle, TextureData data);
 
-        void BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle);
+        void BindTexturesToMaterial(MaterialHandle matHandle,
+                                    TextureHandle albedo, TextureHandle normal,
+                                    TextureHandle metallicRoughness, TextureHandle ao);
+
+        void BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle,
+                                   ETextureSlot slot = ETextureSlot::Diffuse);
+
+        TextureHandle GetDefaultTextureHandle() const { return m_defaultTexture; }
+        TextureHandle GetDefaultNormalTextureHandle() const { return m_defaultNormalTexture; }
 
     private:
         RenderResourceManager() = default;
 
         void RebindPendingMaterials(TextureHandle texHandle);
+
 
         std::vector<MeshData> m_meshes;
         std::vector<MaterialData> m_materials;
@@ -124,10 +153,16 @@ namespace RTGDEngine
 
         std::mutex m_textureUploadMutex;
         std::mutex m_uploadMutex;
-        std::mutex                      m_bindMutex;
+        std::mutex m_bindMutex;
 
         std::vector<PendingGPUUpload> m_pendingUploads;
         std::vector<PendingTextureUpload> m_pendingTextureUploads;
         std::vector<PendingTextureBind> m_pendingBinds;
+
+        Diligent::IRenderDevice* m_device = nullptr;
+        Diligent::IDeviceContext* m_context = nullptr;
+
+        TextureHandle m_defaultTexture = INVALID_TEXTURE_HANDLE;
+        TextureHandle m_defaultNormalTexture = INVALID_TEXTURE_HANDLE;
     };
 } // RTGDEngine

@@ -7,6 +7,7 @@
 
 #include "AssetLoader/AssetLoader.h"
 #include "Components/CameraComponent.h"
+#include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
@@ -19,6 +20,7 @@
 #include "Scene/RTGDEntityFactory.h"
 #include "Systems/CameraSystem.h"
 #include "Systems/EditorCameraSystem.h"
+#include "Systems/LightSystem.h"
 #include "Systems/MovementSystem.h"
 #include "Tools/Logger.h"
 
@@ -39,6 +41,9 @@ namespace RTGDEngine
         int height = rect.bottom - rect.top;
 
         RTGDRenderSystem::Instance().Initialize(hwnd, width, height);
+        RenderResourceManager::Instance().Initialize(RTGDRenderSystem::Instance().GetDevice(),
+                                                     RTGDRenderSystem::Instance().GetContext());
+
         InputSystem::Instance().Initialize(hwnd, width, height);
 
         LogInfo("Engine initialized with HWND: {}", m_hwnd);
@@ -65,6 +70,8 @@ namespace RTGDEngine
 
         AssetLoader::Instance().LoadTextureAsync(
             "Assets/CesiumLogoFlat.png",
+            meshMat,
+            ETextureSlot::Diffuse,
             true,
             [meshMat](TextureHandle t)
             {
@@ -74,8 +81,23 @@ namespace RTGDEngine
 
         m_world.entity("TestMesh")
                 .set(TransformComponent{{2.0f, 2.0f, 2.0f}})
-                .set(MeshComponent{meshHandle, meshMat}) // ← тот же meshMat
+                .set(MeshComponent{meshHandle, meshMat})
                 .set(RenderComponent{});
+
+
+        // Light
+        m_world.entity("Sun")
+                .set(DirectionalLightComponent{
+                    .Direction = {-0.5f, -1.0f, -0.3f},
+                    .Color = {1.0f, 0.95f, 0.8f},
+                    .Intensity = 1.0f
+                });
+
+        m_world.entity("Ambient")
+                .set(AmbientLightComponent{
+                    .Color = {0.2f, 0.2f, 0.2f},
+                    .Intensity = 0.05f
+                });
 
         return true;
     }
@@ -143,15 +165,19 @@ namespace RTGDEngine
 
     void Engine::Render()
     {
-        auto& device = RTGDRenderSystem::Instance().GetDevice();
-        auto& context = RTGDRenderSystem::Instance().GetContext();
+        auto& rs = RTGDRenderSystem::Instance();
+        auto& device = rs.GetDevice();
+        auto& context = rs.GetContext();
+        auto& rm = RenderResourceManager::Instance();
 
-        RenderResourceManager::Instance().FlushMeshUploads(device);
-        RenderResourceManager::Instance().FlushTextureUploads(device, context);
+        rm.FlushMeshUploads(device);
+        rm.FlushTextureUploads(device, context);
 
-        RTGDRenderSystem::Instance().BeginFrame();
-        RTGDRenderSystem::Instance().RenderScene(m_world);
-        RTGDRenderSystem::Instance().EndFrame();
+
+        RTGDRenderSystem::Instance().SetActiveCameraCB(m_world);
+        RTGDRenderSystem::Instance().RenderGeometry(m_world);
+        RTGDRenderSystem::Instance().RenderLighting();
+        RTGDRenderSystem::Instance().Present();
 
         /*if (m_gameModule)
             m_gameModule->Render();*/
@@ -171,6 +197,8 @@ namespace RTGDEngine
         CameraSystem::Update(world, deltaTime);
         EditorCameraSystem::Update(world, deltaTime);
         MovementSystem::Update(world, deltaTime);
+
+        LightSystem::Update(world);
     }
 
     void Engine::PostUpdateSystems(const flecs::world& world, float deltaTime)

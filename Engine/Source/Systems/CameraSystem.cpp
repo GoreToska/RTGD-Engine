@@ -33,4 +33,21 @@ namespace RTGDEngine
                 false);
         });
     }
+
+    flecs::entity CameraSystem::GetActiveCamera(const flecs::world& world)
+    {
+        flecs::entity activeCamera;
+        int32_t highestPriority = INT32_MIN;
+
+        world.each([&](const flecs::entity e, const CameraComponent& cam)
+        {
+            if (cam.Priority > highestPriority)
+            {
+                highestPriority = cam.Priority;
+                activeCamera = e;
+            }
+        });
+
+        return activeCamera;
+    }
 } // RTGDEngine

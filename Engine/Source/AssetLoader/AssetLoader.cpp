@@ -57,25 +57,25 @@ namespace RTGDEngine
         return handle;
     }
 
-    TextureHandle AssetLoader::LoadTextureAsync(const std::string& absolutePath, bool isSRGB,
-                                                std::function<void(TextureHandle)> onComplete)
+    TextureHandle AssetLoader::LoadTextureAsync(const std::string& path, MaterialHandle mat, ETextureSlot slot,
+                                                bool isSRGB, std::function<void(TextureHandle)> onComplete)
     {
         TextureHandle handle = RenderResourceManager::Instance()
-                .RegisterTexture(absolutePath, TextureData{});
+                .RegisterTexture(path, TextureData{});
 
-        LogInfo("AssetLoader: async texture queued '{}' → handle {}", absolutePath, handle);
+        LogInfo("AssetLoader: async texture queued '{}' → handle {}", path, handle);
 
-        JobSystem::Instance().Submit([absolutePath, handle, isSRGB, onComplete]()
+        JobSystem::Instance().Submit([path, handle, mat, slot, isSRGB, onComplete]()
         {
-            TextureImportData data = TextureImporter::Import(absolutePath);
+            TextureImportData data = TextureImporter::Import(path);
             if (!data.Success)
                 return;
 
             RenderResourceManager::Instance().QueueTextureUpload(
-                handle,
-                std::move(data.Pixels),
-                data.Width, data.Height, data.Channels,
-                isSRGB);
+                handle, std::move(data.Pixels),
+                data.Width, data.Height, data.Channels, isSRGB);
+
+            RenderResourceManager::Instance().QueueTextureBind(mat, handle, slot);
 
             if (onComplete)
                 onComplete(handle);

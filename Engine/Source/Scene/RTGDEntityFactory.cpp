@@ -8,6 +8,8 @@
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Render/PipelineFactory.h"
+#include "Render/RenderResourceManager.h"
+#include "Render/RenderSystem.h"
 #include "Render/SimpleMeshFactory.h"
 #include "Tools/Logger.h"
 
@@ -17,16 +19,22 @@ namespace RTGDEngine
                                                     Diligent::ISwapChain& swapChain, const std::string& shadersPath)
     {
         MeshHandle mesh = SimpleMeshFactory::CreateTriangle(device);
-        MaterialHandle material = PipelineFactory::CreateTrianglePipeline(
-            device, swapChain, shadersPath);
+
+        MaterialHandle mat = PipelineFactory::CreateGBufferPipeline(device, RTGDRenderSystem::Instance().GetGBuffer(),
+                                                                    shadersPath);
+
+        TextureHandle colorTex = RenderResourceManager::Instance()
+                .RegisterTexture("triangle_color", 255, 128, 0, 255);
+
+        RenderResourceManager::Instance().BindTextureToMaterial(mat, colorTex);
 
         flecs::entity entity = world.entity("Triangle")
                 .set(TransformComponent{})
-                .set(MeshComponent{mesh, material})
+                .set(MeshComponent{mesh, mat})
                 .set(RenderComponent{});
 
         LogInfo("Entity '{}' created — mesh: {}, material: {}",
-                entity.name().c_str(), mesh, material);
+                entity.name().c_str(), mesh, mat);
 
         return entity;
     }

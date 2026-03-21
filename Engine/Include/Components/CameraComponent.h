@@ -14,6 +14,8 @@ namespace RTGDEngine
         float NearPlane = 0.1f;
         float FarPlane = 1000.0f;
 
+        int Priority = 0;
+
         Matrix4 ViewMatrix = Matrix4::Identity();
         Matrix4 ProjectionMatrix = Matrix4::Identity();
     };

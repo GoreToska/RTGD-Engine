@@ -9,15 +9,16 @@
 
 namespace RTGDEngine
 {
-    static constexpr VertexPC triangleVerts[] = {
-        {{0.0f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-        {{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+    static constexpr VertexPNUV triangleVerts[] = {
+        {{0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {0.5f, 0.0f}},
+        {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
+        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
     };
 
     MeshHandle SimpleMeshFactory::CreateTriangle(Diligent::IRenderDevice& device)
     {
         using namespace Diligent;
+
         MeshData data;
         data.VertexCount = 3;
 
