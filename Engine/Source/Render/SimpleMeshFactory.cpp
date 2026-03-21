@@ -9,31 +9,4 @@
 
 namespace RTGDEngine
 {
-    static constexpr VertexPNUV triangleVerts[] = {
-        {{0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {0.5f, 0.0f}},
-        {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
-    };
-
-    MeshHandle SimpleMeshFactory::CreateTriangle(Diligent::IRenderDevice& device)
-    {
-        using namespace Diligent;
-
-        MeshData data;
-        data.VertexCount = 3;
-
-        BufferDesc vbDesc;
-        vbDesc.Name = "Triangle VB";
-        vbDesc.Size = sizeof(triangleVerts);
-        vbDesc.Usage = USAGE_IMMUTABLE;
-        vbDesc.BindFlags = BIND_VERTEX_BUFFER;
-
-        BufferData vbData;
-        vbData.pData = triangleVerts;
-        vbData.DataSize = sizeof(triangleVerts);
-
-        device.CreateBuffer(vbDesc, &vbData, &data.VertexBuffer);
-
-        return RenderResourceManager::Instance().RegisterMesh("Triangle", std::move(data));
-    }
 }

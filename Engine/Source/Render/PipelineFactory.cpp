@@ -130,7 +130,7 @@ namespace RTGDEngine
         psoCI.pVS = pVS;
         psoCI.pPS = pPS;
 
-        auto layout = VertexLayout::PNUV();
+        auto layout = VertexLayout::PNTUV();
         psoCI.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
         psoCI.GraphicsPipeline.InputLayout.NumElements = static_cast<uint32_t>(layout.size());
 
@@ -201,7 +201,7 @@ namespace RTGDEngine
         psoCI.pVS = pVS;
         psoCI.pPS = pPS;
 
-        auto layout = VertexLayout::PNUV();
+        auto layout = VertexLayout::PNTUV();
         psoCI.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
         psoCI.GraphicsPipeline.InputLayout.NumElements = static_cast<uint32_t>(layout.size());
 

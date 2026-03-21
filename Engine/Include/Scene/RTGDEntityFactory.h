@@ -14,9 +14,6 @@ namespace RTGDEngine
     class ENGINE_API RTGDEntityFactory
     {
     public:
-        static flecs::entity CreateTriangle(flecs::world& world,
-                                            Diligent::IRenderDevice& device,
-                                            Diligent::ISwapChain& swapChain,
-                                            const std::string& shadersPath);
+
     };
 }

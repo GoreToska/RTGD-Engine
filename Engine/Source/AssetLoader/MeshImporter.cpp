@@ -23,7 +23,9 @@ namespace RTGDEngine
                                                  aiProcess_Triangulate |
                                                  aiProcess_GenSmoothNormals |
                                                  aiProcess_CalcTangentSpace |
-                                                 aiProcess_FlipUVs |
+                                                 aiProcess_ConvertToLeftHanded |
+                                                 /*aiProcess_MakeLeftHanded |
+                                                 aiProcess_FlipWindingOrder |*/
                                                  aiProcess_JoinIdenticalVertices);
 
         if (!scene || !scene->HasMeshes())
@@ -33,7 +35,6 @@ namespace RTGDEngine
             return result;
         }
 
-        // Unite all submeshes to one vertex and index buffers
         uint32_t vertexOffset = 0;
         for (uint32_t m = 0; m < scene->mNumMeshes; m++)
         {
@@ -41,7 +42,7 @@ namespace RTGDEngine
 
             for (uint32_t i = 0; i < mesh->mNumVertices; i++)
             {
-                VertexPNUV vertex;
+                VertexPNTUV vertex;
 
                 vertex.Position = {
                     mesh->mVertices[i].x,
@@ -53,8 +54,34 @@ namespace RTGDEngine
                                     ? Float3{mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z}
                                     : Float3{0.0f, 1.0f, 0.0f};
 
+                if (mesh->HasTangentsAndBitangents())
+                {
+                    Float3 T = {mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z};
+                    Float3 B = {mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z};
+                    Float3 N = vertex.Normal;
+
+                    Float3 crossNT = {
+                        N.y * T.z - N.z * T.y,
+                        N.z * T.x - N.x * T.z,
+                        N.x * T.y - N.y * T.x
+                    };
+
+                    float dotResult = crossNT.x * B.x + crossNT.y * B.y + crossNT.z * B.z;
+                    float sign = (dotResult < 0.0f) ? -1.0f : 1.0f;
+
+                    vertex.Tangent = {T.x, T.y, T.z, sign};
+
+                }
+                else
+                {
+                    vertex.Tangent = {1.0f, 0.0f, 0.0f, 1.0f};
+                }
+
                 vertex.UV = mesh->HasTextureCoords(0)
-                                ? Float2{mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}
+                                ? Float2{
+                                    mesh->mTextureCoords[0][i].x,
+                                    mesh->mTextureCoords[0][i].y
+                                }
                                 : Float2{0.0f, 0.0f};
 
                 result.Vertices.push_back(vertex);
@@ -68,6 +95,19 @@ namespace RTGDEngine
             }
 
             vertexOffset += mesh->mNumVertices;
+
+            if (m == 0)
+            {
+                LogInfo("=== UV debug for: {}", absolutePath);
+                LogInfo("ConvertToLeftHanded: {}", "YES");
+                LogInfo("JoinIdenticalVertices: {}", "YES");
+                for (uint32_t i = 0; i < std::min(mesh->mNumVertices, 4u); i++)
+                {
+                    auto& v = result.Vertices[result.Vertices.size() - mesh->mNumVertices + i];
+                    LogInfo("  v[{}] pos=({:.2f},{:.2f},{:.2f}) uv=({:.4f},{:.4f})",
+                            i, v.Position.x, v.Position.y, v.Position.z, v.UV.x, v.UV.y);
+                }
+            }
         }
 
         result.Success = true;

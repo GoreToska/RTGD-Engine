@@ -13,7 +13,7 @@ namespace RTGDEngine
 {
     struct MeshImportData
     {
-        std::vector<VertexPNUV> Vertices;
+        std::vector<VertexPNTUV> Vertices;
         std::vector<uint32_t> Indices;
         uint32_t VertexCount;
         bool Success = false;

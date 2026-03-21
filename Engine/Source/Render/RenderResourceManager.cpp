@@ -336,7 +336,7 @@ namespace RTGDEngine
         return it != m_materialNames.end() ? it->second : INVALID_MATERIAL_HANDLE;
     }
 
-    void RenderResourceManager::QueueMeshUpload(MeshHandle handle, std::vector<VertexPNUV> vertices,
+    void RenderResourceManager::QueueMeshUpload(MeshHandle handle, std::vector<VertexPNTUV> vertices,
                                                 std::vector<uint32_t> indices)
     {
         std::lock_guard lock(m_uploadMutex);
@@ -376,7 +376,7 @@ namespace RTGDEngine
             // Vertex Buffer
             BufferDesc vbDesc;
             vbDesc.Name = "Mesh VB";
-            vbDesc.Size = upload.Vertices.size() * sizeof(VertexPNUV);
+            vbDesc.Size = upload.Vertices.size() * sizeof(VertexPNTUV);
             vbDesc.Usage = USAGE_IMMUTABLE;
             vbDesc.BindFlags = BIND_VERTEX_BUFFER;
 

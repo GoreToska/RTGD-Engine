@@ -14,16 +14,17 @@ namespace RTGDEngine
         Float3 Color;
     };
 
-    struct VertexPNUV
+    struct VertexPNTUV
     {
         Float3 Position;
         Float3 Normal;
+        Float4 Tangent; // W - handedness
         Float2 UV;
     };
 
     namespace VertexLayout
     {
-        constexpr std::vector<Diligent::LayoutElement> PC()
+        inline std::vector<Diligent::LayoutElement> PC()
         {
             return
             {
@@ -32,13 +33,14 @@ namespace RTGDEngine
             };
         }
 
-        constexpr std::vector<Diligent::LayoutElement> PNUV()
+        inline std::vector<Diligent::LayoutElement> PNTUV()
         {
-            return
-            {
-                {0, 0, 3, Diligent::VT_FLOAT32, false}, // position
-                {1, 0, 3, Diligent::VT_FLOAT32, false}, // normal
-                {2, 0, 2, Diligent::VT_FLOAT32, false}, // uv
+            constexpr Diligent::Uint32 stride = sizeof(VertexPNTUV);
+            return {
+                {0, 0, 3, Diligent::VT_FLOAT32, false, offsetof(VertexPNTUV, Position), stride},
+                {1, 0, 3, Diligent::VT_FLOAT32, false, offsetof(VertexPNTUV, Normal), stride},
+                {2, 0, 4, Diligent::VT_FLOAT32, false, offsetof(VertexPNTUV, Tangent), stride},
+                {3, 0, 2, Diligent::VT_FLOAT32, false, offsetof(VertexPNTUV, UV), stride},
             };
         }
     }

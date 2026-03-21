@@ -32,7 +32,6 @@ namespace RTGDEngine
         // always load as RGBA
         int width, height, channels;
         stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, 4);
-
         if (!pixels)
         {
             result.ErrorMessage = stbi_failure_reason();
@@ -50,6 +49,7 @@ namespace RTGDEngine
         stbi_image_free(pixels);
 
         LogInfo("TextureImporter: '{}' — {}x{} RGBA", path, width, height);
+
         return result;
     }
 

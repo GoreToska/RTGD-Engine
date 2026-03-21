@@ -21,7 +21,7 @@ namespace Diligent
 
 namespace RTGDEngine
 {
-    struct VertexPNUV;
+    struct VertexPNTUV;
 
     enum class ETextureSlot : uint8_t
     {
@@ -57,7 +57,7 @@ namespace RTGDEngine
     struct PendingGPUUpload
     {
         MeshHandle Handle;
-        std::vector<VertexPNUV> Vertices;
+        std::vector<VertexPNTUV> Vertices;
         std::vector<uint32_t> Indices;
     };
 
@@ -110,7 +110,7 @@ namespace RTGDEngine
 
         [[nodiscard]] MaterialHandle GetMaterialByName(const std::string& name) const;
 
-        void QueueMeshUpload(MeshHandle handle, std::vector<VertexPNUV> vertices, std::vector<uint32_t> indices);
+        void QueueMeshUpload(MeshHandle handle, std::vector<VertexPNTUV> vertices, std::vector<uint32_t> indices);
 
         void QueueTextureUpload(TextureHandle handle, std::vector<uint8_t> pixels, uint32_t width,
                                 uint32_t height,

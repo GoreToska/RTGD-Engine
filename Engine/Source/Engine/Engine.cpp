@@ -57,9 +57,6 @@ namespace RTGDEngine
                 .set(EditorCameraMovementComponent{})
                 .set(VelocityComponent{});
 
-        RTGDEntityFactory::CreateTriangle(m_world, RTGDRenderSystem::Instance().GetDevice(),
-                                          RTGDRenderSystem::Instance().GetSwapChain(), "Shaders");
-
 
         MaterialHandle meshMat = PipelineFactory::CreateMeshPipeline(
             RTGDRenderSystem::Instance().GetDevice(),
@@ -79,18 +76,69 @@ namespace RTGDEngine
                 LogInfo("Texture queued for binding → tex={} mat={}", t, meshMat);
             });
 
-        m_world.entity("TestMesh")
-                .set(TransformComponent{{2.0f, 2.0f, 2.0f}})
+        m_world.entity("Cube")
+                .set(TransformComponent{{2.0f, 0.0f, 0.0f}})
                 .set(MeshComponent{meshHandle, meshMat})
                 .set(RenderComponent{});
 
+        MaterialHandle helmetMat = PipelineFactory::CreateMeshPipeline(
+            RTGDRenderSystem::Instance().GetDevice(),
+            RTGDRenderSystem::Instance().GetSwapChain(),
+            "Shaders");
+
+
+        MeshHandle helmetMesh = AssetLoader::Instance()
+                .LoadMeshAsync("Assets/Helmet/DamagedHelmet.gltf");
+
+        AssetLoader::Instance().LoadTextureAsync(
+            "Assets/Helmet/Default_albedo.jpg",
+            helmetMat, ETextureSlot::Diffuse, true);
+
+        AssetLoader::Instance().LoadTextureAsync(
+            "Assets/Helmet/Default_normal.jpg",
+            helmetMat, ETextureSlot::Normal, false);
+
+        AssetLoader::Instance().LoadTextureAsync(
+            "Assets/Helmet/Default_metalRoughness.jpg",
+            helmetMat, ETextureSlot::MetallicRoughness, false);
+
+        AssetLoader::Instance().LoadTextureAsync(
+            "Assets/Helmet/Default_AO.jpg",
+            helmetMat, ETextureSlot::AO, false);
+
+        m_world.entity("Helmet")
+                .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
+                .set(RenderComponent{})
+                .set(MeshComponent{helmetMesh, helmetMat});
+
+
+        MaterialHandle spheresMat = PipelineFactory::CreateMeshPipeline(
+            RTGDRenderSystem::Instance().GetDevice(),
+            RTGDRenderSystem::Instance().GetSwapChain(),
+            "Shaders");
+
+
+        MeshHandle spheresMesh = AssetLoader::Instance()
+                .LoadMeshAsync("Assets/PBRTest/MetalRoughSpheres.gltf");
+
+        AssetLoader::Instance().LoadTextureAsync(
+            "Assets/PBRTest/Spheres_BaseColor.png",
+            spheresMat, ETextureSlot::Diffuse, true);
+
+        AssetLoader::Instance().LoadTextureAsync(
+            "Assets/PBRTest/Spheres_MetalRough.png",
+            spheresMat, ETextureSlot::MetallicRoughness, true);
+
+        m_world.entity("Spheres")
+        .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
+        .set(RenderComponent{}).set(MeshComponent{spheresMesh, spheresMat});
 
         // Light
         m_world.entity("Sun")
                 .set(DirectionalLightComponent{
                     .Direction = {-0.5f, -1.0f, -0.3f},
                     .Color = {1.0f, 0.95f, 0.8f},
-                    .Intensity = 1.0f
+                    .Intensity = 3.0f
                 });
 
         m_world.entity("Ambient")
@@ -98,6 +146,14 @@ namespace RTGDEngine
                     .Color = {0.2f, 0.2f, 0.2f},
                     .Intensity = 0.05f
                 });
+
+        /*m_world.entity("PointLight1")
+                .set(TransformComponent{{2.0f, 2.0f, 0.0f}})
+                .set(PointLightComponent{
+                    .Color = {1.0f, 0.5f, 0.1f},
+                    .Intensity = 5.0f,
+                    .Radius = 10.0f
+                });*/
 
         return true;
     }
