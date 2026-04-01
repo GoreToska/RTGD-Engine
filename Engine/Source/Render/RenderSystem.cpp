@@ -138,6 +138,29 @@ namespace RTGDEngine
         LogInfo("Constant buffers initialized");
     }
 
+    void RTGDRenderSystem::ApplyPendingResize()
+    {
+        std::lock_guard<std::mutex> lock(m_resizeMutex);
+        if (!m_resizePending)
+            return;
+        m_resizePending = false;
+
+        int width = m_pendingWidth;
+        int height = m_pendingHeight;
+
+        if (width <= 0 || height <= 0)
+            return;
+
+        m_width = width;
+        m_height = height;
+
+        m_pImmediateContext->Flush();
+        m_swapChain->Resize(width, height);
+        GBufferFactory::Resize(m_gbuffer, *m_device, width, height);
+
+        LogInfo("RenderSystem resized: {}x{}", width, height);
+    }
+
     void RTGDRenderSystem::UpdateCameraConstantBuffer(const CameraConstantBuffer& data)
     {
         using namespace Diligent;
@@ -212,13 +235,13 @@ namespace RTGDEngine
             if (!render.IsVisible)
                 return;
 
-            const MeshData& meshData = rm.GetMesh(mesh.mesh);
+            const MeshData& meshData = rm.GetMesh(mesh.meshHandle);
             const MaterialData& gbufMat = rm.GetMaterial(m_gbufferMaterial);
 
             if (!meshData.VertexBuffer || !gbufMat.PSO || !gbufMat.SRB)
                 return;
 
-            const MaterialData& objMat = rm.GetMaterial(mesh.material);
+            const MaterialData& objMat = rm.GetMaterial(mesh.materialHandle);
 
             auto bindTex = [&](const char* name, TextureHandle handle, TextureHandle fallback)
             {
@@ -374,11 +397,10 @@ namespace RTGDEngine
         if (!m_swapChain)
             return;
 
-        m_width = width;
-        m_height = height;
-        m_swapChain->Resize(width, height);
-
-        GBufferFactory::Resize(m_gbuffer, *m_device, width, height);
+        std::lock_guard<std::mutex> lock(m_resizeMutex);
+        m_resizePending = true;
+        m_pendingWidth = width;
+        m_pendingHeight = height;
     }
 
     void RTGDRenderSystem::UpdateLightConstantBuffer(const LightConstantBuffer& data)

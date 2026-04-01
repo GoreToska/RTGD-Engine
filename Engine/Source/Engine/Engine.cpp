@@ -7,6 +7,7 @@
 
 #include "AssetLoader/AssetLoader.h"
 #include "Components/CameraComponent.h"
+#include "Components/UUID.h"
 #include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RenderComponent.h"
@@ -18,6 +19,8 @@
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
 #include "Scene/RTGDEntityFactory.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
 #include "Systems/CameraSystem.h"
 #include "Systems/EditorCameraSystem.h"
 #include "Systems/LightSystem.h"
@@ -35,6 +38,10 @@ namespace RTGDEngine
 
         JobSystem::Instance().Initialize();
 
+        SceneManager::Instance().Initialize();
+
+        RegisterReflectionTypes(SceneManager::Instance().GetActiveScene()->GetWorld());
+
         RECT rect;
         GetClientRect(hwnd, &rect);
         int width = rect.right - rect.left;
@@ -51,7 +58,8 @@ namespace RTGDEngine
         CameraComponent cam;
         cam.AspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
-        m_world.entity("EditorCamera")
+        SceneManager::Instance().GetActiveScene()->CreateEntity("EditorCamera")
+                .set(UUID{})
                 .set(TransformComponent{{0.0f, 0.0f, -3.0f}})
                 .set(cam)
                 .set(EditorCameraMovementComponent{})
@@ -76,7 +84,8 @@ namespace RTGDEngine
                 LogInfo("Texture queued for binding → tex={} mat={}", t, meshMat);
             });
 
-        m_world.entity("Cube")
+        SceneManager::Instance().GetActiveScene()->CreateEntity("Cube")
+                .set(UUID{})
                 .set(TransformComponent{{2.0f, 0.0f, 0.0f}})
                 .set(MeshComponent{meshHandle, meshMat})
                 .set(RenderComponent{});
@@ -106,7 +115,8 @@ namespace RTGDEngine
             "Assets/Helmet/Default_AO.jpg",
             helmetMat, ETextureSlot::AO, false);
 
-        m_world.entity("Helmet")
+        SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
+                .set(UUID{})
                 .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
                 .set(RenderComponent{})
                 .set(MeshComponent{helmetMesh, helmetMat});
@@ -129,19 +139,22 @@ namespace RTGDEngine
             "Assets/PBRTest/Spheres_MetalRough.png",
             spheresMat, ETextureSlot::MetallicRoughness, true);
 
-        m_world.entity("Spheres")
-        .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
-        .set(RenderComponent{}).set(MeshComponent{spheresMesh, spheresMat});
+        SceneManager::Instance().GetActiveScene()->CreateEntity("Spheres")
+                .set(UUID{})
+                .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
+                .set(RenderComponent{}).set(MeshComponent{spheresMesh, spheresMat});
 
         // Light
-        m_world.entity("Sun")
+        SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
+                .set(UUID{})
                 .set(DirectionalLightComponent{
                     .Direction = {-0.5f, -1.0f, -0.3f},
                     .Color = {1.0f, 0.95f, 0.8f},
                     .Intensity = 3.0f
                 });
 
-        m_world.entity("Ambient")
+        SceneManager::Instance().GetActiveScene()->CreateEntity("Ambient")
+                .set(UUID{})
                 .set(AmbientLightComponent{
                     .Color = {0.2f, 0.2f, 0.2f},
                     .Intensity = 0.05f
@@ -209,18 +222,20 @@ namespace RTGDEngine
     {
         JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
 
-        UpdateSystems(m_world, deltaTime);
+        UpdateSystems(SceneManager::Instance().GetActiveScene()->GetWorld(), deltaTime);
 
         if (m_gameModule)
             m_gameModule->Update(deltaTime);
 
-        PostUpdateSystems(m_world, deltaTime);
+        PostUpdateSystems(SceneManager::Instance().GetActiveScene()->GetWorld(), deltaTime);
 
         Render();
     }
 
     void Engine::Render()
     {
+        RTGDRenderSystem::Instance().ApplyPendingResize();
+
         auto& rs = RTGDRenderSystem::Instance();
         auto& device = rs.GetDevice();
         auto& context = rs.GetContext();
@@ -230,8 +245,8 @@ namespace RTGDEngine
         rm.FlushTextureUploads(device, context);
 
 
-        RTGDRenderSystem::Instance().SetActiveCameraCB(m_world);
-        RTGDRenderSystem::Instance().RenderGeometry(m_world);
+        RTGDRenderSystem::Instance().SetActiveCameraCB(SceneManager::Instance().GetActiveScene()->GetWorld());
+        RTGDRenderSystem::Instance().RenderGeometry(SceneManager::Instance().GetActiveScene()->GetWorld());
         RTGDRenderSystem::Instance().RenderLighting();
         RTGDRenderSystem::Instance().Present();
 

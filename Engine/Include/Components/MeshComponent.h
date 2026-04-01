@@ -11,7 +11,7 @@ namespace RTGDEngine
 {
     struct MeshComponent
     {
-        MeshHandle mesh = INVALID_MESH_HANDLE;
-        MaterialHandle material = INVALID_MESH_HANDLE;
+        MeshHandle meshHandle = INVALID_MESH_HANDLE;
+        MaterialHandle materialHandle = INVALID_MESH_HANDLE;
     };
 }

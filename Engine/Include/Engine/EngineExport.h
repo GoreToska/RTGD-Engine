@@ -28,6 +28,8 @@
 #endif
 #include <cstdint>
 
+typedef void (__stdcall*EntityCallback)(const char* name, uint64_t id);
+
 extern "C"
 {
 ENGINE_API bool Engine_Initialize(void* hwnd);
@@ -40,4 +42,7 @@ ENGINE_API void Engine_HandleMessage(void* hwnd, unsigned int msg,
 ENGINE_API void Engine_Resize(int w, int h);
 
 ENGINE_API void Engine_Shutdown();
+
+
+ENGINE_API void Engine_GetEntities(EntityCallback callback);
 }

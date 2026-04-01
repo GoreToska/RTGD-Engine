@@ -27,14 +27,25 @@ namespace Editor
 
         protected override IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            const uint WM_LBUTTONDOWN = 0x0201;
-            const uint WM_RBUTTONDOWN = 0x0204;
-
-            if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN)
+            if (msg == NativeInterop.WM_LBUTTONDOWN || msg == NativeInterop.WM_RBUTTONDOWN)
                 NativeInterop.SetFocus(hwnd);
+
+            switch (msg)
+            {
+                case NativeInterop.WM_SIZING:
+                case NativeInterop.WM_SIZE:
+                case NativeInterop.WM_MOVE:
+                    UpdateViewportFromWindow();
+                    break;
+            }
 
             NativeInterop.Engine_HandleMessage(hwnd, (uint)msg, wParam, lParam);
             return NativeInterop.DefWindowProc(hwnd, (uint)msg, wParam, lParam);
+        }
+
+        private void UpdateViewportFromWindow()
+        {
+            
         }
 
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)

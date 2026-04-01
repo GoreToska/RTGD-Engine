@@ -5,6 +5,9 @@ namespace Editor
 {
     public static class NativeInterop
     {
+        public const int WM_SIZING = 0x0214;
+        public const int WM_SIZE = 0x0005;
+        public const int WM_MOVE = 0x0003;
         public const uint WS_CHILD = 0x40000000;
         public const uint WS_VISIBLE = 0x10000000;
         public const uint SWP_NOZORDER = 0x0004;
@@ -14,12 +17,18 @@ namespace Editor
         public const int CS_HREDRAW = 0x0002;
         public const int CS_VREDRAW = 0x0001;
         public const int COLOR_WINDOW = 5;
+        public const uint WM_LBUTTONDOWN = 0x0201;
+        public const uint WM_RBUTTONDOWN = 0x0204;
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate void EntityCallback([MarshalAs(UnmanagedType.LPStr)] string name, ulong id);
 
         [DllImport("Engine.dll")] public static extern bool Engine_Initialize(IntPtr hwnd);
         [DllImport("Engine.dll")] public static extern void Engine_Update(float deltaTime);
         [DllImport("Engine.dll")] public static extern void Engine_HandleMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
         [DllImport("Engine.dll")] public static extern void Engine_Resize(int w, int h);
         [DllImport("Engine.dll")] public static extern void Engine_Shutdown();
+        [DllImport("Engine.dll")] public static extern void Engine_GetEntities(EntityCallback callback);
 
         [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr hWnd);
 

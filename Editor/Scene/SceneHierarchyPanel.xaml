@@ -1,0 +1,85 @@
+﻿<UserControl x:Class="Editor.Scene.SceneHierarchyPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="220" d:DesignHeight="400"
+             Background="#1E1E1E">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Явная высота для шапки -->
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== HEADER: Заголовок + кнопка ===== -->
+        <!-- Красная рамка для отладки: видно границы области -->
+        <Border Grid.Row="0" 
+                Background="#2D2D2D" 
+                BorderBrush="Red" 
+                BorderThickness="1"
+                Padding="4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Заголовок -->
+                <TextBlock Text="Hierarchy"
+                           Foreground="#CCCCCC"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="4,0,0,0"/>
+
+                <!-- Кнопка: Зеленая рамка для отладки, явный текст -->
+                <Button Grid.Column="1"
+                        Content="REFRESH"
+                        Width="70" Height="22"
+                        Background="#444444"
+                        Foreground="White"
+                        BorderBrush="Lime"
+                        BorderThickness="2"
+                        Click="OnRefreshClick"
+                        Cursor="Hand"
+                        FontSize="10"
+                        FontWeight="Bold"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== СПИСОК СУЩНОСТЕЙ ===== -->
+        <!-- Синяя рамка для отладки -->
+        <ListView x:Name="EntityList"
+                  Grid.Row="1"
+                  ItemsSource="{Binding Entities, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                  Background="#1E1E1E"
+                  BorderBrush="Blue"
+                  BorderThickness="1"
+                  SelectionChanged="OnEntitySelected">
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Foreground" Value="#CCCCCC"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Padding" Value="8,4"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#3E6FB5"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=Foreground}"/>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</UserControl>

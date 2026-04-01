@@ -4,9 +4,13 @@
 
 #include "Engine/EngineExport.h"
 
+#include "Components/UUID.h"
 #include "Engine/Engine.h"
 #include "Input/InputSystem.h"
 #include "Render/RenderSystem.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
+#include "Tools/Logger.h"
 
 
 using namespace RTGDEngine;
@@ -39,5 +43,23 @@ void Engine_Resize(int w, int h)
 void Engine_Shutdown()
 {
     Engine::Instance().Shutdown();
+}
+
+void Engine_GetEntities(EntityCallback callback)
+{
+    auto scene = SceneManager::Instance().GetActiveScene();
+    if (!scene || !callback)
+        return;
+
+    auto& world = scene->GetWorld();
+
+    scene->GetWorld().each([&](flecs::entity e, UUID go)
+    {
+        if (e.name().length() > 0)
+        {
+            LogInfo(e.name().c_str());
+            callback(e.name().c_str(), e.id());
+        }
+    });
 }
 } // extern "C"

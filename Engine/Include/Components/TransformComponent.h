@@ -1,5 +1,6 @@
 #pragma once
 #include "Tools/Alias.h"
+#include "Engine/Reflection.h"
 
 namespace RTGDEngine
 {
@@ -9,9 +10,10 @@ namespace RTGDEngine
         World
     };
 
+
     struct TransformComponent
     {
-        TransformComponent(Float3 position = {0.0f, 0.0f, 0.0f}, Quaternion rotation = QuaternionIdentity(),
+        explicit TransformComponent(Float3 position = {0.0f, 0.0f, 0.0f}, Quaternion rotation = QuaternionIdentity(),
                            Float3 scale = {1.0f, 1.0f, 1.0f})
             : Position(position), Rotation(rotation), Scale(scale)
         {

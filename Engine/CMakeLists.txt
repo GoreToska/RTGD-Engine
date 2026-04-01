@@ -48,6 +48,13 @@ add_library(Engine SHARED
         Include/Render/GBuffer.h
         Source/Render/GBufferFactory.cpp
         Include/Render/GBufferFactory.h
+        Source/Scene/Scene.cpp
+        Include/Scene/Scene.h
+        Source/Scene/SceneManager.cpp
+        Include/Scene/SceneManager.h
+        Include/Engine/Reflection.h
+        Source/Engine/Reflection.cpp
+        Include/Components/GameObject.h
 )
 
 target_include_directories(Engine PUBLIC

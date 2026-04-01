@@ -47,6 +47,8 @@ namespace RTGDEngine
 
         void Resize(int width, int height);
 
+        void ApplyPendingResize();
+
         [[nodiscard]] Diligent::IRenderDevice& GetDevice() const { return *m_device; }
         [[nodiscard]] Diligent::IDeviceContext& GetContext() const { return *m_pImmediateContext; }
         [[nodiscard]] Diligent::ISwapChain& GetSwapChain() const { return *m_swapChain; }
@@ -63,9 +65,14 @@ namespace RTGDEngine
         void UpdateObjectConstantBuffer(const ObjectConstantBuffer& data);
 
     private:
+        bool m_initialized = false;
+
+        std::mutex m_resizeMutex;
         int m_width = 0;
         int m_height = 0;
-        bool m_initialized = false;
+        bool m_resizePending = false;
+        int m_pendingWidth = 0;
+        int m_pendingHeight = 0;
 
         Diligent::RefCntAutoPtr<Diligent::IRenderDevice> m_device;
         Diligent::RefCntAutoPtr<Diligent::IDeviceContext> m_pImmediateContext;
@@ -79,8 +86,8 @@ namespace RTGDEngine
 
         GBuffer m_gbuffer;
 
-        CameraConstantBuffer m_cameraCBData;
-        ObjectConstantBuffer m_objectCBData;
+        CameraConstantBuffer m_cameraCBData{};
+        ObjectConstantBuffer m_objectCBData{};
 
         MaterialHandle m_gbufferMaterial = INVALID_MATERIAL_HANDLE;
         MaterialHandle m_lightingMaterial = INVALID_MATERIAL_HANDLE;

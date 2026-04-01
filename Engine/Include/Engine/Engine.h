@@ -36,7 +36,6 @@ namespace RTGDEngine
         void* m_hwnd = nullptr;
         std::unique_ptr<IGameModule> m_gameModule;
 
-        flecs::world m_world;
         HMODULE m_gameDllHandle = nullptr;
         CreateGameModuleFunc m_createFunc = nullptr;
         DestroyGameModuleFunc m_destroyFunc = nullptr;
