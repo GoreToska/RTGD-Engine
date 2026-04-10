@@ -18,6 +18,16 @@ namespace RTGDEngine
 
         Matrix4 ViewMatrix = Matrix4::Identity();
         Matrix4 ProjectionMatrix = Matrix4::Identity();
+
+        static void RegisterMeta(const flecs::world& world)
+        {
+            flecs::component<CameraComponent>(world, "CameraComponent")
+                    .member<float>("FOVDegrees")
+                    .member<float>("AspectRatio")
+                    .member<float>("NearPlane")
+                    .member<float>("FarPlane")
+                    .member<int>("Priority");
+        }
     };
 
     struct EditorCameraMovementComponent
@@ -25,5 +35,13 @@ namespace RTGDEngine
         float MovementSpeed = 5.0f;
         float SprintMultiplier = 3.0f;
         float RotationSpeed = 0.1f;
+
+        static void RegisterMeta(const flecs::world& world)
+        {
+            flecs::component<EditorCameraMovementComponent>(world, "EditorCameraMovementComponent")
+                    .member<float>("MovementSpeed")
+                    .member<float>("SprintMultiplier")
+                    .member<float>("RotationSpeed");
+        }
     };
 }

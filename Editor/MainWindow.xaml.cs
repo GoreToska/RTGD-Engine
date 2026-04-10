@@ -58,7 +58,10 @@ namespace Editor
 
         public void OnEntitySelected(EntityItem item)
         {
-            Console.WriteLine($"Выбрана сущность: {item.Name}");
+            Console.WriteLine($"[Editor] Selected: {item.Name} (ID: {item.Id})");
+
+            InspectorPanel?.SetSelectedEntity(item.Id, item.Name);
+
         }
     }
 }

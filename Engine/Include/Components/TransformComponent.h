@@ -1,6 +1,5 @@
 #pragma once
 #include "Tools/Alias.h"
-#include "Engine/Reflection.h"
 
 namespace RTGDEngine
 {
@@ -14,7 +13,7 @@ namespace RTGDEngine
     struct TransformComponent
     {
         explicit TransformComponent(Float3 position = {0.0f, 0.0f, 0.0f}, Quaternion rotation = QuaternionIdentity(),
-                           Float3 scale = {1.0f, 1.0f, 1.0f})
+                                    Float3 scale = {1.0f, 1.0f, 1.0f})
             : Position(position), Rotation(rotation), Scale(scale)
         {
         }
@@ -79,6 +78,14 @@ namespace RTGDEngine
         {
             auto rotation = Rotation.ToMatrix();
             return Diligent::normalize<Float3>({rotation.m10, rotation.m11, rotation.m12});
+        }
+
+        static void RegisterMeta(const flecs::world& world)
+        {
+            flecs::component<TransformComponent>(world, "TransformComponent")
+                    .member<Float3>("Position")
+                    .member<Quaternion>("Rotation")
+                    .member<Float3>("Scale");
         }
     };
 }

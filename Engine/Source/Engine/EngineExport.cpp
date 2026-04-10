@@ -4,7 +4,7 @@
 
 #include "Engine/EngineExport.h"
 
-#include "Components/UUID.h"
+#include "Components/UUIDComponent.h"
 #include "Engine/Engine.h"
 #include "Input/InputSystem.h"
 #include "Render/RenderSystem.h"
@@ -53,7 +53,7 @@ void Engine_GetEntities(EntityCallback callback)
 
     auto& world = scene->GetWorld();
 
-    scene->GetWorld().each([&](flecs::entity e, UUID go)
+    scene->GetWorld().each([&](flecs::entity e, UUIDComponent go)
     {
         if (e.name().length() > 0)
         {

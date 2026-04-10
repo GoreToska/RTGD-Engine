@@ -30,6 +30,25 @@ namespace Editor
         [DllImport("Engine.dll")] public static extern void Engine_Shutdown();
         [DllImport("Engine.dll")] public static extern void Engine_GetEntities(EntityCallback callback);
 
+        [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
+        public static extern int Inspector_GetComponentCount(ulong entityId);
+
+        [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
+        public static extern IntPtr Inspector_GetComponentName(int index);
+
+        [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
+        public static extern void Engine_FreeString(IntPtr str);
+
+        [DllImport("Engine.dll")] public static extern int Inspector_GetFieldCount(int compIndex);
+        [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldName(int compIndex, int fieldIndex);
+        [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldType(int compIndex, int fieldIndex);
+        [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldValue(int compIndex, int fieldIndex);
+
+        public static string GetComponentName(int index) => Marshal.PtrToStringAnsi(Inspector_GetComponentName(index)) ?? "";
+        public static string GetFieldName(int compIndex, int fieldIndex) => Marshal.PtrToStringAnsi(Inspector_GetFieldName(compIndex, fieldIndex)) ?? "";
+        public static string GetFieldType(int compIndex, int fieldIndex) => Marshal.PtrToStringAnsi(Inspector_GetFieldType(compIndex, fieldIndex)) ?? "";
+        public static string GetFieldValue(int compIndex, int fieldIndex) => Marshal.PtrToStringAnsi(Inspector_GetFieldValue(compIndex, fieldIndex)) ?? "";
+
         [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr hWnd);
 
         [DllImport("user32.dll", SetLastError = true)]
@@ -77,6 +96,12 @@ namespace Editor
             public IntPtr hInstance, hIcon, hCursor, hbrBackground;
             public string lpszMenuName, lpszClassName;
             public IntPtr hIconSm;
+        }
+
+        public static string GetComponentName(ulong entityId, int index)
+        {
+            IntPtr ptr = Inspector_GetComponentName(index);
+            return ptr == IntPtr.Zero ? null : Marshal.PtrToStringAnsi(ptr);
         }
     }
 }

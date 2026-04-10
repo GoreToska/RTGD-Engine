@@ -7,12 +7,13 @@
 
 #include "AssetLoader/AssetLoader.h"
 #include "Components/CameraComponent.h"
-#include "Components/UUID.h"
+#include "Components/UUIDComponent.h"
 #include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/VelocityComponent.h"
+#include "Engine/Reflection.h"
 #include "Input/InputSystem.h"
 #include "JobSystem/JobSystem.h"
 #include "Render/PipelineFactory.h"
@@ -59,7 +60,7 @@ namespace RTGDEngine
         cam.AspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("EditorCamera")
-                .set(UUID{})
+                .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 0.0f, -3.0f}})
                 .set(cam)
                 .set(EditorCameraMovementComponent{})
@@ -85,7 +86,7 @@ namespace RTGDEngine
             });
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Cube")
-                .set(UUID{})
+                .set(UUIDComponent{})
                 .set(TransformComponent{{2.0f, 0.0f, 0.0f}})
                 .set(MeshComponent{meshHandle, meshMat})
                 .set(RenderComponent{});
@@ -116,7 +117,7 @@ namespace RTGDEngine
             helmetMat, ETextureSlot::AO, false);
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
-                .set(UUID{})
+                .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
                 .set(RenderComponent{})
                 .set(MeshComponent{helmetMesh, helmetMat});
@@ -140,13 +141,13 @@ namespace RTGDEngine
             spheresMat, ETextureSlot::MetallicRoughness, true);
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Spheres")
-                .set(UUID{})
+                .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
                 .set(RenderComponent{}).set(MeshComponent{spheresMesh, spheresMat});
 
         // Light
         SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
-                .set(UUID{})
+                .set(UUIDComponent{})
                 .set(DirectionalLightComponent{
                     .Direction = {-0.5f, -1.0f, -0.3f},
                     .Color = {1.0f, 0.95f, 0.8f},
@@ -154,7 +155,7 @@ namespace RTGDEngine
                 });
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Ambient")
-                .set(UUID{})
+                .set(UUIDComponent{})
                 .set(AmbientLightComponent{
                     .Color = {0.2f, 0.2f, 0.2f},
                     .Intensity = 0.05f

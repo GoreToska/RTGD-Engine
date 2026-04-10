@@ -11,5 +11,12 @@ namespace RTGDEngine
     {
         Float3 Linear = {0.0f, 0.0f, 0.0f};
         Float3 Angular = {0.0f, 0.0f, 0.0f}; // pitch, yaw, roll
+
+        static void RegisterMeta(const flecs::world& world)
+        {
+            flecs::component<VelocityComponent>(world, "VelocityComponent")
+                    .member<Float3>("Linear")
+                    .member<Float3>("Angular");
+        }
     };
 }

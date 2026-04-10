@@ -5,19 +5,22 @@
 #include "Scene/Scene.h"
 
 #include "Tools/Logger.h"
+#include "Tools/MetaTypes.h"
 
 namespace RTGDEngine
 {
     Scene::Scene(const std::string& name)
         : m_name(name)
     {
+        RegisterMetaTypes(m_world);
+
         LogInfo("Scene created: '{}'", m_name);
     }
 
     flecs::entity Scene::CreateEntity(const std::string& name)
     {
         auto entity = m_world.entity(name.c_str());
-        
+
         LogInfo("Scene '{}': entity created '{}'", m_name, name);
         return entity;
     }

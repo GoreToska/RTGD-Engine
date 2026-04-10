@@ -43,6 +43,5 @@ ENGINE_API void Engine_Resize(int w, int h);
 
 ENGINE_API void Engine_Shutdown();
 
-
 ENGINE_API void Engine_GetEntities(EntityCallback callback);
 }

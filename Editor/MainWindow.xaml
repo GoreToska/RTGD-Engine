@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Editor"
         xmlns:scene="clr-namespace:Editor.Scene"
+        xmlns:inspector="clr-namespace:Editor.Inspector"
         Title="RTGD Engine Editor" Width="1280" Height="720"
         Background="#1A1A1A"
         SizeChanged="Window_SizeChanged">
@@ -32,8 +33,8 @@
 
         <!-- Hierarchy -->
         <scene:SceneHierarchyPanel x:Name="HierarchyPanel"
-                                   Grid.Column="0"
-                                   EntitySelected="OnEntitySelected"/>
+                                    Grid.Column="0"
+                                    EntitySelected="OnEntitySelected"/>
 
         <!-- Viewport -->
         <Border x:Name="ViewportBorder"
@@ -41,12 +42,7 @@
                 Background="Black"/>
 
         <!-- Inspector -->
-        <Border Grid.Column="2" Background="#1E1E1E">
-            <TextBlock Text="Inspector"
-                       Foreground="#555555"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
-        </Border>
+        <inspector:InspectorPanel x:Name="InspectorPanel" Grid.Column="2"/>
 
     </Grid>
 </Window>

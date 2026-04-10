@@ -55,7 +55,14 @@ add_library(Engine SHARED
         Include/Engine/Reflection.h
         Source/Engine/Reflection.cpp
         Include/Components/GameObject.h
+        Include/Tools/MetaTypes.h
+        Include/Components/GameObject.h
+        Source/Tools/MetaTypes.cpp
+        Source/Engine/InspectorExports.cpp
+        Include/Engine/InspectorExports.h
 )
+
+target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
 
 target_include_directories(Engine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -35,7 +35,7 @@ namespace RTGDEngine
         void Each(Func&& func) { m_world.each(std::forward<Func>(func)); }
 
     private:
-        flecs::world m_world;
+        flecs::world m_world = flecs::world();
         std::string m_name;
     };
 } // RTGDEngine
