@@ -29,25 +29,34 @@ namespace Editor
         [DllImport("Engine.dll")] public static extern void Engine_Resize(int w, int h);
         [DllImport("Engine.dll")] public static extern void Engine_Shutdown();
         [DllImport("Engine.dll")] public static extern void Engine_GetEntities(EntityCallback callback);
+        [DllImport("Engine.dll")] public static extern void Engine_FreeString(IntPtr str);
 
         [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
         public static extern int Inspector_GetComponentCount(ulong entityId);
 
         [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
-        public static extern IntPtr Inspector_GetComponentName(int index);
-
-        [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
-        public static extern void Engine_FreeString(IntPtr str);
+        public static extern IntPtr Inspector_GetComponentName(ulong entityId, int index);
 
         [DllImport("Engine.dll")] public static extern int Inspector_GetFieldCount(int compIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldName(int compIndex, int fieldIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldType(int compIndex, int fieldIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldValue(int compIndex, int fieldIndex);
 
-        public static string GetComponentName(int index) => Marshal.PtrToStringAnsi(Inspector_GetComponentName(index)) ?? "";
-        public static string GetFieldName(int compIndex, int fieldIndex) => Marshal.PtrToStringAnsi(Inspector_GetFieldName(compIndex, fieldIndex)) ?? "";
-        public static string GetFieldType(int compIndex, int fieldIndex) => Marshal.PtrToStringAnsi(Inspector_GetFieldType(compIndex, fieldIndex)) ?? "";
-        public static string GetFieldValue(int compIndex, int fieldIndex) => Marshal.PtrToStringAnsi(Inspector_GetFieldValue(compIndex, fieldIndex)) ?? "";
+        [DllImport("Engine.dll")] public static extern int Inspector_GetSubFieldCount(int compIndex, int fieldIndex);
+        [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetSubFieldName(int compIndex, int fieldIndex, int subIndex);
+        [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetSubFieldType(int compIndex, int fieldIndex, int subIndex);
+        [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetSubFieldValue(int compIndex, int fieldIndex, int subIndex);
+
+        public static string GetComponentName(ulong entityId, int index)
+            => Marshal.PtrToStringAnsi(Inspector_GetComponentName(entityId, index)) ?? "";
+
+        public static string GetFieldName(int c, int f) => Marshal.PtrToStringAnsi(Inspector_GetFieldName(c, f)) ?? "";
+        public static string GetFieldType(int c, int f) => Marshal.PtrToStringAnsi(Inspector_GetFieldType(c, f)) ?? "";
+        public static string GetFieldValue(int c, int f) => Marshal.PtrToStringAnsi(Inspector_GetFieldValue(c, f)) ?? "";
+
+        public static string GetSubFieldName(int c, int f, int s) => Marshal.PtrToStringAnsi(Inspector_GetSubFieldName(c, f, s)) ?? "";
+        public static string GetSubFieldType(int c, int f, int s) => Marshal.PtrToStringAnsi(Inspector_GetSubFieldType(c, f, s)) ?? "";
+        public static string GetSubFieldValue(int c, int f, int s) => Marshal.PtrToStringAnsi(Inspector_GetSubFieldValue(c, f, s)) ?? "";
 
         [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr hWnd);
 
@@ -60,26 +69,20 @@ namespace Editor
             int x, int y, int nWidth, int nHeight,
             IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
 
-        [DllImport("user32.dll")]
-        public static extern bool DestroyWindow(IntPtr hwnd);
+        [DllImport("user32.dll")] public static extern bool DestroyWindow(IntPtr hwnd);
 
         [DllImport("user32.dll")]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
             int X, int Y, int cx, int cy, uint uFlags);
 
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetModuleHandle(string lpModuleName);
-
-        [DllImport("kernel32.dll")]
-        public static extern void SetLastError(uint dwErrCode);
+        [DllImport("kernel32.dll")] public static extern IntPtr GetModuleHandle(string lpModuleName);
+        [DllImport("kernel32.dll")] public static extern void SetLastError(uint dwErrCode);
 
         [DllImport("user32.dll")]
-        public static extern IntPtr DefWindowProc(IntPtr hWnd, uint msg,
-            IntPtr wParam, IntPtr lParam);
+        public static extern IntPtr DefWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
         public static WndProcDelegate _wndProcDelegate = CustomWndProc;
-        public delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg,
-            IntPtr wParam, IntPtr lParam);
+        public delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
         private static IntPtr CustomWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
@@ -96,12 +99,6 @@ namespace Editor
             public IntPtr hInstance, hIcon, hCursor, hbrBackground;
             public string lpszMenuName, lpszClassName;
             public IntPtr hIconSm;
-        }
-
-        public static string GetComponentName(ulong entityId, int index)
-        {
-            IntPtr ptr = Inspector_GetComponentName(index);
-            return ptr == IntPtr.Zero ? null : Marshal.PtrToStringAnsi(ptr);
         }
     }
 }

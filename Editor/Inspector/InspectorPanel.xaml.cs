@@ -1,33 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Editor.Inspector
 {
-    /// <summary>
-    /// Interaction logic for InspectorPanel.xaml
-    /// </summary>
     public partial class InspectorPanel : UserControl
     {
         private ulong _selectedEntityId;
-        private string _selectedEntityName;
-
-        public InspectorPanel()
-        {
-            InitializeComponent();
-        }
-
+        private string _selectedEntityName;                     
+                    
+        public InspectorPanel() => InitializeComponent();
 
         public void SetSelectedEntity(ulong entityId, string name)
         {
@@ -41,7 +24,11 @@ namespace Editor.Inspector
         {
             ComponentsPanel.Children.Clear();
 
-            if (_selectedEntityId == 0) { AddPlaceholder("No entity selected"); return; }
+            if (_selectedEntityId == 0)
+            {
+                AddPlaceholder("No entity selected");
+                return;
+            }
 
             HeaderTitle.Text = $"Inspector — {_selectedEntityName}";
 
@@ -50,22 +37,39 @@ namespace Editor.Inspector
 
             for (int c = 0; c < count; c++)
             {
-                var comp = new ComponentViewModel { Name = NativeInterop.GetComponentName(c) };
+                var comp = new ComponentViewModel
+                {
+                    Name = NativeInterop.GetComponentName(_selectedEntityId, c)
+                };
 
                 int fieldCount = NativeInterop.Inspector_GetFieldCount(c);
                 for (int f = 0; f < fieldCount; f++)
                 {
-                    comp.Fields.Add(new FieldViewModel
+                    var field = new FieldViewModel
                     {
                         Name = NativeInterop.GetFieldName(c, f),
                         Type = NativeInterop.GetFieldType(c, f),
                         Value = NativeInterop.GetFieldValue(c, f)
-                    });
+                    };
+
+                    int subCount = NativeInterop.Inspector_GetSubFieldCount(c, f);
+                    for (int s = 0; s < subCount; s++)
+                    {
+                        field.Children.Add(new FieldViewModel
+                        {
+                            Name = NativeInterop.GetSubFieldName(c, f, s),
+                            Type = NativeInterop.GetSubFieldType(c, f, s),
+                            Value = NativeInterop.GetSubFieldValue(c, f, s)
+                        });
+                    }
+
+                    comp.Fields.Add(field);
                 }
 
                 ComponentsPanel.Children.Add(CreateComponentBlock(comp));
             }
         }
+
 
         private void AddPlaceholder(string text)
         {
@@ -97,7 +101,7 @@ namespace Editor.Inspector
                 Foreground = Brushes.LightGray,
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
-                Padding = new Thickness(4, 4, 4, 4),
+                Padding = new Thickness(4),
                 Header = new TextBlock
                 {
                     Text = comp.Name,
@@ -107,11 +111,13 @@ namespace Editor.Inspector
                 }
             };
 
+            var rows = FlattenFields(comp.Fields);
+
             var grid = new Grid { Margin = new Thickness(8, 2, 8, 6) };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            if (comp.Fields.Count == 0)
+            if (rows.Count == 0)
             {
                 grid.RowDefinitions.Add(new RowDefinition());
                 var noFields = new TextBlock
@@ -125,9 +131,9 @@ namespace Editor.Inspector
                 grid.Children.Add(noFields);
             }
 
-            for (int i = 0; i < comp.Fields.Count; i++)
+            for (int i = 0; i < rows.Count; i++)
             {
-                var field = comp.Fields[i];
+                var (field, depth) = rows[i];
                 grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(22) });
 
                 if (i % 2 == 0)
@@ -141,30 +147,51 @@ namespace Editor.Inspector
                     grid.Children.Add(rowBg);
                 }
 
-                var nameBlock = new TextBlock
-                {
-                    Text = field.Name,
-                    Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)),
-                    FontSize = 11,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(4, 0, 0, 0),
-                    ToolTip = field.Type
-                };
+                double leftPad = 4 + depth * 14; 
 
-                var valueBlock = new TextBlock
+                if (field.IsStruct)
                 {
-                    Text = field.Value,
-                    Foreground = GetTypeColor(field.Type),
-                    FontSize = 11,
-                    FontFamily = new FontFamily("Consolas"),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(4, 0, 0, 0)
-                };
+                    var header = new TextBlock
+                    {
+                        Text = field.Name,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0xDC, 0xDC, 0xAA)),
+                        FontSize = 11,
+                        FontWeight = FontWeights.SemiBold,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(leftPad, 0, 0, 0),
+                        ToolTip = field.Type
+                    };
+                    Grid.SetRow(header, i);
+                    Grid.SetColumnSpan(header, 2);
+                    grid.Children.Add(header);
+                }
+                else
+                {
+                    var nameBlock = new TextBlock
+                    {
+                        Text = field.Name,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)),
+                        FontSize = 11,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(leftPad, 0, 0, 0),
+                        ToolTip = field.Type
+                    };
 
-                Grid.SetRow(nameBlock, i); Grid.SetColumn(nameBlock, 0);
-                Grid.SetRow(valueBlock, i); Grid.SetColumn(valueBlock, 1);
-                grid.Children.Add(nameBlock);
-                grid.Children.Add(valueBlock);
+                    var valueBlock = new TextBlock
+                    {
+                        Text = field.Value,
+                        Foreground = GetTypeColor(field.Type),
+                        FontSize = 11,
+                        FontFamily = new FontFamily("Consolas"),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(4, 0, 0, 0)
+                    };
+
+                    Grid.SetRow(nameBlock, i); Grid.SetColumn(nameBlock, 0);
+                    Grid.SetRow(valueBlock, i); Grid.SetColumn(valueBlock, 1);
+                    grid.Children.Add(nameBlock);
+                    grid.Children.Add(valueBlock);
+                }
             }
 
             expander.Content = grid;
@@ -172,7 +199,25 @@ namespace Editor.Inspector
             return border;
         }
 
-        private Brush GetTypeColor(string type) => type switch
+
+        /// <summary>
+        /// Converts the field tree into a flat list of (field, depth) pairs
+        /// suitable for direct Grid row construction.
+        /// </summary>
+        private static List<(FieldViewModel field, int depth)> FlattenFields(
+            IEnumerable<FieldViewModel> fields, int depth = 0)
+        {
+            var result = new List<(FieldViewModel, int)>();
+            foreach (var f in fields)
+            {
+                result.Add((f, depth));
+                if (f.IsStruct)
+                    result.AddRange(FlattenFields(f.Children, depth + 1));
+            }
+            return result;
+        }
+
+        private static Brush GetTypeColor(string type) => type switch
         {
             "float" or "double" => new SolidColorBrush(Color.FromRgb(0xB5, 0xCE, 0xA8)),
             "int32" or "int64" => new SolidColorBrush(Color.FromRgb(0xB8, 0xD7, 0xA3)),

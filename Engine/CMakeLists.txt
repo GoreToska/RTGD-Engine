@@ -52,8 +52,6 @@ add_library(Engine SHARED
         Include/Scene/Scene.h
         Source/Scene/SceneManager.cpp
         Include/Scene/SceneManager.h
-        Include/Engine/Reflection.h
-        Source/Engine/Reflection.cpp
         Include/Components/GameObject.h
         Include/Tools/MetaTypes.h
         Include/Components/GameObject.h

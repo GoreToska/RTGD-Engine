@@ -19,11 +19,15 @@
 #include <string>
 #include <vector>
 
+#include <flecs.h>
+
 struct FieldInfo
 {
     std::string name;
     std::string typeName;
-    std::string value;
+    std::string value;                // empty when isStruct == true
+    std::vector<FieldInfo> children;  // populated when isStruct == true
+    bool isStruct = false;
 };
 
 struct ComponentInfo
@@ -32,7 +36,13 @@ struct ComponentInfo
     std::vector<FieldInfo> fields;
 };
 
-#ifdef __cplusplus
+
+static void ReadStructFields(flecs::world_t* world,
+                             const void*    data,
+                             ecs_entity_t   typeId,
+                             std::vector<FieldInfo>& out);
+
+/*#ifdef __cplusplus
 extern "C"
 {
 #endif
@@ -51,4 +61,4 @@ INSPECTOR_API const char* Inspector_GetFieldType(int compIndex, int fieldIndex);
 INSPECTOR_API const char* Inspector_GetFieldValue(int compIndex, int fieldIndex);
 #ifdef __cplusplus
 }
-#endif
+#endif*/

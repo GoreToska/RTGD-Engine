@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Editor.Inspector
 {
@@ -11,6 +7,14 @@ namespace Editor.Inspector
         public string Name { get; set; }
         public string Type { get; set; }
         public string Value { get; set; }
+
+        /// <summary>
+        /// Populated when this field is a struct (e.g. Float3, Quaternion).
+        /// When non-empty, <see cref="Value"/> is ignored.
+        /// </summary>
+        public List<FieldViewModel> Children { get; set; } = new();
+
+        public bool IsStruct => Children.Count > 0;
     }
 
     public class ComponentViewModel

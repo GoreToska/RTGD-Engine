@@ -13,7 +13,6 @@
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/VelocityComponent.h"
-#include "Engine/Reflection.h"
 #include "Input/InputSystem.h"
 #include "JobSystem/JobSystem.h"
 #include "Render/PipelineFactory.h"
@@ -40,8 +39,6 @@ namespace RTGDEngine
         JobSystem::Instance().Initialize();
 
         SceneManager::Instance().Initialize();
-
-        RegisterReflectionTypes(SceneManager::Instance().GetActiveScene()->GetWorld());
 
         RECT rect;
         GetClientRect(hwnd, &rect);
