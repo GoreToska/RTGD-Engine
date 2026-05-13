@@ -19,28 +19,34 @@ namespace RTGDEngine
 {
     void RegisterMetaTypes(const flecs::world& world)
     {
-        world.component<Float2>()
-                .member<float>("x")
-                .member<float>("y");
+        LogInfo("Meta types registered");
 
-        world.component<Float3>()
-                .member<float>("x")
-                .member<float>("y")
-                .member<float>("z");
+        if (!MetaAlreadyRegistered(world, flecs::component<Float2>(world, "Float2")))
+            world.component<Float2>()
+                    .member<float>("x")
+                    .member<float>("y");
 
-        world.component<Float4>()
-                .member<float>("x")
-                .member<float>("y")
-                .member<float>("z")
-                .member<float>("w");
+        if (!MetaAlreadyRegistered(world, flecs::component<Float3>(world, "Float3")))
+            world.component<Float3>()
+                    .member<float>("x")
+                    .member<float>("y")
+                    .member<float>("z");
 
-        world.component<Quaternion>()
-                .member<float>("x")
-                .member<float>("y")
-                .member<float>("z")
-                .member<float>("w")
-                .set_doc_brief("Quaternion (x, y, z, w)")
-                .set_doc_detail("Rotation represented as a unit quaternion");
+        if (!MetaAlreadyRegistered(world, flecs::component<Float4>(world, "Float4")))
+            world.component<Float4>()
+                    .member<float>("x")
+                    .member<float>("y")
+                    .member<float>("z")
+                    .member<float>("w");
+
+        if (!MetaAlreadyRegistered(world, flecs::component<Quaternion>(world, "Quaternion")))
+            world.component<Quaternion>()
+                    .member<float>("x")
+                    .member<float>("y")
+                    .member<float>("z")
+                    .member<float>("w")
+                    .set_doc_brief("Quaternion (x, y, z, w)")
+                    .set_doc_detail("Rotation represented as a unit quaternion");
 
         TransformComponent::RegisterMeta(world);
         CameraComponent::RegisterMeta(world);

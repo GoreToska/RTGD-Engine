@@ -138,7 +138,7 @@ namespace RTGDEngine
         LogInfo("Constant buffers initialized");
     }
 
-    void RTGDRenderSystem::ApplyPendingResize()
+    void RTGDRenderSystem::ApplyPendingResize(flecs::world& world)
     {
         std::lock_guard<std::mutex> lock(m_resizeMutex);
         if (!m_resizePending)
@@ -158,7 +158,12 @@ namespace RTGDEngine
         m_swapChain->Resize(width, height);
         GBufferFactory::Resize(m_gbuffer, *m_device, width, height);
 
-        LogInfo("RenderSystem resized: {}x{}", width, height);
+        auto cameraEntity = CameraSystem::GetActiveCamera(world);
+        if (cameraEntity.is_valid())
+        {
+            auto cam = cameraEntity.get_ref<CameraComponent>();
+            cam->AspectRatio = static_cast<float>(width) / static_cast<float>(height);
+        }
     }
 
     void RTGDRenderSystem::UpdateCameraConstantBuffer(const CameraConstantBuffer& data)
@@ -230,7 +235,7 @@ namespace RTGDEngine
 
         world.each([&](const MeshComponent& mesh,
                        const RenderComponent& render,
-                       const TransformComponent& transform)
+                       TransformComponent& transform)
         {
             if (!render.IsVisible)
                 return;

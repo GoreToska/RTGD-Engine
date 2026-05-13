@@ -1,27 +1,51 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace Editor.Inspector
 {
     public partial class InspectorPanel : UserControl
     {
         private ulong _selectedEntityId;
-        private string _selectedEntityName;                     
-                    
-        public InspectorPanel() => InitializeComponent();
+        private string _selectedEntityName;
+
+        // Flat list of all editable value boxes so we can update them on the timer
+        // without rebuilding the entire UI.
+        // Tuple: (compIndex, fieldIndex, subIndex — or -1 if top-level, TextBox)
+        private readonly List<(int c, int f, int s, TextBox box)> _valueBoxes = new();
+
+        // Live-update timer polls Inspector_RefreshValues and pushes new text
+        // into any TextBox that is not currently focused
+        private readonly DispatcherTimer _refreshTimer;
+        private const double RefreshHz = 10;
+
+        public InspectorPanel()
+        {
+            InitializeComponent();
+
+            _refreshTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1.0 / RefreshHz)
+            };
+            _refreshTimer.Tick += OnRefreshTick;
+        }
 
         public void SetSelectedEntity(ulong entityId, string name)
         {
             _selectedEntityId = entityId;
             _selectedEntityName = name;
-            Refresh();
+            Rebuild();
         }
 
-
-        public void Refresh()
+        private void Rebuild()
         {
+            _refreshTimer.Stop();
+            _valueBoxes.Clear();
             ComponentsPanel.Children.Clear();
 
             if (_selectedEntityId == 0)
@@ -62,14 +86,32 @@ namespace Editor.Inspector
                             Value = NativeInterop.GetSubFieldValue(c, f, s)
                         });
                     }
-
                     comp.Fields.Add(field);
                 }
 
-                ComponentsPanel.Children.Add(CreateComponentBlock(comp));
+                ComponentsPanel.Children.Add(CreateComponentBlock(comp, c));
             }
+
+            _refreshTimer.Start();
         }
 
+        private void OnRefreshTick(object sender, EventArgs e)
+        {
+            if (_selectedEntityId == 0) return;
+            if (NativeInterop.Inspector_RefreshValues() == 0) return;
+
+            foreach (var (c, f, s, box) in _valueBoxes)
+            {
+                if (box.IsFocused) continue;
+
+                string newVal = s < 0
+                    ? NativeInterop.GetFieldValue(c, f)
+                    : NativeInterop.GetSubFieldValue(c, f, s);
+
+                if (box.Text != newVal)
+                    box.Text = newVal;
+            }
+        }
 
         private void AddPlaceholder(string text)
         {
@@ -84,7 +126,7 @@ namespace Editor.Inspector
             });
         }
 
-        private UIElement CreateComponentBlock(ComponentViewModel comp)
+        private UIElement CreateComponentBlock(ComponentViewModel comp, int compIndex)
         {
             var border = new Border
             {
@@ -133,7 +175,7 @@ namespace Editor.Inspector
 
             for (int i = 0; i < rows.Count; i++)
             {
-                var (field, depth) = rows[i];
+                var (field, depth, fieldIdx, subIdx) = rows[i];
                 grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(22) });
 
                 if (i % 2 == 0)
@@ -147,7 +189,7 @@ namespace Editor.Inspector
                     grid.Children.Add(rowBg);
                 }
 
-                double leftPad = 4 + depth * 14; 
+                double leftPad = 4 + depth * 14;
 
                 if (field.IsStruct)
                 {
@@ -177,20 +219,40 @@ namespace Editor.Inspector
                         ToolTip = field.Type
                     };
 
-                    var valueBlock = new TextBlock
+                    int ci = compIndex, fi = fieldIdx, si = subIdx;
+
+                    var valueBox = new TextBox
                     {
                         Text = field.Value,
                         Foreground = GetTypeColor(field.Type),
+                        Background = Brushes.Transparent,
+                        BorderThickness = new Thickness(0),
                         FontSize = 11,
                         FontFamily = new FontFamily("Consolas"),
                         VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(4, 0, 0, 0)
+                        Margin = new Thickness(4, 1, 2, 1),
+                        Padding = new Thickness(0),
+                        CaretBrush = Brushes.White,
+                        SelectionBrush = new SolidColorBrush(Color.FromArgb(0x60, 0x26, 0x7A, 0xCC))
                     };
 
+                    // Commit on Enter or lost focus
+                    valueBox.KeyDown += (_, e) =>
+                    {
+                        if (e.Key == Key.Enter) CommitValue(ci, fi, si, valueBox);
+                    };
+                    valueBox.LostFocus += (_, _) => CommitValue(ci, fi, si, valueBox);
+
+                    valueBox.GotFocus += (_, _) => valueBox.BorderThickness = new Thickness(0, 0, 0, 1);
+                    valueBox.LostFocus += (_, _) => valueBox.BorderThickness = new Thickness(0);
+
+                    // Register for live updates
+                    _valueBoxes.Add((ci, fi, si, valueBox));
+
                     Grid.SetRow(nameBlock, i); Grid.SetColumn(nameBlock, 0);
-                    Grid.SetRow(valueBlock, i); Grid.SetColumn(valueBlock, 1);
+                    Grid.SetRow(valueBox, i); Grid.SetColumn(valueBox, 1);
                     grid.Children.Add(nameBlock);
-                    grid.Children.Add(valueBlock);
+                    grid.Children.Add(valueBox);
                 }
             }
 
@@ -200,19 +262,40 @@ namespace Editor.Inspector
         }
 
 
-        /// <summary>
-        /// Converts the field tree into a flat list of (field, depth) pairs
-        /// suitable for direct Grid row construction.
-        /// </summary>
-        private static List<(FieldViewModel field, int depth)> FlattenFields(
-            IEnumerable<FieldViewModel> fields, int depth = 0)
+        private static void CommitValue(int c, int f, int s, TextBox box)
         {
-            var result = new List<(FieldViewModel, int)>();
+            string text = box.Text.Trim();
+
+            int result = s < 0
+                ? NativeInterop.Inspector_SetFieldValue(c, f, text)
+                : NativeInterop.Inspector_SetSubFieldValue(c, f, s, text);
+
+            box.Foreground = result == 1
+                ? GetTypeColor(box.Tag as string ?? "")
+                : Brushes.Tomato;
+        }
+
+
+        private static List<(FieldViewModel field, int depth, int fieldIdx, int subIdx)>
+            FlattenFields(IEnumerable<FieldViewModel> fields, int depth = 0, int parentFieldIdx = 0)
+        {
+            var result = new List<(FieldViewModel, int, int, int)>();
+            int fi = 0;
             foreach (var f in fields)
             {
-                result.Add((f, depth));
+                // subIdx == -1 means top-level field, use Inspector_GetFieldValue
+                result.Add((f, depth, parentFieldIdx + fi, -1));
                 if (f.IsStruct)
-                    result.AddRange(FlattenFields(f.Children, depth + 1));
+                {
+                    int fi2 = parentFieldIdx + fi;
+                    int si = 0;
+                    foreach (var child in f.Children)
+                    {
+                        result.Add((child, depth + 1, fi2, si));
+                        si++;
+                    }
+                }
+                fi++;
             }
             return result;
         }

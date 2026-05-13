@@ -113,12 +113,14 @@ namespace RTGDEngine
             "Assets/Helmet/Default_AO.jpg",
             helmetMat, ETextureSlot::AO, false);
 
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
+        auto& entt = SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
                 .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
                 .set(RenderComponent{})
                 .set(MeshComponent{helmetMesh, helmetMat});
 
+        //entt.get_ref<TransformComponent>()->SetRotationEuler(30, 30, 30);
+        entt.get_ref<TransformComponent>()->Rotation = {1, 1, 0, 1};
 
         MaterialHandle spheresMat = PipelineFactory::CreateMeshPipeline(
             RTGDRenderSystem::Instance().GetDevice(),
@@ -142,6 +144,7 @@ namespace RTGDEngine
                 .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
                 .set(RenderComponent{}).set(MeshComponent{spheresMesh, spheresMat});
 
+        
         // Light
         SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
                 .set(UUIDComponent{})
@@ -232,7 +235,7 @@ namespace RTGDEngine
 
     void Engine::Render()
     {
-        RTGDRenderSystem::Instance().ApplyPendingResize();
+        RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetActiveScene()->GetWorld());
 
         auto& rs = RTGDRenderSystem::Instance();
         auto& device = rs.GetDevice();

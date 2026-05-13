@@ -47,7 +47,7 @@ namespace RTGDEngine
 
         void Resize(int width, int height);
 
-        void ApplyPendingResize();
+        void ApplyPendingResize(flecs::world& world);
 
         [[nodiscard]] Diligent::IRenderDevice& GetDevice() const { return *m_device; }
         [[nodiscard]] Diligent::IDeviceContext& GetContext() const { return *m_pImmediateContext; }

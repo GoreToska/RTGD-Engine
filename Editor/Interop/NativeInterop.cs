@@ -31,21 +31,34 @@ namespace Editor
         [DllImport("Engine.dll")] public static extern void Engine_GetEntities(EntityCallback callback);
         [DllImport("Engine.dll")] public static extern void Engine_FreeString(IntPtr str);
 
+        // Inspector component level
         [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
         public static extern int Inspector_GetComponentCount(ulong entityId);
 
         [DllImport("Engine.dll", CallingConvention = CallingConvention.StdCall)]
         public static extern IntPtr Inspector_GetComponentName(ulong entityId, int index);
 
+        // Inspector field level
         [DllImport("Engine.dll")] public static extern int Inspector_GetFieldCount(int compIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldName(int compIndex, int fieldIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldType(int compIndex, int fieldIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetFieldValue(int compIndex, int fieldIndex);
 
+        // Inspector sub-field level (Float3.x, Quaternion.w)
         [DllImport("Engine.dll")] public static extern int Inspector_GetSubFieldCount(int compIndex, int fieldIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetSubFieldName(int compIndex, int fieldIndex, int subIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetSubFieldType(int compIndex, int fieldIndex, int subIndex);
         [DllImport("Engine.dll")] public static extern IntPtr Inspector_GetSubFieldValue(int compIndex, int fieldIndex, int subIndex);
+
+        // Inspector write-back 
+        /// <returns>1 on success, 0 on parse/index error.</returns>
+        [DllImport("Engine.dll")] public static extern int Inspector_SetFieldValue(int compIndex, int fieldIndex, [MarshalAs(UnmanagedType.LPStr)] string value);
+        [DllImport("Engine.dll")] public static extern int Inspector_SetSubFieldValue(int compIndex, int fieldIndex, int subIndex, [MarshalAs(UnmanagedType.LPStr)] string value);
+
+        // Inspector live refresh (engine → editor)
+        /// Re-reads all cached values from ECS memory.
+        /// Returns 0 if the cache is empty.
+        [DllImport("Engine.dll")] public static extern int Inspector_RefreshValues();
 
         public static string GetComponentName(ulong entityId, int index)
             => Marshal.PtrToStringAnsi(Inspector_GetComponentName(entityId, index)) ?? "";
@@ -58,6 +71,7 @@ namespace Editor
         public static string GetSubFieldType(int c, int f, int s) => Marshal.PtrToStringAnsi(Inspector_GetSubFieldType(c, f, s)) ?? "";
         public static string GetSubFieldValue(int c, int f, int s) => Marshal.PtrToStringAnsi(Inspector_GetSubFieldValue(c, f, s)) ?? "";
 
+        // ── Win32 ───────────────────────────────────────────────────────────────
         [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr hWnd);
 
         [DllImport("user32.dll", SetLastError = true)]
