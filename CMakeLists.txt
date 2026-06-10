@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 add_subdirectory(ThirdParty/flecs)
 add_subdirectory(ThirdParty/DiligentEngine)
@@ -34,8 +35,18 @@ target_link_libraries(RTGD-Engine PRIVATE
         Engine
 )
 
-add_custom_command(TARGET RTGD-Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:Diligent-GraphicsEngineD3D12-shared>
-        $<TARGET_FILE_DIR:RTGD-Engine>
-)
+if(WIN32)
+    add_custom_command(TARGET RTGD-Engine POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Diligent-GraphicsEngineD3D12-shared>
+            $<TARGET_FILE_DIR:RTGD-Engine>
+    )
+elseif(UNIX AND NOT APPLE)
+    if(TARGET Diligent-GraphicsEngineVk-shared)
+        add_custom_command(TARGET RTGD-Engine POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:Diligent-GraphicsEngineVk-shared>
+                $<TARGET_FILE_DIR:RTGD-Engine>
+        )
+    endif()
+endif()
