@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Windows.h>
+#include "Platform/WindowHandle.h"
 #include <memory>
 #include <string>
 #include <flecs.h>
@@ -11,20 +11,21 @@
 #include "Tools/RTGDMacros.h"
 
 
-namespace RTGDEngine
-{
-    class ENGINE_API Engine : public IEngineInterface
-    {
+namespace RTGDEngine {
+    class IPlatformWindow;
+
+    class ENGINE_API Engine : public IEngineInterface {
         DECLARE_SINGLETON(Engine);
 
     public:
-        bool Initialize(HWND hwnd);
+        // TODO: separate engine from window
+        bool Initialize(IPlatformWindow* window);
 
         void Run();
 
         void Shutdown();
 
-        bool LoadGameModule(const std::string& dllPath);
+        bool LoadGameModule(const std::string &dllPath);
 
         void Update(float deltaTime);
 
@@ -33,15 +34,16 @@ namespace RTGDEngine
         void CreateConsole();
 
     private:
-        void* m_hwnd = nullptr;
+        NativeWindowHandle m_window = {};
+
         std::unique_ptr<IGameModule> m_gameModule;
 
-        HMODULE m_gameDllHandle = nullptr;
+        //HMODULE m_gameDllHandle = nullptr;
         CreateGameModuleFunc m_createFunc = nullptr;
         DestroyGameModuleFunc m_destroyFunc = nullptr;
 
-        void UpdateSystems(const flecs::world& world, float deltaTime);
+        void UpdateSystems(const flecs::world &world, float deltaTime);
 
-        void PostUpdateSystems(const flecs::world& world, float deltaTime);
+        void PostUpdateSystems(const flecs::world &world, float deltaTime);
     };
 }

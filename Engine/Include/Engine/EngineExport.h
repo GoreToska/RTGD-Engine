@@ -11,7 +11,7 @@
 #define ENGINE_API __declspec(dllimport)
 #endif
 #else
-    #define ENGINE_API __attribute__((visibility("default")))
+#define ENGINE_API __attribute__((visibility("default")))
 #endif
 
 
@@ -21,22 +21,32 @@
 #ifdef ENGINE_EXPORTS
 #define ENGINE_API __declspec(dllexport)
 #else
-        #define ENGINE_API __declspec(dllimport)
+#define ENGINE_API __declspec(dllimport)
 #endif
 #else
-    #define ENGINE_API __attribute__((visibility("default")))
+#define ENGINE_API __attribute__((visibility("default")))
 #endif
+
+#ifdef _WIN32
+#define RTGD_CALLBACK __stdcall
+#else
+#define RTGD_CALLBACK
+#endif
+
 #include <cstdint>
 
-typedef void (__stdcall*EntityCallback)(const char* name, uint64_t id);
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
-extern "C"
-{
-ENGINE_API bool Engine_Initialize(void* hwnd);
+typedef void (RTGD_CALLBACK*EntityCallback)(const char *name, uint64_t id);
+
+extern "C" {
+ENGINE_API bool Engine_Initialize(void *hwnd, void *hinstance);
 
 ENGINE_API void Engine_Update(float deltaTime);
 
-ENGINE_API void Engine_HandleMessage(void* hwnd, unsigned int msg,
+ENGINE_API void Engine_HandleMessage(void *hwnd, unsigned int msg,
                                      uintptr_t wParam, intptr_t lParam);
 
 ENGINE_API void Engine_Resize(int w, int h);

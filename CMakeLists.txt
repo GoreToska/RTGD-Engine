@@ -8,6 +8,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(ThirdParty/flecs)
 add_subdirectory(ThirdParty/DiligentEngine)
 add_subdirectory(ThirdParty/spdlog)
@@ -17,6 +21,7 @@ add_subdirectory(ThirdParty/enkiTS)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/assimp)
 
 

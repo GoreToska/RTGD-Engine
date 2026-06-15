@@ -58,12 +58,22 @@ add_library(Engine SHARED
         Source/Tools/MetaTypes.cpp
         Source/Engine/InspectorExports.cpp
         Include/Engine/InspectorExports.h
+        Source/Platform/IPlatformWindow.cpp
+        Include/Platform/IPlatformWindow.h
+        Include/Platform/Linux/LinuxPlatform.h
+        Source/Platform/Linux/LinuxPlatform.cpp
+        Include/Platform/PlatformFactory.h
+        Source/Platform/PlatformFactory.cpp
+        Include/Platform/Windows/WindowsPlatform.h
+        Source/Platform/Windows/WindowsPlatform.cpp
+        Include/Platform/WindowHandle.h
+        Include/Platform/WindowEvent.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
 
 target_include_directories(Engine PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/Include
         ${CMAKE_SOURCE_DIR}/ThirdParty/gainput/lib/include
         ${CMAKE_SOURCE_DIR}/ThirdParty/stb
 )
@@ -71,7 +81,6 @@ target_include_directories(Engine PUBLIC
 target_link_libraries(Engine PUBLIC
         Diligent-GraphicsEngineVk-shared
         Diligent-Common
-        Diligent-GraphicsEngineD3D12-shared
         Diligent-GraphicsTools
         flecs_static
         spdlog::spdlog
@@ -80,8 +89,19 @@ target_link_libraries(Engine PUBLIC
         enkiTS
 )
 
+if (WIN32)
+    target_link_libraries(Engine PUBLIC
+            Diligent-GraphicsEngineD3D12-shared
+    )
+elseif (UNIX AND NOT APPLE)
+    target_link_libraries(Engine PUBLIC
+            Diligent-GraphicsEngineVk-shared X11 Xi Xfixes
+    )
+endif ()
+
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
+if (WIN32)
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:Engine>
@@ -99,7 +119,7 @@ add_custom_command(TARGET Engine POST_BUILD
         $<TARGET_FILE:assimp>
         "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:assimp>"
 )
-
+endif ()
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

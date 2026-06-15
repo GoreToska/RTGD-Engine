@@ -17,9 +17,18 @@ using namespace RTGDEngine;
 
 extern "C"
 {
-bool Engine_Initialize(void* hwnd)
+bool Engine_Initialize(void* hwnd, void* hinstance)
 {
-    return Engine::Instance().Initialize(static_cast<HWND>(hwnd));
+    RTGDEngine::NativeWindowHandle handle{};
+#ifdef _WIN32
+    handle.hwnd      = hwnd;
+    handle.hinstance = hinstance;
+#elif defined(__linux__)
+    handle.display = hwnd;      // Display*
+    handle.window  = reinterpret_cast<unsigned long>(hinstance);
+#endif
+    return false;
+    //return RTGDEngine::Engine::Instance().Initialize(handle);
 }
 
 void Engine_Update(float deltaTime)
@@ -27,13 +36,14 @@ void Engine_Update(float deltaTime)
     Engine::Instance().Update(deltaTime);
 }
 
-void Engine_HandleMessage(void* hwnd, unsigned int msg, uintptr_t wParam, intptr_t lParam)
+// TODO: will be refactored in future
+/*void Engine_HandleMessage(void* hwnd, unsigned int msg, uintptr_t wParam, intptr_t lParam)
 {
     InputSystem::Instance().HandleMessage(
         static_cast<HWND>(hwnd), msg,
         static_cast<WPARAM>(wParam),
         static_cast<LPARAM>(lParam));
-}
+}*/
 
 void Engine_Resize(int w, int h)
 {

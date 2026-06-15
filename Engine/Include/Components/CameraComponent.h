@@ -5,10 +5,8 @@
 #pragma once
 #include "Tools/Alias.h"
 
-namespace RTGDEngine
-{
-    struct CameraComponent
-    {
+namespace RTGDEngine {
+    struct CameraComponent {
         float FOVDegrees = 75.0f;
         float AspectRatio = 16.0f / 9.0f;
         float NearPlane = 0.1f;
@@ -19,8 +17,7 @@ namespace RTGDEngine
         Matrix4 ViewMatrix = Matrix4::Identity();
         Matrix4 ProjectionMatrix = Matrix4::Identity();
 
-        static void RegisterMeta(const flecs::world& world)
-        {
+        static void RegisterMeta(const flecs::world &world) {
             flecs::component<CameraComponent>(world, "CameraComponent")
                     .member<float>("FOVDegrees")
                     .member<float>("AspectRatio")
@@ -30,14 +27,12 @@ namespace RTGDEngine
         }
     };
 
-    struct EditorCameraMovementComponent
-    {
+    struct EditorCameraMovementComponent {
         float MovementSpeed = 5.0f;
         float SprintMultiplier = 3.0f;
-        float RotationSpeed = 0.1f;
+        float RotationSpeed = 50.f;
 
-        static void RegisterMeta(const flecs::world& world)
-        {
+        static void RegisterMeta(const flecs::world &world) {
             flecs::component<EditorCameraMovementComponent>(world, "EditorCameraMovementComponent")
                     .member<float>("MovementSpeed")
                     .member<float>("SprintMultiplier")
