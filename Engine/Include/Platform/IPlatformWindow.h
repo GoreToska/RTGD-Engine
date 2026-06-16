@@ -36,6 +36,11 @@ namespace RTGDEngine {
         [[nodiscard]] int GetWidth() const { return m_width; }
         [[nodiscard]] int GetHeight() const { return m_height; }
 
+        void SetSize(int width, int height) {
+            m_width = width;
+            m_height = height;
+        }
+
         std::function<void(int width, int height)> OnResize;
         std::function<void()> OnClose;
         std::function<void(const NativeWindowEvent &)> OnNativeEvent;

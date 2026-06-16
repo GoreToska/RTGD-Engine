@@ -36,23 +36,18 @@ namespace RTGDEngine {
 
         SceneManager::Instance().Initialize();
 
-#ifdef _WIN32
-        HWND hwnd = static_cast<HWND>(handle.hwnd);
-        RECT rect;
-        GetClientRect(hwnd, &rect);
-        int width = rect.right - rect.left;
-        int height = rect.bottom - rect.top;
-#elif defined(__linux__)
-        // TODO: get attributes
-        int width = 1280;
-        int height = 720;
-#endif
+        RTGDRenderSystem::Instance().Initialize(window->GetHandle(), window->GetWidth(), window->GetHeight());
 
-        RTGDRenderSystem::Instance().Initialize(window->GetHandle(), width, height);
         RenderResourceManager::Instance().Initialize(RTGDRenderSystem::Instance().GetDevice(),
                                                      RTGDRenderSystem::Instance().GetContext());
 
         InputSystem::Instance().AddWindowHandle(window);
+
+        window->OnResize = [window](int width, int height) {
+            RTGDRenderSystem::Instance().Resize(width, height);
+            InputSystem::Instance().Resize(width, height);
+            window->SetSize(width, height);
+        };
 
 #ifdef _WIN32
         LogInfo("Engine initialized with HWND: {}";
@@ -61,7 +56,7 @@ namespace RTGDEngine {
 #endif
 
         CameraComponent cam;
-        cam.AspectRatio = static_cast<float>(width) / static_cast<float>(height);
+        cam.AspectRatio = static_cast<float>(window->GetWidth()) / static_cast<float>(window->GetHeight());
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("EditorCamera")
                 .set(UUIDComponent{})
