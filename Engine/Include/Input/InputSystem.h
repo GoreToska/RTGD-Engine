@@ -51,6 +51,8 @@ namespace RTGDEngine {
 
         void MoveMouseBack();
 
+        void CalculateMouseDelta();
+
         gainput::InputManager m_manager;
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
         gainput::DeviceId m_keyboard = gainput::InvalidDeviceId;

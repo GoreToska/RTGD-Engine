@@ -24,13 +24,17 @@ namespace RTGDEngine {
         virtual void Destroy() = 0;
 
         virtual bool PollEvents() = 0; // false is exit
-        virtual NativeWindowHandle GetHandle() const = 0;
+
+        [[nodiscard]] virtual NativeWindowHandle GetHandle() const = 0;
 
         virtual void SetCursorVisible(bool visible) = 0;
 
         virtual void SetMouseCapture(bool capture) = 0;
 
         virtual void CenterCursor() = 0;
+
+        [[nodiscard]] int GetWidth() const { return m_width; }
+        [[nodiscard]] int GetHeight() const { return m_height; }
 
         std::function<void(int width, int height)> OnResize;
         std::function<void()> OnClose;

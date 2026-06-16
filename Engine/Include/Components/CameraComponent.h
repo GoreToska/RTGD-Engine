@@ -30,13 +30,17 @@ namespace RTGDEngine {
     struct EditorCameraMovementComponent {
         float MovementSpeed = 5.0f;
         float SprintMultiplier = 3.0f;
-        float RotationSpeed = 50.f;
+        float RotationSpeed = 0.1f;
+        float CurrentPitch = 0.0f;
+        float PitchLimit = 89.0f;
 
         static void RegisterMeta(const flecs::world &world) {
             flecs::component<EditorCameraMovementComponent>(world, "EditorCameraMovementComponent")
                     .member<float>("MovementSpeed")
                     .member<float>("SprintMultiplier")
-                    .member<float>("RotationSpeed");
+                    .member<float>("RotationSpeed")
+                    .member<float>("CurrentPitch")
+                    .member<float>("PitchLimit");
         }
     };
 }

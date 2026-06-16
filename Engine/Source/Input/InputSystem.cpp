@@ -67,11 +67,20 @@ namespace RTGDEngine {
         }
     }
 
+    void InputSystem::CalculateMouseDelta() {
+        if (m_ignoreNextDelta) {
+            m_mouseDeltaX = 0.0f;
+            m_mouseDeltaY = 0.0f;
+            m_ignoreNextDelta = false;
+        } else {
+            // if the mouse is captured, it is always at the center of the screen, so to calc delta we need to subtract half screen from current mouse pos
+            m_mouseDeltaX = m_currentMouseX - 0.5f * static_cast<float>(m_platformWindow->GetWidth());
+            m_mouseDeltaY = m_currentMouseY - 0.5f * static_cast<float>(m_platformWindow->GetHeight());
+        }
+    }
+
     void InputSystem::Update() {
         m_manager.Update();
-
-        m_currentMouseX = m_map->GetFloat(ID(EInputAction::LookX));
-        m_currentMouseY = m_map->GetFloat(ID(EInputAction::LookY));
 
         if (IsPressed(EInputAction::MouseRight)) {
             CaptureMouse(true);
@@ -82,18 +91,16 @@ namespace RTGDEngine {
             CaptureMouse(false);
         }
 
-        if (IsMouseCaptured()) {
-            if (m_ignoreNextDelta) {
-                m_mouseDeltaX = 0.0f;
-                m_mouseDeltaY = 0.0f;
-                m_ignoreNextDelta = false;
-            } else {
-                m_mouseDeltaX = m_currentMouseX - 0.5f;
-                m_mouseDeltaY = m_currentMouseY - 0.5f;
-            }
+        if (!m_platformWindow)
+            return;
 
-            if (m_platformWindow)
-                m_platformWindow->CenterCursor();
+        // Actual mouse position in pixels
+        m_currentMouseX = m_map->GetFloat(ID(EInputAction::LookX)) * static_cast<float>(m_platformWindow->GetWidth());
+        m_currentMouseY = m_map->GetFloat(ID(EInputAction::LookY)) * static_cast<float>(m_platformWindow->GetHeight());
+
+        if (IsMouseCaptured()) {
+            CalculateMouseDelta();
+            m_platformWindow->CenterCursor();
         }
     }
 
