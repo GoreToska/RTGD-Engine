@@ -15,24 +15,21 @@
 
 using namespace RTGDEngine;
 
-extern "C"
-{
-bool Engine_Initialize(void* hwnd, void* hinstance)
-{
-    RTGDEngine::NativeWindowHandle handle{};
+extern "C" {
+bool Engine_Initialize(void *hwnd, void *hinstance) {
+    NativeWindowHandle handle{};
 #ifdef _WIN32
-    handle.hwnd      = hwnd;
+    handle.hwnd = hwnd;
     handle.hinstance = hinstance;
 #elif defined(__linux__)
-    handle.display = hwnd;      // Display*
-    handle.window  = reinterpret_cast<unsigned long>(hinstance);
+    handle.display = hwnd; // Display*
+    handle.window = reinterpret_cast<unsigned long>(hinstance);
 #endif
     return false;
     //return RTGDEngine::Engine::Instance().Initialize(handle);
 }
 
-void Engine_Update(float deltaTime)
-{
+void Engine_Update(float deltaTime) {
     Engine::Instance().Update(deltaTime);
 }
 
@@ -45,28 +42,21 @@ void Engine_Update(float deltaTime)
         static_cast<LPARAM>(lParam));
 }*/
 
-void Engine_Resize(int w, int h)
-{
+void Engine_Resize(int w, int h) {
     RTGDRenderSystem::Instance().Resize(w, h);
 }
 
-void Engine_Shutdown()
-{
+void Engine_Shutdown() {
     Engine::Instance().Shutdown();
 }
 
-void Engine_GetEntities(EntityCallback callback)
-{
+void Engine_GetEntities(EntityCallback callback) {
     auto scene = SceneManager::Instance().GetActiveScene();
     if (!scene || !callback)
         return;
 
-    auto& world = scene->GetWorld();
-
-    scene->GetWorld().each([&](flecs::entity e, UUIDComponent go)
-    {
-        if (e.name().length() > 0)
-        {
+    scene->GetWorld().each([&](flecs::entity e, UUIDComponent go) {
+        if (e.name().length() > 0) {
             LogInfo(e.name().c_str());
             callback(e.name().c_str(), e.id());
         }

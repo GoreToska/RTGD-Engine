@@ -60,14 +60,16 @@ add_library(Engine SHARED
         Include/Engine/InspectorExports.h
         Source/Platform/IPlatformWindow.cpp
         Include/Platform/IPlatformWindow.h
-        Include/Platform/Linux/LinuxPlatform.h
-        Source/Platform/Linux/LinuxPlatform.cpp
+        Include/Platform/Linux/LinuxPlatformWindow.h
+        Source/Platform/Linux/LinuxPlatformWindow.cpp
         Include/Platform/PlatformFactory.h
         Source/Platform/PlatformFactory.cpp
-        Include/Platform/Windows/WindowsPlatform.h
-        Source/Platform/Windows/WindowsPlatform.cpp
+        Include/Platform/Windows/WindowsPlatformWindow.h
+        Source/Platform/Windows/WindowsPlatformWindow.cpp
         Include/Platform/WindowHandle.h
         Include/Platform/WindowEvent.h
+        Source/Platform/Linux/EmbeddedLinuxWindow.cpp
+        Include/Platform/Linux/EmbeddedLinuxWindow.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)

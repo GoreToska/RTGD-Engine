@@ -28,31 +28,32 @@
 namespace RTGDEngine {
     constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
 
-    bool Engine::Initialize(IPlatformWindow *window) {
-        m_window = window->GetHandle();
+    bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window) {
+        m_platformWindow = std::move(window);
+
         Logger::Instance().Initialize();
 
         JobSystem::Instance().Initialize();
 
         SceneManager::Instance().Initialize();
 
-        RTGDRenderSystem::Instance().Initialize(window->GetHandle(), window->GetWidth(), window->GetHeight());
+        RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(), m_platformWindow->GetHeight());
 
         RenderResourceManager::Instance().Initialize(RTGDRenderSystem::Instance().GetDevice(),
                                                      RTGDRenderSystem::Instance().GetContext());
 
-        InputSystem::Instance().AddWindowHandle(window);
+        InputSystem::Instance().AddWindowHandle(m_platformWindow.get());
 
-        window->OnResize = [window](int width, int height) {
+        m_platformWindow->OnResize = [this](int width, int height) {
             RTGDRenderSystem::Instance().Resize(width, height);
             InputSystem::Instance().Resize(width, height);
-            window->SetSize(width, height);
+            m_platformWindow->SetSize(width, height);
         };
 
 #ifdef _WIN32
         LogInfo("Engine initialized with HWND: {}";
 #elif defined(__linux__)
-        LogInfo("Engine initialized with ID: {}", m_window.window);
+        LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
 
         CameraComponent cam;
@@ -170,9 +171,6 @@ namespace RTGDEngine {
                 });*/
 
         return true;
-    }
-
-    void Engine::Run() {
     }
 
     void Engine::Shutdown() {

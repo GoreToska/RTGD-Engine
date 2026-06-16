@@ -9,4 +9,6 @@
 
 namespace RTGDEngine {
     std::unique_ptr<IPlatformWindow> CreatePlatformWindow();
+
+    std::unique_ptr<IPlatformWindow> CreateEmbeddedPlatformWindow(const NativeWindowHandle &windowHandle, int width,int height);
 }

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Platform/WindowHandle.h"
 #include <memory>
 #include <string>
 #include <flecs.h>
 
 #include "Engine/IGameModule.h"
 #include "Engine/IEngineInterface.h"
+#include "Platform/IPlatformWindow.h"
 #include "Engine/EngineExport.h"
 #include "Tools/RTGDMacros.h"
 
@@ -19,9 +19,7 @@ namespace RTGDEngine {
 
     public:
         // TODO: separate engine from window
-        bool Initialize(IPlatformWindow* window);
-
-        void Run();
+        bool Initialize(std::unique_ptr<IPlatformWindow> window);
 
         void Shutdown();
 
@@ -34,9 +32,8 @@ namespace RTGDEngine {
         void CreateConsole();
 
     private:
-        NativeWindowHandle m_window = {};
-
-        std::unique_ptr<IGameModule> m_gameModule;
+        std::unique_ptr<IPlatformWindow> m_platformWindow = nullptr;
+        std::unique_ptr<IGameModule> m_gameModule = nullptr;
 
         //HMODULE m_gameDllHandle = nullptr;
         CreateGameModuleFunc m_createFunc = nullptr;

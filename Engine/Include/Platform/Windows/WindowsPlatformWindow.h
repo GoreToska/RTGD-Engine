@@ -8,7 +8,7 @@
 #include <Windows.h>
 
 namespace RTGDEngine {
-    class WindowsPlatform : public IPlatformWindow {
+    class WindowsPlatformWindow : public IPlatformWindow {
     public:
         bool Create(const WindowDesc &desc) override;
 
@@ -22,7 +22,7 @@ namespace RTGDEngine {
 
         void SetMouseCapture(bool capture) override;
 
-        void WarpCursor() override;
+        void CenterCursor() override;
         
     private:
         static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

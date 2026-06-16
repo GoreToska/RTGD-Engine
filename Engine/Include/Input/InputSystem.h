@@ -6,7 +6,6 @@
 
 #include <memory>
 #include <gainput/gainput.h>
-#include "Platform/WindowHandle.h"
 
 #include "EInputAction.h"
 #include "Engine/EngineExport.h"

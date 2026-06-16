@@ -8,8 +8,10 @@
 #include <X11/Xlib.h>
 
 namespace RTGDEngine {
-    class LinuxPlatform : public IPlatformWindow {
+    class LinuxPlatformWindow : public IPlatformWindow {
     public:
+        ~LinuxPlatformWindow() override = default;
+        
         bool Create(const WindowDesc &desc) override;
 
         bool PollEvents() override;

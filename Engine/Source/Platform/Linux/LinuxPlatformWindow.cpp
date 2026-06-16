@@ -2,12 +2,12 @@
 // Created by ivan on 6/10/26.
 //
 
-#include "Platform/Linux/LinuxPlatform.h"
+#include "Platform/Linux/LinuxPlatformWindow.h"
 #if defined(__linux__)
 #include <X11/extensions/Xfixes.h>
 
 namespace RTGDEngine {
-    bool LinuxPlatform::Create(const WindowDesc &desc) {
+    bool LinuxPlatformWindow::Create(const WindowDesc &desc) {
         m_display = XOpenDisplay(nullptr);
         if (!m_display) return false;
 
@@ -33,7 +33,7 @@ namespace RTGDEngine {
         return true;
     }
 
-    bool LinuxPlatform::PollEvents() {
+    bool LinuxPlatformWindow::PollEvents() {
         while (XPending(m_display)) {
             XEvent e;
             XNextEvent(m_display, &e);
@@ -61,7 +61,7 @@ namespace RTGDEngine {
         return m_running;
     }
 
-    NativeWindowHandle LinuxPlatform::GetHandle() const {
+    NativeWindowHandle LinuxPlatformWindow::GetHandle() const {
         NativeWindowHandle handle;
         handle.display = m_display;
         handle.window = m_window;
@@ -71,7 +71,7 @@ namespace RTGDEngine {
         return handle;
     }
 
-    void LinuxPlatform::Destroy() {
+    void LinuxPlatformWindow::Destroy() {
         XFreeCursor(m_display, m_window);
 
         if (m_window && m_display) {
@@ -84,7 +84,7 @@ namespace RTGDEngine {
         }
     }
 
-    void LinuxPlatform::SetCursorVisible(const bool visible) {
+    void LinuxPlatformWindow::SetCursorVisible(const bool visible) {
         if (visible) {
             XFixesShowCursor(m_display, m_window);
         } else {
@@ -92,7 +92,7 @@ namespace RTGDEngine {
         }
     }
 
-    void LinuxPlatform::SetMouseCapture(bool capture) {
+    void LinuxPlatformWindow::SetMouseCapture(bool capture) {
         if (capture) {
             constexpr auto mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
             XGrabPointer(m_display, m_window, capture, mask, GrabModeAsync, GrabModeAsync, m_window, None, CurrentTime);
@@ -103,7 +103,7 @@ namespace RTGDEngine {
         XFlush(m_display);
     }
 
-    void LinuxPlatform::CenterCursor() {
+    void LinuxPlatformWindow::CenterCursor() {
         const int centerX = m_width / 2;
         const int centerY = m_height / 2;
         XWarpPointer(m_display, None, m_window, 0, 0, 0, 0, centerX, centerY);
