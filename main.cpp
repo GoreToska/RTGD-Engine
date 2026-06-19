@@ -18,8 +18,7 @@ int main() {
         return 1;
     }
 
-    auto handle = window->GetHandle();
-    if (!RTGDEngine::Engine::Instance().Initialize(window.get())) {
+    if (!RTGDEngine::Engine::Instance().Initialize(std::move(window))) {
         LogError("Failed to initialize engine!");
         return 1;
     }
@@ -27,7 +26,7 @@ int main() {
     using Clock = std::chrono::high_resolution_clock;
     auto lastTime = Clock::now();
 
-    while (window->PollEvents()) {
+    while (RTGDEngine::Engine::Instance().PollEvents()) {
         auto now = Clock::now();
         float dt = std::chrono::duration<float>(now - lastTime).count();
         lastTime = now;

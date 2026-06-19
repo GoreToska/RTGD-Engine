@@ -8,7 +8,7 @@
 #include "Tools/Logger.h"
 
 namespace RTGDEngine {
-    EmbeddedLinuxWindow::EmbeddedLinuxWindow(unsigned long XID, int width, int height)
+    EmbeddedLinuxWindow::EmbeddedLinuxWindow(unsigned long XID)
         : m_windowHandle(XID) {
     }
 

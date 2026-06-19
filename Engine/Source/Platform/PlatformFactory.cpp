@@ -23,12 +23,14 @@ namespace RTGDEngine {
 #endif
     }
 
-    std::unique_ptr<IPlatformWindow> CreateEmbeddedPlatformWindow(const NativeWindowHandle &windowHandle, int width,
-                                                                  int height) {
+    std::unique_ptr<IPlatformWindow> CreateEmbeddedPlatformWindow(const NativeWindowHandle &windowHandle) {
 #ifdef _WIN32
-
+        throw;
+        return nullptr;
 #elif defined(__linux__)
-        return std::make_unique<EmbeddedLinuxWindow>(windowHandle.window, width, height);
+        auto window = std::make_unique<EmbeddedLinuxWindow>(windowHandle.window);
+        window->Create({"Embedded window", windowHandle.width, windowHandle.height});
+        return window;
 #endif
     }
 }

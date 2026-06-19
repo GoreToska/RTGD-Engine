@@ -25,13 +25,18 @@ namespace RTGDEngine {
 
         bool LoadGameModule(const std::string &dllPath);
 
+        bool PollEvents() const;
+
         void Update(float deltaTime);
 
         void Render();
 
         void CreateConsole();
 
+        void Resize(int w, int h) const;
+
     private:
+        // TODO: Engine owns window for now, but need to refactor this in future
         std::unique_ptr<IPlatformWindow> m_platformWindow = nullptr;
         std::unique_ptr<IGameModule> m_gameModule = nullptr;
 

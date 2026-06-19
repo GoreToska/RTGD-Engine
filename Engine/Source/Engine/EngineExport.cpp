@@ -11,39 +11,40 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Tools/Logger.h"
-
+#include "Platform/IPlatformWindow.h"
+#include "Platform/Linux/EmbeddedLinuxWindow.h"
+#include "Platform/PlatformFactory.h"
 
 using namespace RTGDEngine;
 
 extern "C" {
-bool Engine_Initialize(void *hwnd, void *hinstance) {
-    NativeWindowHandle handle{};
+bool Engine_Initialize(void *nativeWindow, int width, int height) {
+    std::unique_ptr<IPlatformWindow> platform;
+    NativeWindowHandle windowHandle = {};
 #ifdef _WIN32
-    handle.hwnd = hwnd;
-    handle.hinstance = hinstance;
+    windowHandle.hwnd = nativeWindow;
+    windowHandle.hinstance = GetModuleHandle(nullptr);
+    platform = CreateEmbeddedPlatformWindow(windowHandle);
 #elif defined(__linux__)
-    handle.display = hwnd; // Display*
-    handle.window = reinterpret_cast<unsigned long>(hinstance);
+    windowHandle.window = reinterpret_cast<unsigned long>(nativeWindow);
+    windowHandle.width = width;
+    windowHandle.height = height;
+    platform = CreateEmbeddedPlatformWindow(windowHandle);
 #endif
-    return false;
-    //return RTGDEngine::Engine::Instance().Initialize(handle);
+
+    return Engine::Instance().Initialize(std::move(platform));
 }
 
 void Engine_Update(float deltaTime) {
-    Engine::Instance().Update(deltaTime);
+    if (Engine::Instance().PollEvents())
+        Engine::Instance().Update(deltaTime);
 }
 
-// TODO: will be refactored in future
-/*void Engine_HandleMessage(void* hwnd, unsigned int msg, uintptr_t wParam, intptr_t lParam)
-{
-    InputSystem::Instance().HandleMessage(
-        static_cast<HWND>(hwnd), msg,
-        static_cast<WPARAM>(wParam),
-        static_cast<LPARAM>(lParam));
-}*/
+void Engine_HandleMessage(void *hwnd, unsigned int msg, uintptr_t wParam, intptr_t lParam) {
+}
 
 void Engine_Resize(int w, int h) {
-    RTGDRenderSystem::Instance().Resize(w, h);
+    Engine::Instance().Resize(w, h);
 }
 
 void Engine_Shutdown() {

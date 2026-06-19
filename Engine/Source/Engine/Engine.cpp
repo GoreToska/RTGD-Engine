@@ -37,27 +37,25 @@ namespace RTGDEngine {
 
         SceneManager::Instance().Initialize();
 
-        RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(), m_platformWindow->GetHeight());
+        RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
+                                                m_platformWindow->GetHeight());
 
         RenderResourceManager::Instance().Initialize(RTGDRenderSystem::Instance().GetDevice(),
                                                      RTGDRenderSystem::Instance().GetContext());
 
         InputSystem::Instance().AddWindowHandle(m_platformWindow.get());
 
-        m_platformWindow->OnResize = [this](int width, int height) {
-            RTGDRenderSystem::Instance().Resize(width, height);
-            InputSystem::Instance().Resize(width, height);
-            m_platformWindow->SetSize(width, height);
-        };
+        m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
 
 #ifdef _WIN32
-        LogInfo("Engine initialized with HWND: {}";
+        LogInfo("Engine initialized with HWND: {}");
 #elif defined(__linux__)
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
 
         CameraComponent cam;
-        cam.AspectRatio = static_cast<float>(window->GetWidth()) / static_cast<float>(window->GetHeight());
+        cam.AspectRatio = static_cast<float>(m_platformWindow->GetWidth()) / static_cast<float>(m_platformWindow->
+                              GetHeight());
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("EditorCamera")
                 .set(UUIDComponent{})
@@ -213,6 +211,10 @@ namespace RTGDEngine {
         return true;
     }
 
+    bool Engine::PollEvents() const {
+        return m_platformWindow->PollEvents();
+    }
+
     void Engine::Update(const float deltaTime) {
         JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
 
@@ -254,6 +256,12 @@ namespace RTGDEngine {
         freopen_s(&f, "CONOUT$", "w", stdout);
         freopen_s(&f, "CONOUT$", "w", stderr);
 #endif
+    }
+
+    void Engine::Resize(int w, int h) const {
+        RTGDRenderSystem::Instance().Resize(w, h);
+        InputSystem::Instance().Resize(w, h);
+        m_platformWindow->SetSize(w, h);
     }
 
     void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {

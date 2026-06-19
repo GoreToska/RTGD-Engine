@@ -10,7 +10,7 @@
 namespace RTGDEngine {
     class EmbeddedLinuxWindow : public IPlatformWindow {
     public:
-        EmbeddedLinuxWindow(unsigned long XID, int width, int height);
+        EmbeddedLinuxWindow(unsigned long XID);
 
         ~EmbeddedLinuxWindow() override = default;
 
