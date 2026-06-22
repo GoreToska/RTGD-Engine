@@ -153,6 +153,23 @@ namespace RTGDEngine {
         return m_mouseDeltaY;
     }
 
+    void InputSystem::InjectKey(gainput::Key key, bool down) const {
+        if (m_injectKeyboard)
+            m_injectKeyboard->InjectButton(key, down);
+    }
+
+    void InputSystem::InjectMouseButton(gainput::MouseButton button, bool down) const {
+        if (m_injectMouseButton)
+            m_injectMouseButton->InjectButton(button, down);
+    }
+
+    void InputSystem::InjectMousePosition(float normX, float normY) const {
+        if (!m_injectMouseAxis) return;
+
+        m_injectMouseAxis->InjectAxis(gainput::MouseAxisX, normX);
+        m_injectMouseAxis->InjectAxis(gainput::MouseAxisY, normY);
+    }
+
     void InputSystem::CreateNativeDevices() {
         m_keyboard = m_manager.CreateDevice<gainput::InputDeviceKeyboard>();
         m_mouse = m_manager.CreateDevice<gainput::InputDeviceMouse>();

@@ -40,9 +40,6 @@ void Engine_Update(float deltaTime) {
         Engine::Instance().Update(deltaTime);
 }
 
-void Engine_HandleMessage(void *hwnd, unsigned int msg, uintptr_t wParam, intptr_t lParam) {
-}
-
 void Engine_Resize(int w, int h) {
     Engine::Instance().Resize(w, h);
 }

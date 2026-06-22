@@ -77,6 +77,8 @@ add_library(Engine SHARED
         Include/Input/IInjectable.h
         Source/Input/MouseDevice.cpp
         Include/Input/MouseDevice.h
+        Source/Platform/Windows/EmbeddedWindowsWindow.cpp
+        Include/Platform/Windows/EmbeddedWindowsWindow.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)

@@ -45,6 +45,12 @@ namespace RTGDEngine {
 
         [[nodiscard]] float GetMouseDeltaY() const;
 
+        void InjectKey(gainput::Key key, bool down) const;
+
+        void InjectMouseButton(gainput::MouseButton button, bool down) const;
+
+        void InjectMousePosition(float normX, float normY) const;
+
     private:
         void CreateNativeDevices();
 
@@ -60,7 +66,7 @@ namespace RTGDEngine {
 
         void CalculateMouseDelta();
 
-        gainput::InputManager m_manager;
+        gainput::InputManager m_manager = {};
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
         gainput::DeviceId m_keyboard = gainput::InvalidDeviceId;
         gainput::DeviceId m_mouse = gainput::InvalidDeviceId;
