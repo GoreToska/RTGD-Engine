@@ -18,11 +18,11 @@ namespace RTGDEngine {
         manager_.GetAllocator().Delete(previousState_);
     }
 
-    void MouseDevice::InjectAxis(gainput::DeviceButtonId id, float v) {
+    void MouseDevice::InjectAxis(DeviceButtonId id, float v) {
         m_queue.PushAxis(id, v);
     }
 
-    void MouseDevice::InjectButton(gainput::DeviceButtonId id, bool v) {
+    void MouseDevice::InjectButton(DeviceButtonId id, bool v) {
         m_queue.PushButton(id, v);
     }
 

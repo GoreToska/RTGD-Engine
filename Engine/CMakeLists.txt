@@ -73,6 +73,7 @@ add_library(Engine SHARED
         Source/Input/KeyboardDevice.cpp
         Include/Input/KeyboardDevice.h
         Include/Input/InjectQueue.h
+        Source/Input/InjectQueue.cpp
         Include/Input/IInjectable.h
         Source/Input/MouseDevice.cpp
         Include/Input/MouseDevice.h

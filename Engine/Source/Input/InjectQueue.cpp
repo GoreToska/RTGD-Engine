@@ -4,7 +4,8 @@
 
 #include "Input/InjectQueue.h"
 
-#include "gainput/GainputHelpers.h"
+#include <gainput/GainputInputDeltaState.h>
+#include <gainput/GainputHelpers.h>
 
 namespace RTGDEngine {
     void InjectQueue::PushButton(gainput::DeviceButtonId id, bool v) {
@@ -24,8 +25,8 @@ namespace RTGDEngine {
         }
 
         for (auto &[ID, IsAxis, BValue, FValue]: batch) {
-            if (IsAxis) gainput::HandleButton(device, state, delta, ID, FValue);
-            else gainput::HandleAxis(device, state, delta, ID, BValue);
+            if (IsAxis) gainput::HandleAxis(device, state, delta, ID, FValue);
+            else gainput::HandleButton(device, state, delta, ID, BValue);
         }
     }
 

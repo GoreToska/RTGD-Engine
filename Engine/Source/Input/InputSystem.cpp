@@ -4,6 +4,8 @@
 
 #include "Input/InputSystem.h"
 
+#include "Input/KeyboardDevice.h"
+#include "Input/MouseDevice.h"
 #include "Platform/IPlatformWindow.h"
 #include "Tools/Logger.h"
 
@@ -14,14 +16,8 @@
 #endif
 
 namespace RTGDEngine {
-    // TODO: need to initialize once and just switch focus of windows
-    void InputSystem::InitializeInputForWindow(IPlatformWindow *handle) {
-        m_manager.SetDisplaySize(handle->GetHandle().width, handle->GetHandle().height);
-
-        m_keyboard = m_manager.CreateDevice<gainput::InputDeviceKeyboard>();
-        m_mouse = m_manager.CreateDevice<gainput::InputDeviceMouse>();
-
-        m_map = std::make_unique<gainput::InputMap>(m_manager);
+    void InputSystem::CreateInputMapping() {
+        m_map = std::make_unique<InputMap>(m_manager);
 
         using A = EInputAction;
         m_map->MapBool(ID(A::MoveForward), m_keyboard, gainput::KeyW);
@@ -36,6 +32,22 @@ namespace RTGDEngine {
         m_map->MapBool(ID(A::MouseRight), m_mouse, gainput::MouseButtonRight);
         m_map->MapFloat(ID(A::LookX), m_mouse, gainput::MouseAxisX);
         m_map->MapFloat(ID(A::LookY), m_mouse, gainput::MouseAxisY);
+    }
+
+    // TODO: need to initialize once and just switch focus of windows
+    void InputSystem::InitializeInputForWindow(IPlatformWindow *handle) {
+        m_manager.SetDisplaySize(handle->GetHandle().width, handle->GetHandle().height);
+
+        switch (handle->GetInputSource()) {
+            case EInputSource::NativeEvents:
+                CreateNativeDevices();
+                break;
+            case EInputSource::Injected:
+                CreateInjectedDevices();
+                break;
+        }
+
+        CreateInputMapping();
 
         LogInfo("InputSystem initialized ({}x{})", handle->GetHandle().width, handle->GetHandle().height);
     }
@@ -139,6 +151,20 @@ namespace RTGDEngine {
 
     float InputSystem::GetMouseDeltaY() const {
         return m_mouseDeltaY;
+    }
+
+    void InputSystem::CreateNativeDevices() {
+        m_keyboard = m_manager.CreateDevice<gainput::InputDeviceKeyboard>();
+        m_mouse = m_manager.CreateDevice<gainput::InputDeviceMouse>();
+    }
+
+    void InputSystem::CreateInjectedDevices() {
+        m_keyboard = m_manager.CreateDevice<KeyboardDevice>();
+        m_mouse = m_manager.CreateDevice<MouseDevice>();
+
+        m_injectKeyboard = dynamic_cast<IInjectableButton *>(m_manager.GetDevice(m_keyboard));
+        m_injectMouseButton = dynamic_cast<IInjectableButton *>(m_manager.GetDevice(m_mouse));
+        m_injectMouseAxis = dynamic_cast<IInjectableAxis *>(m_manager.GetDevice(m_mouse));
     }
 
     void InputSystem::CaptureMouse(const bool capture) {

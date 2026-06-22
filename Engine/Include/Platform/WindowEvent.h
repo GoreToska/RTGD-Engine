@@ -14,3 +14,8 @@ struct NativeWindowEvent {
     void *XEvent;
 #endif
 };
+
+enum class EInputSource {
+    NativeEvents, // XEvent/MSG
+    Injected // Injection by embedded host
+};

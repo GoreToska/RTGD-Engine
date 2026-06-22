@@ -71,6 +71,10 @@ namespace RTGDEngine {
         return handle;
     }
 
+    EInputSource LinuxPlatformWindow::GetInputSource() const {
+        return EInputSource::NativeEvents;
+    }
+
     void LinuxPlatformWindow::Destroy() {
         XFreeCursor(m_display, m_window);
 

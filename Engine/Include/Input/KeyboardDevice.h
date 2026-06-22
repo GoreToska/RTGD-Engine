@@ -6,7 +6,6 @@
 #include <mutex>
 #include <vector>
 #include <gainput/gainput.h>
-#include <gainput/GainputHelpers.h>
 
 #include "IInjectable.h"
 #include "InjectQueue.h"
@@ -38,12 +37,6 @@ namespace RTGDEngine {
         [[nodiscard]] DeviceState InternalGetState() const override;
 
     private:
-        struct KeyEvent {
-            DeviceButtonId buttonId;
-            bool down;
-        };
-
-        std::mutex m_mutex = {};
         InjectQueue m_queue = {};
     };
 } // RTGDEngine

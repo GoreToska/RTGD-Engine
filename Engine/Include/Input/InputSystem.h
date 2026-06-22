@@ -13,6 +13,8 @@
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine {
+    class IInjectableAxis;
+    class IInjectableButton;
     class IPlatformWindow;
 
     class ENGINE_API InputSystem {
@@ -44,6 +46,12 @@ namespace RTGDEngine {
         [[nodiscard]] float GetMouseDeltaY() const;
 
     private:
+        void CreateNativeDevices();
+
+        void CreateInjectedDevices();
+
+        void CreateInputMapping();
+
         void InitializeInputForWindow(IPlatformWindow *handle);
 
         void CaptureMouse(bool capture);
@@ -56,6 +64,10 @@ namespace RTGDEngine {
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
         gainput::DeviceId m_keyboard = gainput::InvalidDeviceId;
         gainput::DeviceId m_mouse = gainput::InvalidDeviceId;
+
+        IInjectableButton *m_injectKeyboard = nullptr;
+        IInjectableButton *m_injectMouseButton = nullptr;
+        IInjectableAxis *m_injectMouseAxis = nullptr;
 
         IPlatformWindow *m_platformWindow = nullptr;
 

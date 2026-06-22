@@ -11,12 +11,14 @@ namespace RTGDEngine {
     class LinuxPlatformWindow : public IPlatformWindow {
     public:
         ~LinuxPlatformWindow() override = default;
-        
+
         bool Create(const WindowDesc &desc) override;
 
         bool PollEvents() override;
 
         [[nodiscard]] NativeWindowHandle GetHandle() const override;
+
+        [[nodiscard]] EInputSource GetInputSource() const override;
 
         void Destroy() override;
 

@@ -38,6 +38,10 @@ namespace RTGDEngine {
         return {GetWidth(), GetHeight(), m_display, m_windowHandle};
     }
 
+    EInputSource EmbeddedLinuxWindow::GetInputSource() const {
+        return EInputSource::Injected;
+    }
+
     void EmbeddedLinuxWindow::Destroy() {
         if (m_display) {
             XCloseDisplay(m_display);

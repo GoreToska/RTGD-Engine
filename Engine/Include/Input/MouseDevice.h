@@ -19,18 +19,18 @@ namespace RTGDEngine {
 
         void InjectButton(gainput::DeviceButtonId id, bool v) override;
 
-        DeviceType GetType() const override;
+        [[nodiscard]] DeviceType GetType() const override;
 
-        DeviceVariant GetVariant() const override;
+        [[nodiscard]] DeviceVariant GetVariant() const override;
 
-        const char *GetTypeName() const override;
+        [[nodiscard]] const char *GetTypeName() const override;
 
-        bool IsValidButtonId(gainput::DeviceButtonId deviceButton) const override;
+        [[nodiscard]] bool IsValidButtonId(gainput::DeviceButtonId deviceButton) const override;
 
-        gainput::ButtonType GetButtonType(gainput::DeviceButtonId deviceButton) const override;
+        [[nodiscard]] gainput::ButtonType GetButtonType(gainput::DeviceButtonId deviceButton) const override;
 
     protected:
-        DeviceState InternalGetState() const override;
+        [[nodiscard]] DeviceState InternalGetState() const override;
 
         void InternalUpdate(gainput::InputDeltaState *delta) override;
 

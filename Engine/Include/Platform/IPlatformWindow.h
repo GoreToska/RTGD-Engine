@@ -27,6 +27,8 @@ namespace RTGDEngine {
 
         [[nodiscard]] virtual NativeWindowHandle GetHandle() const = 0;
 
+        [[nodiscard]] virtual EInputSource GetInputSource() const = 0;
+
         virtual void SetCursorVisible(bool visible) = 0;
 
         virtual void SetMouseCapture(bool capture) = 0;
