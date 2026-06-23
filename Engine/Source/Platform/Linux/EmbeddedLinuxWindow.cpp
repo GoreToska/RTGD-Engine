@@ -5,6 +5,8 @@
 #if defined(__linux__)
 #include "Platform/Linux/EmbeddedLinuxWindow.h"
 
+#include <X11/extensions/Xfixes.h>
+
 #include "Tools/Logger.h"
 
 namespace RTGDEngine {
@@ -51,15 +53,24 @@ namespace RTGDEngine {
     }
 
     void EmbeddedLinuxWindow::SetCursorVisible(bool visible) {
-        // probably should do nothing, because cursor should be controlled by window owner
+        if (visible) XFixesShowCursor(m_display, m_windowHandle);
+        else XFixesHideCursor(m_display, m_windowHandle);
+        XFlush(m_display);
     }
 
     void EmbeddedLinuxWindow::SetMouseCapture(bool capture) {
-        // don't know what to do for now without editor
+        if (capture) {
+            constexpr unsigned mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
+            XGrabPointer(m_display, m_windowHandle, True, mask,GrabModeAsync, GrabModeAsync, m_windowHandle, None,
+                         CurrentTime);
+        } else {
+            XUngrabPointer(m_display, CurrentTime);
+        }
+        XFlush(m_display);
     }
 
     void EmbeddedLinuxWindow::CenterCursor() {
-        // don't know what to do for now without editor
+        // do not needed
     }
 }
 

@@ -48,15 +48,32 @@ namespace RTGDEngine {
     }
 
     void EmbeddedWindowsWindow::SetCursorVisible(bool visible) {
-        // Cursor is controlled by the window owner.
+        if (visible) {
+            while (ShowCursor(TRUE) < 0) {
+            }
+        } else {
+            while (ShowCursor(FALSE) >= 0) {
+            }
+        }
     }
 
     void EmbeddedWindowsWindow::SetMouseCapture(bool capture) {
-        // Controlled by the editor for now.
+        if (capture) {
+            SetCapture(m_hwnd);
+            RECT rc;
+            GetClientRect(m_hwnd, &rc);
+            POINT tl{rc.left, rc.top}, br{rc.right, rc.bottom};
+            ClientToScreen(m_hwnd, &tl);
+            ClientToScreen(m_hwnd, &br);
+            RECT clip{tl.x, tl.y, br.x, br.y};
+            ClipCursor(&clip);
+        } else {
+            ReleaseCapture();
+            ClipCursor(nullptr);
+        }
     }
 
     void EmbeddedWindowsWindow::CenterCursor() {
-        // Controlled by the editor for now.
     }
 }
 
