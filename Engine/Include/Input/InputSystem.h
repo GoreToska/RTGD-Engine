@@ -52,9 +52,9 @@ namespace RTGDEngine {
         void InjectMousePosition(float normX, float normY) const;
 
     private:
-        void CreateNativeDevices();
+        void CreateKeyboardDevice();
 
-        void CreateInjectedDevices();
+        void CreateMouseDevice(EInputSource source);
 
         void CreateInputMapping();
 

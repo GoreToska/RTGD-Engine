@@ -79,6 +79,7 @@ add_library(Engine SHARED
         Include/Input/MouseDevice.h
         Source/Platform/Windows/EmbeddedWindowsWindow.cpp
         Include/Platform/Windows/EmbeddedWindowsWindow.h
+        Include/Input/PhysicalKeyMap.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)

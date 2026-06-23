@@ -5,6 +5,7 @@
 #include "Platform/Linux/LinuxPlatformWindow.h"
 #if defined(__linux__)
 #include <X11/extensions/Xfixes.h>
+#include <X11/XKBlib.h>
 
 namespace RTGDEngine {
     bool LinuxPlatformWindow::Create(const WindowDesc &desc) {
@@ -30,6 +31,10 @@ namespace RTGDEngine {
                      ExposureMask | KeyPressMask | StructureNotifyMask | KeyReleaseMask | ButtonPressMask |
                      ButtonReleaseMask | PointerMotionMask);
         XMapWindow(m_display, m_window);
+
+        Bool supported;
+        XkbSetDetectableAutoRepeat(m_display, True, &supported);
+
         return true;
     }
 
