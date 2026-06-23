@@ -4,22 +4,22 @@
 
 #include "Input/InputSystem.h"
 
+#include "Input/KeyboardDevice.h"
+#include "Input/MouseDevice.h"
+#include "Input/PhysicalKeyMap.h"
+#include "Platform/IPlatformWindow.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine
-{
-    void InputSystem::Initialize(HWND hwnd, const int width, const int height)
-    {
-        m_hwnd = hwnd;
-        m_manager.SetDisplaySize(width, height);
+#ifdef _WIN32
+#include <Windows.h>
+#include <vector>
+#elif defined(__linux__)
+#include <X11/Xlib.h>
+#endif
 
-        m_keyboard = m_manager.CreateDevice<gainput::InputDeviceKeyboard>();
-        m_mouse = m_manager.CreateDevice<gainput::InputDeviceMouse>();
-        m_mouseRaw = m_manager.CreateDevice<gainput::InputDeviceMouse>(
-            gainput::InputDevice::AutoIndex,
-            gainput::InputDevice::DV_RAW);
-
-        m_map = std::make_unique<gainput::InputMap>(m_manager);
+namespace RTGDEngine {
+    void InputSystem::CreateInputMapping() {
+        m_map = std::make_unique<InputMap>(m_manager);
 
         using A = EInputAction;
         m_map->MapBool(ID(A::MoveForward), m_keyboard, gainput::KeyW);
@@ -34,151 +34,193 @@ namespace RTGDEngine
         m_map->MapBool(ID(A::MouseRight), m_mouse, gainput::MouseButtonRight);
         m_map->MapFloat(ID(A::LookX), m_mouse, gainput::MouseAxisX);
         m_map->MapFloat(ID(A::LookY), m_mouse, gainput::MouseAxisY);
-        m_map->MapFloat(ID(A::DeltaX), m_mouseRaw, gainput::MouseAxisX);
-        m_map->MapFloat(ID(A::DeltaY), m_mouseRaw, gainput::MouseAxisY);
-
-        RAWINPUTDEVICE rid;
-        rid.usUsagePage = 0x01;
-        rid.usUsage = 0x02;
-        rid.dwFlags = RIDEV_INPUTSINK;
-        rid.hwndTarget = hwnd;
-
-        if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
-            LogError("Failed to register Raw Input: {}", GetLastError());
-        else
-            LogInfo("Raw Input registered for HWND: {}", (void*)hwnd);
-
-        LogInfo("InputSystem initialized ({}x{})", width, height);
     }
 
-    void InputSystem::MoveMouseBack()
-    {
-        if (m_mouseCaptured)
-        {
-            SetCursorPos(m_savedMousePos.x, m_savedMousePos.y);
+    // TODO: need to initialize once and just switch focus of windows
+    void InputSystem::InitializeInputForWindow(IPlatformWindow *handle) {
+        m_manager.SetDisplaySize(handle->GetHandle().width, handle->GetHandle().height);
+
+        CreateKeyboardDevice();
+        CreateMouseDevice(handle->GetInputSource());
+
+        CreateInputMapping();
+
+        LogInfo("InputSystem initialized ({}x{})", handle->GetHandle().width, handle->GetHandle().height);
+    }
+
+    void InputSystem::AddWindowHandle(IPlatformWindow *window) {
+        // TODO: add to vector of current windows
+
+        m_platformWindow = window;
+
+        window->OnNativeEvent = [this](const NativeWindowEvent &event) {
+            this->HandleNativeEvent(event);
+        };
+
+        InitializeInputForWindow(window);
+    }
+
+    void InputSystem::HandleNativeEvent(const NativeWindowEvent &event) {
+#ifdef _WIN32
+        switch (event.Msg) {
+            case WM_KEYDOWN:
+            case WM_SYSKEYDOWN:
+            case WM_KEYUP:
+            case WM_SYSKEYUP: {
+                const bool down = (event.Msg == WM_KEYDOWN || event.Msg == WM_SYSKEYDOWN);
+                const unsigned sc = (event.LParam >> 16) & 0xFF;
+                const bool ext = (event.LParam >> 24) & 1;
+                gainput::Key key;
+                if (PhysicalToGainput(sc, ext, key)) InjectKey(key, down);
+                return;
+            }
+        }
+#elif defined(__linux__)
+        auto *xe = static_cast<XEvent *>(event.XEvent);
+        if (xe->type == KeyPress || xe->type == KeyRelease) {
+            const bool down = (xe->type == KeyPress);
+            const int evdev = static_cast<int>(xe->xkey.keycode) - 8;
+
+            if (Key key; PhysicalToGainput(evdev, key))
+                InjectKey(key, down);
+
+            return;
+        }
+        m_manager.HandleEvent(*xe);
+#endif
+    }
+
+    void InputSystem::MoveMouseBack() {
+        if (m_mouseCaptured) {
+            m_platformWindow->CenterCursor();
         }
     }
 
-    void InputSystem::Update()
-    {
+    void InputSystem::CalculateMouseDelta() {
+        if (m_ignoreNextDelta) {
+            m_mouseDeltaX = 0.0f;
+            m_mouseDeltaY = 0.0f;
+            m_ignoreNextDelta = false;
+        } else {
+            // if the mouse is captured, it is always at the center of the screen, so to calc delta we need to subtract half screen from current mouse pos
+            m_mouseDeltaX = m_currentMouseX - 0.5f * static_cast<float>(m_platformWindow->GetWidth());
+            m_mouseDeltaY = m_currentMouseY - 0.5f * static_cast<float>(m_platformWindow->GetHeight());
+        }
+    }
+
+    void InputSystem::Update() {
         m_manager.Update();
 
-        if (IsPressed(EInputAction::MouseRight))
-        {
+        if (IsPressed(EInputAction::MouseRight)) {
             CaptureMouse(true);
         }
 
         if (IsReleased(EInputAction::MouseRight) ||
-            IsPressed(EInputAction::Escape))
-        {
+            IsPressed(EInputAction::Escape)) {
             CaptureMouse(false);
+        }
+
+        if (!m_platformWindow)
+            return;
+
+        // Actual mouse position in pixels
+        m_currentMouseX = m_map->GetFloat(ID(EInputAction::LookX)) * static_cast<float>(m_platformWindow->GetWidth());
+        m_currentMouseY = m_map->GetFloat(ID(EInputAction::LookY)) * static_cast<float>(m_platformWindow->GetHeight());
+
+        if (IsMouseCaptured()) {
+            CalculateMouseDelta();
+            m_platformWindow->CenterCursor();
         }
     }
 
-    void InputSystem::PostUpdate()
-    {
+    void InputSystem::PostUpdate() {
         m_mouseDeltaX = 0;
         m_mouseDeltaY = 0;
     }
 
-    void InputSystem::Resize(const int width, const int height)
-    {
+    void InputSystem::Resize(const int width, const int height) {
         m_manager.SetDisplaySize(width, height);
     }
 
-    void InputSystem::HandleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-    {
-        m_manager.HandleMessage({hwnd, msg, wParam, lParam});
-
-        if (msg == WM_INPUT)
-        {
-            ProcessRawMouseInput(lParam);
-        }
-    }
-
-    void InputSystem::ProcessRawMouseInput(LPARAM lParam)
-    {
-        UINT size = 0;
-        UINT result = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
-                                      RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER));
-
-        if (size == 0)
-            return;
-
-        std::vector<BYTE> buffer(size);
-        UINT bytesRead = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),
-                                         RID_INPUT, buffer.data(), &size, sizeof(RAWINPUTHEADER));
-
-        if (bytesRead != size)
-            return;
-
-        const auto* raw = reinterpret_cast<const RAWINPUT*>(buffer.data());
-
-        if (raw->header.dwType != RIM_TYPEMOUSE)
-            return;
-
-        m_mouseDeltaX += static_cast<float>(raw->data.mouse.lLastX);
-        m_mouseDeltaY += static_cast<float>(raw->data.mouse.lLastY);
-    }
-
-    bool InputSystem::IsDown(const EInputAction action) const
-    {
+    bool InputSystem::IsDown(const EInputAction action) const {
         return m_map->GetBool(ID(action));
     }
 
-    bool InputSystem::IsPressed(const EInputAction action) const
-    {
+    bool InputSystem::IsPressed(const EInputAction action) const {
         return m_map->GetBoolIsNew(ID(action));
     }
 
-    bool InputSystem::IsReleased(const EInputAction action) const
-    {
+    bool InputSystem::IsReleased(const EInputAction action) const {
         return m_map->GetBoolWasDown(ID(action));
     }
 
-    float InputSystem::GetAxis(EInputAction action) const
-    {
+    float InputSystem::GetAxis(EInputAction action) const {
         return m_map->GetFloat(ID(action));
     }
 
-    bool InputSystem::IsMouseCaptured() const
-    {
+    bool InputSystem::IsMouseCaptured() const {
         return m_mouseCaptured;
     }
 
-    float InputSystem::GetMouseDeltaX() const
-    {
+    float InputSystem::GetMouseDeltaX() const {
         return m_mouseDeltaX;
     }
 
-    float InputSystem::GetMouseDeltaY() const
-    {
+    float InputSystem::GetMouseDeltaY() const {
         return m_mouseDeltaY;
     }
 
-    void InputSystem::CaptureMouse(const bool capture)
-    {
+    void InputSystem::InjectKey(gainput::Key key, bool down) const {
+        if (m_injectKeyboard)
+            m_injectKeyboard->InjectButton(key, down);
+    }
+
+    void InputSystem::InjectMouseButton(gainput::MouseButton button, bool down) const {
+        if (m_injectMouseButton)
+            m_injectMouseButton->InjectButton(button, down);
+    }
+
+    void InputSystem::InjectMousePosition(float normX, float normY) const {
+        if (!m_injectMouseAxis) return;
+
+        m_injectMouseAxis->InjectAxis(gainput::MouseAxisX, normX);
+        m_injectMouseAxis->InjectAxis(gainput::MouseAxisY, normY);
+    }
+
+    void InputSystem::CreateKeyboardDevice() {
+        m_keyboard = m_manager.CreateDevice<KeyboardDevice>();
+        m_injectKeyboard = dynamic_cast<IInjectableButton *>(m_manager.GetDevice(m_keyboard));
+    }
+
+    void InputSystem::CreateMouseDevice(EInputSource source) {
+        switch (source) {
+            case EInputSource::NativeEvents:
+                m_mouse = m_manager.CreateDevice<gainput::InputDeviceMouse>();
+                break;
+            case EInputSource::Injected:
+                m_mouse = m_manager.CreateDevice<MouseDevice>();
+                m_injectMouseButton = dynamic_cast<IInjectableButton *>(m_manager.GetDevice(m_mouse));
+                m_injectMouseAxis = dynamic_cast<IInjectableAxis *>(m_manager.GetDevice(m_mouse));
+                break;
+        }
+    }
+
+    void InputSystem::CaptureMouse(const bool capture) {
         if (m_mouseCaptured == capture)
             return;
 
         m_mouseCaptured = capture;
 
-        if (capture)
-        {
-            SetCapture(m_hwnd);
-            ShowCursor(FALSE);
+        if (!m_platformWindow) return;
 
-            RECT rect;
-            GetClientRect(m_hwnd, &rect);
-            ClientToScreen(m_hwnd, reinterpret_cast<POINT*>(&rect.left));
-            ClientToScreen(m_hwnd, reinterpret_cast<POINT*>(&rect.right));
-            ClipCursor(&rect);
-        }
-        else
-        {
-            ReleaseCapture();
-            ShowCursor(TRUE);
-            ClipCursor(nullptr);
+        if (capture) {
+            m_platformWindow->SetCursorVisible(false);
+            m_platformWindow->SetMouseCapture(true);
+            m_platformWindow->CenterCursor();
+            m_ignoreNextDelta = true;
+        } else {
+            m_platformWindow->SetCursorVisible(true);
+            m_platformWindow->SetMouseCapture(false);
         }
     }
 }

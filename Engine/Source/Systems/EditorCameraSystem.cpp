@@ -10,16 +10,13 @@
 #include "Input/InputSystem.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine
-{
-    void EditorCameraSystem::Update(const flecs::world& world, float deltaTime)
-    {
-        auto& input = InputSystem::Instance();
+namespace RTGDEngine {
+    void EditorCameraSystem::Update(const flecs::world &world, float deltaTime) {
+        auto &input = InputSystem::Instance();
 
-        world.each([&](EditorCameraMovementComponent& editorCam,
-                       VelocityComponent& velocity,
-                       TransformComponent& transform)
-        {
+        world.each([&](EditorCameraMovementComponent &editorCam,
+                       VelocityComponent &velocity,
+                       TransformComponent &transform) {
             velocity.Linear = {0.0f, 0.0f, 0.0f};
             velocity.Angular = {0.0f, 0.0f, 0.0f};
 
@@ -32,17 +29,14 @@ namespace RTGDEngine
             if (dx != 0.0f)
                 transform.Rotate(TransformComponent::GlobalUp, dx, World);
 
-            if (dy != 0.0f)
-            {
-                float currentPitch = std::asin(
-                    std::clamp(transform.GetForward().y, -1.0f, 1.0f));
+            if (dy != 0.0f) {
+                float desired = editorCam.CurrentPitch + dy;
+                float clamped = std::clamp(desired, -editorCam.PitchLimit, editorCam.PitchLimit);
+                float applied = clamped - editorCam.CurrentPitch;
+                editorCam.CurrentPitch = clamped;
 
-                float newPitch = std::clamp(
-                    currentPitch - dy,
-                    -Diligent::PI_F / 2.0f + 0.01f,
-                    Diligent::PI_F / 2.0f - 0.01f);
-
-                transform.Rotate(TransformComponent::GlobalRight, currentPitch - newPitch, Local);
+                if (applied != 0.0f)
+                    transform.Rotate(TransformComponent::GlobalRight, applied, Local);
             }
 
             float speed = editorCam.MovementSpeed;

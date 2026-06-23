@@ -227,7 +227,7 @@ namespace RTGDEngine
             {SHADER_TYPE_PIXEL, "g_Sampler", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
         };
         psoCI.PSODesc.ResourceLayout.Variables = vars;
-        psoCI.PSODesc.ResourceLayout.NumVariables = ARRAYSIZE(vars);
+        psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
@@ -308,7 +308,7 @@ namespace RTGDEngine
             {SHADER_TYPE_PIXEL, "g_Sampler", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
         };
         psoCI.PSODesc.ResourceLayout.Variables = vars;
-        psoCI.PSODesc.ResourceLayout.NumVariables = ARRAYSIZE(vars);
+        psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);

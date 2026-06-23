@@ -6,30 +6,30 @@
 
 #include <memory>
 #include <gainput/gainput.h>
-#include <Windows.h>
 
 #include "EInputAction.h"
 #include "Engine/EngineExport.h"
+#include "Platform/WindowEvent.h"
 #include "Tools/RTGDMacros.h"
 
-namespace RTGDEngine
-{
-    class ENGINE_API InputSystem
-    {
+namespace RTGDEngine {
+    class IInjectableAxis;
+    class IInjectableButton;
+    class IPlatformWindow;
+
+    class ENGINE_API InputSystem {
         DECLARE_SINGLETON(InputSystem);
 
     public:
-        void Initialize(HWND hwnd, int width, int height);
+        void AddWindowHandle(IPlatformWindow *window);
+
+        void HandleNativeEvent(const NativeWindowEvent &event);
 
         void Update();
 
         void PostUpdate();
 
         void Resize(int width, int height);
-
-        void HandleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-        void ProcessRawMouseInput(LPARAM lParam);
 
         [[nodiscard]] bool IsDown(EInputAction action) const;
 
@@ -45,24 +45,46 @@ namespace RTGDEngine
 
         [[nodiscard]] float GetMouseDeltaY() const;
 
+        void InjectKey(gainput::Key key, bool down) const;
+
+        void InjectMouseButton(gainput::MouseButton button, bool down) const;
+
+        void InjectMousePosition(float normX, float normY) const;
+
     private:
+        void CreateKeyboardDevice();
+
+        void CreateMouseDevice(EInputSource source);
+
+        void CreateInputMapping();
+
+        void InitializeInputForWindow(IPlatformWindow *handle);
+
         void CaptureMouse(bool capture);
 
         void MoveMouseBack();
 
-        gainput::InputManager m_manager;
+        void CalculateMouseDelta();
+
+        gainput::InputManager m_manager = {};
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
         gainput::DeviceId m_keyboard = gainput::InvalidDeviceId;
         gainput::DeviceId m_mouse = gainput::InvalidDeviceId;
-        gainput::DeviceId m_mouseRaw = gainput::InvalidDeviceId;
 
-        HWND m_hwnd = nullptr;
+        IInjectableButton *m_injectKeyboard = nullptr;
+        IInjectableButton *m_injectMouseButton = nullptr;
+        IInjectableAxis *m_injectMouseAxis = nullptr;
+
+        IPlatformWindow *m_platformWindow = nullptr;
+
         bool m_mouseCaptured = false;
+        bool m_ignoreNextDelta = false;
 
-        float m_lastMouseX = 0.0f;
-        float m_lastMouseY = 0.0f;
+        float m_currentMouseX = 0.0f;
+        float m_currentMouseY = 0.0f;
         float m_mouseDeltaX = 0.0f;
         float m_mouseDeltaY = 0.0f;
-        POINT m_savedMousePos = {0, 0};
+
+        // TODO: add vector of current windows
     };
 }

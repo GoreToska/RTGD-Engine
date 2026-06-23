@@ -58,12 +58,34 @@ add_library(Engine SHARED
         Source/Tools/MetaTypes.cpp
         Source/Engine/InspectorExports.cpp
         Include/Engine/InspectorExports.h
+        Source/Platform/IPlatformWindow.cpp
+        Include/Platform/IPlatformWindow.h
+        Include/Platform/Linux/LinuxPlatformWindow.h
+        Source/Platform/Linux/LinuxPlatformWindow.cpp
+        Include/Platform/PlatformFactory.h
+        Source/Platform/PlatformFactory.cpp
+        Include/Platform/Windows/WindowsPlatformWindow.h
+        Source/Platform/Windows/WindowsPlatformWindow.cpp
+        Include/Platform/WindowHandle.h
+        Include/Platform/WindowEvent.h
+        Source/Platform/Linux/EmbeddedLinuxWindow.cpp
+        Include/Platform/Linux/EmbeddedLinuxWindow.h
+        Source/Input/KeyboardDevice.cpp
+        Include/Input/KeyboardDevice.h
+        Include/Input/InjectQueue.h
+        Source/Input/InjectQueue.cpp
+        Include/Input/IInjectable.h
+        Source/Input/MouseDevice.cpp
+        Include/Input/MouseDevice.h
+        Source/Platform/Windows/EmbeddedWindowsWindow.cpp
+        Include/Platform/Windows/EmbeddedWindowsWindow.h
+        Include/Input/PhysicalKeyMap.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
 
 target_include_directories(Engine PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/Include
         ${CMAKE_SOURCE_DIR}/ThirdParty/gainput/lib/include
         ${CMAKE_SOURCE_DIR}/ThirdParty/stb
 )
@@ -71,7 +93,6 @@ target_include_directories(Engine PUBLIC
 target_link_libraries(Engine PUBLIC
         Diligent-GraphicsEngineVk-shared
         Diligent-Common
-        Diligent-GraphicsEngineD3D12-shared
         Diligent-GraphicsTools
         flecs_static
         spdlog::spdlog
@@ -80,26 +101,38 @@ target_link_libraries(Engine PUBLIC
         enkiTS
 )
 
+if (WIN32)
+    target_link_libraries(Engine PUBLIC
+            Diligent-GraphicsEngineD3D12-shared
+    )
+elseif (UNIX AND NOT APPLE)
+    target_link_libraries(Engine PUBLIC
+            Diligent-GraphicsEngineVk-shared X11 Xi Xfixes
+    )
+endif ()
+
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
-add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:Engine>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Engine.dll"
+# TODO: make copy for new editor
+#[[if (WIN32)
+    add_custom_command(TARGET Engine POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Engine>
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Engine.dll"
 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_BINARY_DIR}/bin/GraphicsEngineD3D12_64d.dll"
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/GraphicsEngineD3D12_64d.dll"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/bin/GraphicsEngineD3D12_64d.dll"
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/GraphicsEngineD3D12_64d.dll"
 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:gainput>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:gainput>"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:gainput>
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:gainput>"
 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:assimp>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:assimp>"
-)
-
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:assimp>
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:assimp>"
+    )
+endif ()]]
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -115,6 +148,8 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMENT "Copying Assets to output directory"
 )
 
+# TODO: make copy for new editor
+#[[
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Shaders
@@ -122,9 +157,10 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMENT "Copying shaders to Editor directory"
 )
 
+# TODO: make copy for new editor
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Assets
         "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Assets"
         COMMENT "Copying assets to Editor directory"
-)
+)]]

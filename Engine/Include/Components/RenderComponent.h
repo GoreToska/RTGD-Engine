@@ -19,7 +19,7 @@ namespace RTGDEngine
     {
         bool IsVisible = true;
         bool CastShadows = true;
-        RenderLayer RenderLayer = RenderLayer::Opaque;
+        RenderLayer Layer = RenderLayer::Opaque;
 
         static void RegisterMeta(const flecs::world& world)
         {

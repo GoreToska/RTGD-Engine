@@ -1,6 +1,3 @@
-#include <Windows.h>
-#include <libloaderapi.h>
-
 #include "Engine/Engine.h"
 
 #include <filesystem>
@@ -15,6 +12,7 @@
 #include "Components/VelocityComponent.h"
 #include "Input/InputSystem.h"
 #include "JobSystem/JobSystem.h"
+#include "Platform/IPlatformWindow.h"
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
@@ -27,34 +25,37 @@
 #include "Systems/MovementSystem.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
 
-    bool Engine::Initialize(HWND hwnd)
-    {
-        m_hwnd = hwnd;
+    bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window) {
+        m_platformWindow = std::move(window);
+
         Logger::Instance().Initialize();
 
         JobSystem::Instance().Initialize();
 
         SceneManager::Instance().Initialize();
 
-        RECT rect;
-        GetClientRect(hwnd, &rect);
-        int width = rect.right - rect.left;
-        int height = rect.bottom - rect.top;
+        RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
+                                                m_platformWindow->GetHeight());
 
-        RTGDRenderSystem::Instance().Initialize(hwnd, width, height);
         RenderResourceManager::Instance().Initialize(RTGDRenderSystem::Instance().GetDevice(),
                                                      RTGDRenderSystem::Instance().GetContext());
 
-        InputSystem::Instance().Initialize(hwnd, width, height);
+        InputSystem::Instance().AddWindowHandle(m_platformWindow.get());
 
-        LogInfo("Engine initialized with HWND: {}", m_hwnd);
+        m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
+
+#ifdef _WIN32
+        LogInfo("Engine initialized with HWND: {}");
+#elif defined(__linux__)
+        LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
+#endif
 
         CameraComponent cam;
-        cam.AspectRatio = static_cast<float>(width) / static_cast<float>(height);
+        cam.AspectRatio = static_cast<float>(m_platformWindow->GetWidth()) / static_cast<float>(m_platformWindow->
+                              GetHeight());
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("EditorCamera")
                 .set(UUIDComponent{})
@@ -76,8 +77,7 @@ namespace RTGDEngine
             meshMat,
             ETextureSlot::Diffuse,
             true,
-            [meshMat](TextureHandle t)
-            {
+            [meshMat](TextureHandle t) {
                 RenderResourceManager::Instance().QueueTextureBind(meshMat, t);
                 LogInfo("Texture queued for binding → tex={} mat={}", t, meshMat);
             });
@@ -113,13 +113,12 @@ namespace RTGDEngine
             "Assets/Helmet/Default_AO.jpg",
             helmetMat, ETextureSlot::AO, false);
 
-        auto& entt = SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
+        auto entt = SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
                 .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
                 .set(RenderComponent{})
                 .set(MeshComponent{helmetMesh, helmetMat});
 
-        //entt.get_ref<TransformComponent>()->SetRotationEuler(30, 30, 30);
         entt.get_ref<TransformComponent>()->Rotation = {1, 1, 0, 1};
 
         MaterialHandle spheresMat = PipelineFactory::CreateMeshPipeline(
@@ -144,7 +143,7 @@ namespace RTGDEngine
                 .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
                 .set(RenderComponent{}).set(MeshComponent{spheresMesh, spheresMat});
 
-        
+
         // Light
         SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
                 .set(UUIDComponent{})
@@ -172,31 +171,24 @@ namespace RTGDEngine
         return true;
     }
 
-    void Engine::Run()
-    {
-    }
-
-    void Engine::Shutdown()
-    {
-        if (m_gameModule && m_destroyFunc)
-        {
+    void Engine::Shutdown() {
+        if (m_gameModule && m_destroyFunc) {
             m_destroyFunc(m_gameModule.release());
         }
 
-        if (m_gameDllHandle)
-        {
+        // TODO: kill game dll
+        /*if (m_gameDllHandle) {
             FreeLibrary(m_gameDllHandle);
             m_gameDllHandle = nullptr;
-        }
+        }*/
 
         RTGDRenderSystem::Instance().Shutdown();
     }
 
-    bool Engine::LoadGameModule(const std::string& dllPath)
-    {
-        m_gameDllHandle = LoadLibraryA(dllPath.c_str());
-        if (!m_gameDllHandle)
-        {
+    bool Engine::LoadGameModule(const std::string &dllPath) {
+        // TODO: load game library
+        /*m_gameDllHandle = LoadLibraryA(dllPath.c_str());
+        if (!m_gameDllHandle) {
             LogError("Failed to load DLL: {}", dllPath);
             return false;
         }
@@ -204,8 +196,7 @@ namespace RTGDEngine
         m_createFunc = reinterpret_cast<CreateGameModuleFunc>(GetProcAddress(m_gameDllHandle, "CreateGameModule"));
         m_destroyFunc = reinterpret_cast<DestroyGameModuleFunc>(GetProcAddress(m_gameDllHandle, "DestroyGameModule"));
 
-        if (!m_createFunc || !m_destroyFunc)
-        {
+        if (!m_createFunc || !m_destroyFunc) {
             LogError("Failed to get exported functions");
             FreeLibrary(m_gameDllHandle);
             m_gameDllHandle = nullptr;
@@ -215,12 +206,16 @@ namespace RTGDEngine
         m_gameModule.reset(m_createFunc());
         if (m_gameModule)
             m_gameModule->Initialize();
+            */
 
         return true;
     }
 
-    void Engine::Update(const float deltaTime)
-    {
+    bool Engine::PollEvents() const {
+        return m_platformWindow->PollEvents();
+    }
+
+    void Engine::Update(const float deltaTime) {
         JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
 
         UpdateSystems(SceneManager::Instance().GetActiveScene()->GetWorld(), deltaTime);
@@ -233,14 +228,13 @@ namespace RTGDEngine
         Render();
     }
 
-    void Engine::Render()
-    {
+    void Engine::Render() {
         RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetActiveScene()->GetWorld());
 
-        auto& rs = RTGDRenderSystem::Instance();
-        auto& device = rs.GetDevice();
-        auto& context = rs.GetContext();
-        auto& rm = RenderResourceManager::Instance();
+        auto &rs = RTGDRenderSystem::Instance();
+        auto &device = rs.GetDevice();
+        auto &context = rs.GetContext();
+        auto &rm = RenderResourceManager::Instance();
 
         rm.FlushMeshUploads(device);
         rm.FlushTextureUploads(device, context);
@@ -255,16 +249,22 @@ namespace RTGDEngine
             m_gameModule->Render();*/
     }
 
-    void Engine::CreateConsole()
-    {
+    void Engine::CreateConsole() {
+#ifdef _WIN32
         AllocConsole();
-        FILE* f;
+        FILE *f;
         freopen_s(&f, "CONOUT$", "w", stdout);
         freopen_s(&f, "CONOUT$", "w", stderr);
+#endif
     }
 
-    void Engine::UpdateSystems(const flecs::world& world, float deltaTime)
-    {
+    void Engine::Resize(int w, int h) const {
+        RTGDRenderSystem::Instance().Resize(w, h);
+        InputSystem::Instance().Resize(w, h);
+        m_platformWindow->SetSize(w, h);
+    }
+
+    void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {
         InputSystem::Instance().Update();
         CameraSystem::Update(world, deltaTime);
         EditorCameraSystem::Update(world, deltaTime);
@@ -273,8 +273,7 @@ namespace RTGDEngine
         LightSystem::Update(world);
     }
 
-    void Engine::PostUpdateSystems(const flecs::world& world, float deltaTime)
-    {
+    void Engine::PostUpdateSystems(const flecs::world &world, float deltaTime) {
         InputSystem::Instance().PostUpdate();
     }
 }

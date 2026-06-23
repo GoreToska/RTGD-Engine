@@ -3,7 +3,8 @@
 //
 
 #pragma once
-#include <assert.h>
+#include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <ios>
 #include <iosfwd>

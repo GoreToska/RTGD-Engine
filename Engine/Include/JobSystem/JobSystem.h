@@ -6,6 +6,7 @@
 
 #include "Engine/EngineExport.h"
 #include <functional>
+#include <memory>
 #include <mutex>
 
 #include "TaskScheduler.h"
@@ -37,8 +38,8 @@ namespace RTGDEngine
         JobScheduler& GetScheduler();
 
     private:
-        JobScheduler m_scheduler;
-        std::mutex m_tasksMutex;
+        JobScheduler m_scheduler = {};
+        std::mutex m_tasksMutex = {};
         std::vector<std::shared_ptr<JobHandle>> m_activeTasks = {};
     };
 } // RTGDEngine

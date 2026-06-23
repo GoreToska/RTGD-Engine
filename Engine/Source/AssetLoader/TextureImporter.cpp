@@ -5,6 +5,7 @@
 #include "AssetLoader/TextureImporter.h"
 
 #include <filesystem>
+#include <algorithm>
 
 #include "Tools/Logger.h"
 

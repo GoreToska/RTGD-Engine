@@ -11,52 +11,62 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Tools/Logger.h"
-
+#include "Platform/IPlatformWindow.h"
+#include "Platform/Linux/EmbeddedLinuxWindow.h"
+#include "Platform/PlatformFactory.h"
 
 using namespace RTGDEngine;
 
-extern "C"
-{
-bool Engine_Initialize(void* hwnd)
-{
-    return Engine::Instance().Initialize(static_cast<HWND>(hwnd));
+extern "C" {
+bool Engine_Initialize(void *nativeWindow, int width, int height) {
+    std::unique_ptr<IPlatformWindow> platform;
+    NativeWindowHandle windowHandle = {};
+#ifdef _WIN32
+    windowHandle.hwnd = nativeWindow;
+    windowHandle.hinstance = GetModuleHandle(nullptr);
+    platform = CreateEmbeddedPlatformWindow(windowHandle);
+#elif defined(__linux__)
+    windowHandle.window = reinterpret_cast<unsigned long>(nativeWindow);
+    windowHandle.width = width;
+    windowHandle.height = height;
+    platform = CreateEmbeddedPlatformWindow(windowHandle);
+#endif
+
+    return Engine::Instance().Initialize(std::move(platform));
 }
 
-void Engine_Update(float deltaTime)
-{
-    Engine::Instance().Update(deltaTime);
+void Engine_Update(float deltaTime) {
+    if (Engine::Instance().PollEvents())
+        Engine::Instance().Update(deltaTime);
 }
 
-void Engine_HandleMessage(void* hwnd, unsigned int msg, uintptr_t wParam, intptr_t lParam)
-{
-    InputSystem::Instance().HandleMessage(
-        static_cast<HWND>(hwnd), msg,
-        static_cast<WPARAM>(wParam),
-        static_cast<LPARAM>(lParam));
+void Engine_InjectKey(int key, bool down) {
+    InputSystem::Instance().InjectKey(static_cast<gainput::Key>(key), down);
 }
 
-void Engine_Resize(int w, int h)
-{
-    RTGDRenderSystem::Instance().Resize(w, h);
+void Engine_InjectMouseButton(int button, bool down) {
+    InputSystem::Instance().InjectMouseButton(static_cast<gainput::MouseButton>(button), down);
 }
 
-void Engine_Shutdown()
-{
+void Engine_InjectMousePosition(float normX, float normY) {
+    InputSystem::Instance().InjectMousePosition(normX, normY);
+}
+
+void Engine_Resize(int w, int h) {
+    Engine::Instance().Resize(w, h);
+}
+
+void Engine_Shutdown() {
     Engine::Instance().Shutdown();
 }
 
-void Engine_GetEntities(EntityCallback callback)
-{
+void Engine_GetEntities(EntityCallback callback) {
     auto scene = SceneManager::Instance().GetActiveScene();
     if (!scene || !callback)
         return;
 
-    auto& world = scene->GetWorld();
-
-    scene->GetWorld().each([&](flecs::entity e, UUIDComponent go)
-    {
-        if (e.name().length() > 0)
-        {
+    scene->GetWorld().each([&](flecs::entity e, UUIDComponent go) {
+        if (e.name().length() > 0) {
             LogInfo(e.name().c_str());
             callback(e.name().c_str(), e.id());
         }

@@ -4,7 +4,7 @@ Texture2D    g_Position : register(t2);
 Texture2D    g_PBR      : register(t3);
 SamplerState g_Sampler  : register(s0);
 
-static const uint MAX_DIRECTIONAL_LIGHTS = 4;
+static const uint MAX_DIRECTIONAL_LIGHTS = 1;
 static const uint MAX_POINT_LIGHTS       = 64;
 static const uint MAX_SPOT_LIGHTS        = 16;
 static const float PI                    = 3.14159265359;
@@ -26,7 +26,7 @@ struct SpotLightData
     float3 Position;  float InnerAngle;
     float3 Direction; float OuterAngle;
     float3 Color;     float Intensity;
-    float  Radius;    float3 _pad;
+    float  Radius;    float _pad0; float _pad1; float _pad2;
 };
 
 cbuffer LightConstants : register(b0)
