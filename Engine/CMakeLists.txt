@@ -113,7 +113,8 @@ endif ()
 
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
-if (WIN32)
+# TODO: make copy for new editor
+#[[if (WIN32)
     add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Engine>
@@ -131,7 +132,7 @@ if (WIN32)
             $<TARGET_FILE:assimp>
             "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:assimp>"
     )
-endif ()
+endif ()]]
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -147,6 +148,8 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMENT "Copying Assets to output directory"
 )
 
+# TODO: make copy for new editor
+#[[
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Shaders
@@ -154,9 +157,10 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMENT "Copying shaders to Editor directory"
 )
 
+# TODO: make copy for new editor
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Assets
         "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Assets"
         COMMENT "Copying assets to Editor directory"
-)
+)]]
