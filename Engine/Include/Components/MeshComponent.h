@@ -24,6 +24,13 @@ namespace RTGDEngine {
             flecs::component<MeshComponent>(world, "MeshComponent")
                     .member<MeshRef>("Mesh")
                     .member<MaterialRef>("Material");
+
+            world.observer<MeshComponent>()
+                    .event(flecs::OnSet)
+                    .each([](MeshComponent &m) {
+                        if (!m.Mesh.Path.empty())
+                            m.Mesh.Handle = AssetManager::Instance().GetMesh(m.Mesh.Path);
+                    });
         }
     };
 }

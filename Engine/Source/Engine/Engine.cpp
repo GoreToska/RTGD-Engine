@@ -16,7 +16,6 @@
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
-#include "Scene/RTGDEntityFactory.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Systems/CameraSystem.h"
