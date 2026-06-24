@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include "AssetLoader/AssetLoader.h"
+#include "AssetLoader/AssetManager.h"
 #include "Components/CameraComponent.h"
 #include "Components/UUIDComponent.h"
 #include "Components/LightComponent.h"
@@ -70,17 +70,10 @@ namespace RTGDEngine {
             RTGDRenderSystem::Instance().GetSwapChain(),
             "Shaders");
 
-        MeshHandle meshHandle = AssetLoader::Instance().LoadMeshAsync("Assets/BoxTextured.gltf");
+        MeshHandle meshHandle = AssetManager::Instance().GetMesh("Assets/BoxTextured.gltf");
 
-        AssetLoader::Instance().LoadTextureAsync(
-            "Assets/CesiumLogoFlat.png",
-            meshMat,
-            ETextureSlot::Diffuse,
-            true,
-            [meshMat](TextureHandle t) {
-                RenderResourceManager::Instance().QueueTextureBind(meshMat, t);
-                LogInfo("Texture queued for binding → tex={} mat={}", t, meshMat);
-            });
+        AssetManager::Instance().GetTexture("Assets/CesiumLogoFlat.png");
+        AssetManager::Instance().AssignTexture(meshMat, ETextureSlot::Diffuse, "Assets/CesiumLogoFlat.png", true);
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Cube")
                 .set(UUIDComponent{})
@@ -94,24 +87,22 @@ namespace RTGDEngine {
             "Shaders");
 
 
-        MeshHandle helmetMesh = AssetLoader::Instance()
-                .LoadMeshAsync("Assets/Helmet/DamagedHelmet.gltf");
+        MeshHandle helmetMesh = AssetManager::Instance().GetMesh("Assets/Helmet/DamagedHelmet.gltf");
 
-        AssetLoader::Instance().LoadTextureAsync(
-            "Assets/Helmet/Default_albedo.jpg",
-            helmetMat, ETextureSlot::Diffuse, true);
+        AssetManager::Instance().GetTexture("Assets/Helmet/Default_albedo.jpg");
+        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Diffuse, "Assets/Helmet/Default_albedo.jpg",
+                                               true);
 
-        AssetLoader::Instance().LoadTextureAsync(
-            "Assets/Helmet/Default_normal.jpg",
-            helmetMat, ETextureSlot::Normal, false);
+        AssetManager::Instance().GetTexture("Assets/Helmet/Default_normal.jpg");
+        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_normal.jpg",
+                                               true);
 
-        AssetLoader::Instance().LoadTextureAsync(
-            "Assets/Helmet/Default_metalRoughness.jpg",
-            helmetMat, ETextureSlot::MetallicRoughness, false);
+        AssetManager::Instance().GetTexture("Assets/Helmet/Default_metalRoughness.jpg");
+        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::MetallicRoughness,
+                                               "Assets/Helmet/Default_metalRoughness.jpg", true);
 
-        AssetLoader::Instance().LoadTextureAsync(
-            "Assets/Helmet/Default_AO.jpg",
-            helmetMat, ETextureSlot::AO, false);
+        AssetManager::Instance().GetTexture("Assets/Helmet/Default_AO.jpg");
+        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_AO.jpg", true);
 
         auto entt = SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
                 .set(UUIDComponent{})
@@ -127,16 +118,15 @@ namespace RTGDEngine {
             "Shaders");
 
 
-        MeshHandle spheresMesh = AssetLoader::Instance()
-                .LoadMeshAsync("Assets/PBRTest/MetalRoughSpheres.gltf");
+        MeshHandle spheresMesh = AssetManager::Instance().GetMesh("Assets/PBRTest/MetalRoughSpheres.gltf");
 
-        AssetLoader::Instance().LoadTextureAsync(
-            "Assets/PBRTest/Spheres_BaseColor.png",
-            spheresMat, ETextureSlot::Diffuse, true);
+        AssetManager::Instance().GetTexture("Assets/PBRTest/Spheres_BaseColor.png");
+        AssetManager::Instance().AssignTexture(spheresMat, ETextureSlot::Diffuse,
+                                               "Assets/PBRTest/Spheres_BaseColor.png", true);
 
-        AssetLoader::Instance().LoadTextureAsync(
-            "Assets/PBRTest/Spheres_MetalRough.png",
-            spheresMat, ETextureSlot::MetallicRoughness, true);
+        AssetManager::Instance().GetTexture("Assets/PBRTest/Spheres_MetalRough.png");
+        AssetManager::Instance().AssignTexture(spheresMat, ETextureSlot::MetallicRoughness,
+                                               "Assets/PBRTest/Spheres_MetalRough.png", true);
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Spheres")
                 .set(UUIDComponent{})

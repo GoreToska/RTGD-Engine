@@ -5,20 +5,25 @@
 #pragma once
 #include "Buffer.h"
 #include "RefCntAutoPtr.hpp"
+#include "AssetLoader/AssetManager.h"
+#include "AssetLoader/Refs/AssetRef.h"
 #include "Render/RenderHandle.h"
 
-namespace RTGDEngine
-{
-    struct MeshComponent
-    {
-        MeshHandle meshHandle = INVALID_MESH_HANDLE;
-        MaterialHandle materialHandle = INVALID_MESH_HANDLE;
+namespace RTGDEngine {
+    struct MeshComponent {
+        MeshRef Mesh;
+        MaterialRef Material;
 
-        static void RegisterMeta(const flecs::world& world)
-        {
+        MeshComponent() = default;
+
+        MeshComponent(const MeshRef &meshRef, const MaterialRef &material)
+            : Mesh(meshRef), Material(material) {
+        }
+
+        static void RegisterMeta(const flecs::world &world) {
             flecs::component<MeshComponent>(world, "MeshComponent")
-                    .member<MeshHandle>("MeshHandle")
-                    .member<MaterialHandle>("MaterialHandle");
+                    .member<MeshRef>("Mesh")
+                    .member<MaterialRef>("Material");
         }
     };
 }

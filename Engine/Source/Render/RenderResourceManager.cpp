@@ -9,16 +9,8 @@
 #include "Render/Vertex.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine
-{
-    RenderResourceManager& RenderResourceManager::Instance()
-    {
-        static RenderResourceManager instance;
-        return instance;
-    }
-
-    void RenderResourceManager::Initialize(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context)
-    {
+namespace RTGDEngine {
+    void RenderResourceManager::Initialize(Diligent::IRenderDevice &device, Diligent::IDeviceContext &context) {
         using namespace Diligent;
 
         m_device = &device;
@@ -90,24 +82,21 @@ namespace RTGDEngine
         LogInfo("Default normal texture created → handle {}", m_defaultNormalTexture);
     }
 
-    MeshHandle RenderResourceManager::RegisterMesh(const std::string& name, MeshData data)
-    {
+    MeshHandle RenderResourceManager::RegisterMesh(const std::string &name, MeshData data) {
         MeshHandle handle = static_cast<MeshHandle>(m_meshes.size());
         m_meshes.push_back(std::move(data));
         m_meshNames[name] = handle;
         return handle;
     }
 
-    MaterialHandle RenderResourceManager::RegisterMaterial(const std::string& name, MaterialData data)
-    {
+    MaterialHandle RenderResourceManager::RegisterMaterial(const std::string &name, MaterialData data) {
         MaterialHandle handle = static_cast<MaterialHandle>(m_materials.size());
         m_materials.push_back(std::move(data));
         m_materialNames[name] = handle;
         return handle;
     }
 
-    TextureHandle RenderResourceManager::RegisterTexture(const std::string& name, TextureData data)
-    {
+    TextureHandle RenderResourceManager::RegisterTexture(const std::string &name, TextureData data) {
         auto it = m_textureNames.find(name);
         if (it != m_textureNames.end())
             return it->second;
@@ -118,9 +107,8 @@ namespace RTGDEngine
         return handle;
     }
 
-    TextureHandle RenderResourceManager::RegisterTexture(const std::string& name, uint8_t r, uint8_t g, uint8_t b,
-                                                         uint8_t a)
-    {
+    TextureHandle RenderResourceManager::RegisterTexture(const std::string &name, uint8_t r, uint8_t g, uint8_t b,
+                                                         uint8_t a) {
         using namespace Diligent;
 
         if (auto it = m_textureNames.find(name); it != m_textureNames.end())
@@ -159,31 +147,34 @@ namespace RTGDEngine
         return RegisterTexture(name, std::move(data));
     }
 
-    const TextureData& RenderResourceManager::GetTexture(TextureHandle handle) const
-    {
+    const TextureData &RenderResourceManager::GetTexture(TextureHandle handle) const {
         return m_textures[handle];
     }
 
     void RenderResourceManager::QueueTextureUpload(TextureHandle handle, std::vector<uint8_t> pixels, uint32_t width,
-                                                   uint32_t height, uint32_t channels, bool isSRGB)
-    {
+                                                   uint32_t height, uint32_t channels, bool isSRGB) {
         std::lock_guard lock(m_textureUploadMutex);
         m_pendingTextureUploads.push_back({
             handle, std::move(pixels), width, height, channels, isSRGB
         });
     }
 
-    void RenderResourceManager::QueueTextureBind(MaterialHandle mat, TextureHandle tex, ETextureSlot slot)
-    {
+    void RenderResourceManager::QueueTextureBind(MaterialHandle mat, TextureHandle tex, ETextureSlot slot) {
+        if (tex < m_textures.size() && m_textures[tex].SRV) {
+            BindTextureToMaterial(mat, tex, slot);
+            return;
+        }
+
         std::lock_guard lock(m_bindMutex);
         m_pendingBinds.push_back({mat, tex, slot});
     }
 
-    void RenderResourceManager::FlushTextureUploads(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context)
-    {
+    void RenderResourceManager::FlushTextureUploads(Diligent::IRenderDevice &device,
+                                                    Diligent::IDeviceContext &context) {
         using namespace Diligent;
 
-        std::vector<PendingTextureUpload> uploads; {
+        std::vector<PendingTextureUpload> uploads;
+        {
             std::lock_guard lock(m_textureUploadMutex);
             uploads = std::move(m_pendingTextureUploads);
             m_pendingTextureUploads.clear();
@@ -192,8 +183,7 @@ namespace RTGDEngine
         if (uploads.empty())
             return;
 
-        for (auto& upload: uploads)
-        {
+        for (auto &upload: uploads) {
             TextureData data;
 
             TextureDesc texDesc;
@@ -217,8 +207,7 @@ namespace RTGDEngine
 
             device.CreateTexture(texDesc, &texData, &data.Texture);
 
-            if (!data.Texture)
-            {
+            if (!data.Texture) {
                 LogError("FlushTextureUploads: failed to create texture for handle {}",
                          upload.Handle);
                 continue;
@@ -245,8 +234,7 @@ namespace RTGDEngine
         }
     }
 
-    void RenderResourceManager::UpdateTexture(TextureHandle handle, TextureData data)
-    {
+    void RenderResourceManager::UpdateTexture(TextureHandle handle, TextureData data) {
         if (handle == INVALID_TEXTURE_HANDLE || handle >= m_textures.size())
             return;
         m_textures[handle] = std::move(data);
@@ -254,9 +242,8 @@ namespace RTGDEngine
 
     void RenderResourceManager::BindTexturesToMaterial(MaterialHandle matHandle, TextureHandle albedo,
                                                        TextureHandle normal, TextureHandle metallicRoughness,
-                                                       TextureHandle ao)
-    {
-        auto& mat = m_materials[matHandle];
+                                                       TextureHandle ao) {
+        auto &mat = m_materials[matHandle];
 
         mat.DiffuseTexture = albedo;
         mat.NormalTexture = normal;
@@ -265,17 +252,15 @@ namespace RTGDEngine
     }
 
     void RenderResourceManager::BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle,
-                                                      ETextureSlot slot)
-    {
+                                                      ETextureSlot slot) {
         if (matHandle == INVALID_MATERIAL_HANDLE || matHandle >= m_materials.size())
             return;
         if (texHandle == INVALID_TEXTURE_HANDLE || texHandle >= m_textures.size())
             return;
 
-        auto& mat = m_materials[matHandle];
+        auto &mat = m_materials[matHandle];
 
-        switch (slot)
-        {
+        switch (slot) {
             case ETextureSlot::Diffuse:
                 mat.DiffuseTexture = texHandle;
                 break;
@@ -294,51 +279,43 @@ namespace RTGDEngine
                 matHandle, static_cast<int>(slot), texHandle);
     }
 
-    void RenderResourceManager::RebindPendingMaterials(TextureHandle texHandle)
-    {
-        std::vector<PendingTextureBind> toProcess; {
+    void RenderResourceManager::RebindPendingMaterials(TextureHandle texHandle) {
+        std::vector<PendingTextureBind> toProcess;
+        {
             std::lock_guard lock(m_bindMutex);
-            for (auto it = m_pendingBinds.begin(); it != m_pendingBinds.end();)
-            {
-                if (it->TexHandle == texHandle)
-                {
+            for (auto it = m_pendingBinds.begin(); it != m_pendingBinds.end();) {
+                if (it->TexHandle == texHandle) {
                     toProcess.push_back(*it);
                     it = m_pendingBinds.erase(it);
-                }
-                else
+                } else
                     ++it;
             }
         }
 
-        for (auto& bind: toProcess)
+        for (auto &bind: toProcess)
             BindTextureToMaterial(bind.MatHandle, bind.TexHandle, bind.Slot);
     }
 
-    const MeshData& RenderResourceManager::GetMesh(MeshHandle handle) const
-    {
+    const MeshData &RenderResourceManager::GetMesh(MeshHandle handle) const {
         return m_meshes[handle];
     }
 
-    const MaterialData& RenderResourceManager::GetMaterial(MaterialHandle handle) const
-    {
+    const MaterialData &RenderResourceManager::GetMaterial(MaterialHandle handle) const {
         return m_materials[handle];
     }
 
-    MeshHandle RenderResourceManager::GetMeshByName(const std::string& name) const
-    {
+    MeshHandle RenderResourceManager::GetMeshByName(const std::string &name) const {
         auto it = m_meshNames.find(name);
         return it != m_meshNames.end() ? it->second : INVALID_MESH_HANDLE;
     }
 
-    MaterialHandle RenderResourceManager::GetMaterialByName(const std::string& name) const
-    {
+    MaterialHandle RenderResourceManager::GetMaterialByName(const std::string &name) const {
         auto it = m_materialNames.find(name);
         return it != m_materialNames.end() ? it->second : INVALID_MATERIAL_HANDLE;
     }
 
     void RenderResourceManager::QueueMeshUpload(MeshHandle handle, std::vector<VertexPNTUV> vertices,
-                                                std::vector<uint32_t> indices)
-    {
+                                                std::vector<uint32_t> indices) {
         std::lock_guard lock(m_uploadMutex);
         m_pendingUploads.push_back({
             handle,
@@ -349,11 +326,11 @@ namespace RTGDEngine
         LogInfo("RenderResourceManager: queued GPU upload → handle {}", handle);
     }
 
-    void RenderResourceManager::FlushMeshUploads(Diligent::IRenderDevice& device)
-    {
+    void RenderResourceManager::FlushMeshUploads(Diligent::IRenderDevice &device) {
         using namespace Diligent;
 
-        std::vector<PendingGPUUpload> uploads; {
+        std::vector<PendingGPUUpload> uploads;
+        {
             std::lock_guard lock(m_uploadMutex);
             uploads = std::move(m_pendingUploads);
             m_pendingUploads.clear();
@@ -362,10 +339,8 @@ namespace RTGDEngine
         if (uploads.empty())
             return;
 
-        for (auto& upload: uploads)
-        {
-            if (upload.Vertices.empty())
-            {
+        for (auto &upload: uploads) {
+            if (upload.Vertices.empty()) {
                 LogWarn("RenderResourceManager: empty vertices for handle {}", upload.Handle);
                 continue;
             }
@@ -386,8 +361,7 @@ namespace RTGDEngine
             device.CreateBuffer(vbDesc, &vbData, &data.VertexBuffer);
 
             // Index Buffer
-            if (!upload.Indices.empty())
-            {
+            if (!upload.Indices.empty()) {
                 data.IndexCount = static_cast<uint32_t>(upload.Indices.size());
 
                 BufferDesc ibDesc;
@@ -411,10 +385,8 @@ namespace RTGDEngine
         }
     }
 
-    void RenderResourceManager::UpdateMesh(MeshHandle handle, MeshData data)
-    {
-        if (handle == INVALID_MESH_HANDLE || handle >= m_meshes.size())
-        {
+    void RenderResourceManager::UpdateMesh(MeshHandle handle, MeshData data) {
+        if (handle == INVALID_MESH_HANDLE || handle >= m_meshes.size()) {
             LogError("RenderResourceManager::UpdateMesh — invalid handle {}", handle);
             return;
         }

@@ -12,35 +12,30 @@
 #include "RefCntAutoPtr.hpp"
 #include "RenderHandle.h"
 #include "Texture.h"
+#include "Vertex.h"
+#include "Tools/RTGDMacros.h"
 
 
-namespace Diligent
-{
+namespace Diligent {
     struct IRenderDevice;
 }
 
-namespace RTGDEngine
-{
-    struct VertexPNTUV;
-
-    enum class ETextureSlot : uint8_t
-    {
+namespace RTGDEngine {
+    enum class ETextureSlot : uint8_t {
         Diffuse,
         Normal,
         MetallicRoughness,
         AO
     };
 
-    struct MeshData
-    {
+    struct MeshData {
         Diligent::RefCntAutoPtr<Diligent::IBuffer> VertexBuffer;
         Diligent::RefCntAutoPtr<Diligent::IBuffer> IndexBuffer;
         uint32_t VertexCount = 0;
         uint32_t IndexCount = 0;
     };
 
-    struct MaterialData
-    {
+    struct MaterialData {
         Diligent::RefCntAutoPtr<Diligent::IPipelineState> PSO;
         Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> SRB;
 
@@ -54,22 +49,19 @@ namespace RTGDEngine
         float AO = 1.0f;
     };
 
-    struct PendingGPUUpload
-    {
+    struct PendingGPUUpload {
         MeshHandle Handle;
         std::vector<VertexPNTUV> Vertices;
         std::vector<uint32_t> Indices;
     };
 
-    struct TextureData
-    {
+    struct TextureData {
         Diligent::RefCntAutoPtr<Diligent::ITexture> Texture;
         Diligent::RefCntAutoPtr<Diligent::ITextureView> SRV;
         Diligent::RefCntAutoPtr<Diligent::ISampler> Sampler;
     };
 
-    struct PendingTextureUpload
-    {
+    struct PendingTextureUpload {
         TextureHandle Handle;
         std::vector<uint8_t> Pixels;
         uint32_t Width;
@@ -78,37 +70,35 @@ namespace RTGDEngine
         bool IsSRGB = true;
     };
 
-    struct PendingTextureBind
-    {
+    struct PendingTextureBind {
         MaterialHandle MatHandle;
         TextureHandle TexHandle;
         ETextureSlot Slot = ETextureSlot::Diffuse;
     };
 
-    class RenderResourceManager
-    {
+    class RenderResourceManager {
+        DECLARE_SINGLETON(RenderResourceManager);
+
     public:
-        static RenderResourceManager& Instance();
+        void Initialize(Diligent::IRenderDevice &device, Diligent::IDeviceContext &context);
 
-        void Initialize(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context);
+        MeshHandle RegisterMesh(const std::string &name, MeshData data);
 
-        MeshHandle RegisterMesh(const std::string& name, MeshData data);
+        MaterialHandle RegisterMaterial(const std::string &name, MaterialData data);
 
-        MaterialHandle RegisterMaterial(const std::string& name, MaterialData data);
+        TextureHandle RegisterTexture(const std::string &name, TextureData data);
 
-        TextureHandle RegisterTexture(const std::string& name, TextureData data);
+        TextureHandle RegisterTexture(const std::string &name, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
-        TextureHandle RegisterTexture(const std::string& name, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+        [[nodiscard]] const MeshData &GetMesh(MeshHandle handle) const;
 
-        [[nodiscard]] const MeshData& GetMesh(MeshHandle handle) const;
+        [[nodiscard]] const MaterialData &GetMaterial(MaterialHandle handle) const;
 
-        [[nodiscard]] const MaterialData& GetMaterial(MaterialHandle handle) const;
+        [[nodiscard]] const TextureData &GetTexture(TextureHandle handle) const;
 
-        [[nodiscard]] const TextureData& GetTexture(TextureHandle handle) const;
+        [[nodiscard]] MeshHandle GetMeshByName(const std::string &name) const;
 
-        [[nodiscard]] MeshHandle GetMeshByName(const std::string& name) const;
-
-        [[nodiscard]] MaterialHandle GetMaterialByName(const std::string& name) const;
+        [[nodiscard]] MaterialHandle GetMaterialByName(const std::string &name) const;
 
         void QueueMeshUpload(MeshHandle handle, std::vector<VertexPNTUV> vertices, std::vector<uint32_t> indices);
 
@@ -119,9 +109,9 @@ namespace RTGDEngine
 
         void QueueTextureBind(MaterialHandle mat, TextureHandle tex, ETextureSlot slot = ETextureSlot::Diffuse);
 
-        void FlushMeshUploads(Diligent::IRenderDevice& device);
+        void FlushMeshUploads(Diligent::IRenderDevice &device);
 
-        void FlushTextureUploads(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context);
+        void FlushTextureUploads(Diligent::IRenderDevice &device, Diligent::IDeviceContext &context);
 
         void UpdateMesh(MeshHandle handle, MeshData data);
 
@@ -138,29 +128,27 @@ namespace RTGDEngine
         TextureHandle GetDefaultNormalTextureHandle() const { return m_defaultNormalTexture; }
 
     private:
-        RenderResourceManager() = default;
-
         void RebindPendingMaterials(TextureHandle texHandle);
 
 
-        std::vector<MeshData> m_meshes;
-        std::vector<MaterialData> m_materials;
-        std::vector<TextureData> m_textures;
+        std::vector<MeshData> m_meshes = {};
+        std::vector<MaterialData> m_materials = {};
+        std::vector<TextureData> m_textures = {};
 
-        std::unordered_map<std::string, MeshHandle> m_meshNames;
-        std::unordered_map<std::string, MaterialHandle> m_materialNames;
-        std::unordered_map<std::string, TextureHandle> m_textureNames;
+        std::unordered_map<std::string, MeshHandle> m_meshNames = {};
+        std::unordered_map<std::string, MaterialHandle> m_materialNames = {};
+        std::unordered_map<std::string, TextureHandle> m_textureNames = {};
 
-        std::mutex m_textureUploadMutex;
-        std::mutex m_uploadMutex;
-        std::mutex m_bindMutex;
+        std::mutex m_textureUploadMutex = {};
+        std::mutex m_uploadMutex = {};
+        std::mutex m_bindMutex = {};
 
-        std::vector<PendingGPUUpload> m_pendingUploads;
-        std::vector<PendingTextureUpload> m_pendingTextureUploads;
-        std::vector<PendingTextureBind> m_pendingBinds;
+        std::vector<PendingGPUUpload> m_pendingUploads = {};
+        std::vector<PendingTextureUpload> m_pendingTextureUploads = {};
+        std::vector<PendingTextureBind> m_pendingBinds = {};
 
-        Diligent::IRenderDevice* m_device = nullptr;
-        Diligent::IDeviceContext* m_context = nullptr;
+        Diligent::IRenderDevice *m_device = nullptr;
+        Diligent::IDeviceContext *m_context = nullptr;
 
         TextureHandle m_defaultTexture = INVALID_TEXTURE_HANDLE;
         TextureHandle m_defaultNormalTexture = INVALID_TEXTURE_HANDLE;

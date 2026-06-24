@@ -5,8 +5,7 @@
 #pragma once
 #include <cstdint>
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     using MeshHandle = uint32_t;
     using MaterialHandle = uint32_t;
 
