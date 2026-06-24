@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Editor.ViewModels"
+             x:Class="Editor.Views.EditorView"
+             x:DataType="vm:EditorViewModel">
+
+    <TextBlock Text="Editor" />
+</UserControl>
