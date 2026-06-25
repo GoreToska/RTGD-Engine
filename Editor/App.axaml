@@ -15,8 +15,23 @@
                 <!-- Palette for Light theme variant -->
                 <ColorPaletteResources x:Key="Light" Accent="#8B5CF6" RegionColor="White" ErrorText="Red" />
                 <!-- Palette for Dark theme variant -->
-                <ColorPaletteResources x:Key="Dark" Accent="#8B5CF6" RegionColor="#0D0D0F" ErrorText="Yellow" />
+                <ColorPaletteResources x:Key="Dark"
+                                       Accent="#2DD4BF"
+                                       RegionColor="#0B0E14"
+                                       ErrorText="#F87171" />
             </FluentTheme.Palettes>
         </FluentTheme>
+        
+        <StyleInclude Source="avares://Editor/Shared/Themes/Splitter.axaml" />
     </Application.Styles>
+
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Editor/Shared/Themes/Colors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
 </Application>

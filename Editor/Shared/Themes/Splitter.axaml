@@ -1,0 +1,65 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="GridSplitter.editor-splitter">
+        <Setter Property="ClipToBounds" Value="False" />
+    </Style>
+
+    <Style Selector="GridSplitter.editor-splitter[ResizeDirection=Columns]">
+        <Setter Property="Width" Value="15" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Width="15" Background="Transparent">
+                    <Border
+                        x:Name="Line"
+                        Width="2"
+                        HorizontalAlignment="Center"
+                        Background="{StaticResource AccentSecondary}"
+                        Opacity="0">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition
+                                    Easing="CubicEaseOut"
+                                    Property="Opacity"
+                                    Duration="0:0:0.30" />
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="GridSplitter.editor-splitter[ResizeDirection=Rows]">
+        <Setter Property="Height" Value="15" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Height="15" Background="Transparent">
+                    <Border
+                        x:Name="Line"
+                        Height="2"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource AccentSecondary}"
+                        Opacity="0">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition
+                                    Easing="CubicEaseOut"
+                                    Property="Opacity"
+                                    Duration="0:0:0.30" />
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="GridSplitter.editor-splitter:pointerover /template/ Border#Line">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <Style Selector="GridSplitter.editor-splitter:pressed /template/ Border#Line">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+</Styles>
