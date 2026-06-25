@@ -125,7 +125,6 @@ namespace RTGDEngine {
                 .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
                 .set(RenderComponent{}).set(MeshComponent{{"Assets/PBRTest/MetalRoughSpheres.gltf"}, spheresMat});
 
-
         // Light
         SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
                 .set(UUIDComponent{})

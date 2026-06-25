@@ -12,6 +12,7 @@
 namespace RTGDEngine {
     static const MeshData emptyMesh = {};
     static const MaterialData emptyMaterial = {};
+    static const TextureData emptyTexture = {};
 
     void RenderResourceManager::Initialize(Diligent::IRenderDevice &device, Diligent::IDeviceContext &context) {
         using namespace Diligent;
@@ -86,28 +87,51 @@ namespace RTGDEngine {
     }
 
     MeshHandle RenderResourceManager::RegisterMesh(const std::string &name, MeshData data) {
-        MeshHandle handle = static_cast<MeshHandle>(m_meshes.size());
-        m_meshes.push_back(std::move(data));
-        m_meshNames[name] = handle;
-        return handle;
+        uint32_t index;
+
+        if (!m_meshFreeList.empty()) {
+            index = m_meshFreeList.back();
+            m_meshFreeList.pop_back();
+            m_meshes[index] = std::move(data);
+        } else {
+            index = static_cast<uint32_t>(m_meshes.size());
+            m_meshes.push_back(std::move(data));
+            m_meshGenerations.push_back(0);
+        }
+
+        return MeshHandle{index, m_meshGenerations[index]};
     }
 
     MaterialHandle RenderResourceManager::RegisterMaterial(const std::string &name, MaterialData data) {
-        MaterialHandle handle = static_cast<MaterialHandle>(m_materials.size());
-        m_materials.push_back(std::move(data));
-        m_materialNames[name] = handle;
-        return handle;
+        uint32_t index;
+
+        if (!m_materialFreeList.empty()) {
+            index = m_materialFreeList.back();
+            m_materialFreeList.pop_back();
+            m_materials[index] = std::move(data);
+        } else {
+            index = static_cast<uint32_t>(m_materials.size());
+            m_materials.push_back(std::move(data));
+            m_materialGenerations.push_back(0);
+        }
+
+        return MaterialHandle{index, m_materialGenerations[index]};
     }
 
     TextureHandle RenderResourceManager::RegisterTexture(const std::string &name, TextureData data) {
-        auto it = m_textureNames.find(name);
-        if (it != m_textureNames.end())
-            return it->second;
+        uint32_t index;
 
-        auto handle = static_cast<TextureHandle>(m_textures.size());
-        m_textures.push_back(std::move(data));
-        m_textureNames[name] = handle;
-        return handle;
+        if (!m_textureFreeList.empty()) {
+            index = m_textureFreeList.back();
+            m_textureFreeList.pop_back();
+            m_textures[index] = std::move(data);
+        } else {
+            index = static_cast<uint32_t>(m_textures.size());
+            m_textures.push_back(std::move(data));
+            m_textureGenerations.push_back(0);
+        }
+
+        return TextureHandle{index, m_textureGenerations[index]};
     }
 
     TextureHandle RenderResourceManager::RegisterTexture(const std::string &name, uint8_t r, uint8_t g, uint8_t b,
@@ -151,7 +175,11 @@ namespace RTGDEngine {
     }
 
     const TextureData &RenderResourceManager::GetTexture(TextureHandle handle) const {
-        return m_textures[handle];
+        if (handle.Index() >= m_textures.size() || m_textureGenerations[handle.Index()] != handle.Generation()) {
+            return emptyTexture;
+        }
+
+        return m_textures[handle.Index()];
     }
 
     void RenderResourceManager::QueueTextureUpload(TextureHandle handle, std::vector<uint8_t> pixels, uint32_t width,
@@ -163,7 +191,7 @@ namespace RTGDEngine {
     }
 
     void RenderResourceManager::QueueTextureBind(MaterialHandle mat, TextureHandle tex, ETextureSlot slot) {
-        if (tex < m_textures.size() && m_textures[tex].SRV) {
+        if (tex.Index() < m_textures.size() && m_textures[tex.Index()].SRV) {
             BindTextureToMaterial(mat, tex, slot);
             return;
         }
@@ -238,15 +266,25 @@ namespace RTGDEngine {
     }
 
     void RenderResourceManager::UpdateTexture(TextureHandle handle, TextureData data) {
-        if (handle == INVALID_TEXTURE_HANDLE || handle >= m_textures.size())
+        if (handle == INVALID_TEXTURE_HANDLE || handle.Index() >= m_textures.size() || m_textureGenerations[handle.
+                Index()] != handle.Generation()) {
+            LogError("Invalid handle {}", handle);
             return;
-        m_textures[handle] = std::move(data);
+        }
+
+        m_textures[handle.Index()] = std::move(data);
     }
 
     void RenderResourceManager::BindTexturesToMaterial(MaterialHandle matHandle, TextureHandle albedo,
                                                        TextureHandle normal, TextureHandle metallicRoughness,
                                                        TextureHandle ao) {
-        auto &mat = m_materials[matHandle];
+        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle.Index() >= m_materials.size() || m_materialGenerations[
+                matHandle.Index()] != matHandle.Generation()) {
+            LogError("Invalid handle {}", matHandle);
+            return;
+        }
+
+        auto &mat = m_materials[matHandle.Index()];
 
         mat.DiffuseTexture = albedo;
         mat.NormalTexture = normal;
@@ -256,12 +294,18 @@ namespace RTGDEngine {
 
     void RenderResourceManager::BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle,
                                                       ETextureSlot slot) {
-        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle >= m_materials.size())
+        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle.Index() >= m_materials.size() || m_materialGenerations[
+                matHandle.Index()] != matHandle.Generation()) {
+            LogError("Invalid handle {}", matHandle);
             return;
-        if (texHandle == INVALID_TEXTURE_HANDLE || texHandle >= m_textures.size())
+        }
+        if (texHandle == INVALID_TEXTURE_HANDLE || texHandle.Index() >= m_textures.size() || m_textureGenerations[
+                texHandle.Index()] != texHandle.Generation()) {
+            LogError("Invalid handle {}", texHandle);
             return;
+        }
 
-        auto &mat = m_materials[matHandle];
+        auto &mat = m_materials[matHandle.Index()];
 
         switch (slot) {
             case ETextureSlot::Diffuse:
@@ -300,19 +344,21 @@ namespace RTGDEngine {
     }
 
     const MeshData &RenderResourceManager::GetMesh(MeshHandle handle) const {
-        if (handle >= m_meshes.size()) {
-            LogError("Handle is greater than Meshes size.");
+        if (handle.Index() >= m_meshes.size() || m_meshGenerations[handle.Index()] != handle.Generation()) {
+            LogError("Mesh handle generation missmatch.");
             return emptyMesh;
         }
-        return m_meshes[handle];
+
+        return m_meshes[handle.Index()];
     }
 
     const MaterialData &RenderResourceManager::GetMaterial(MaterialHandle handle) const {
-        if (handle >= m_materials.size()) {
-            LogError("Handle is greater than Materials size.");
+        if (handle.Index() >= m_materials.size() || m_materialGenerations[handle.Index()] != handle.Generation()) {
+            LogError("Material handle generation missmatch.");
             return emptyMaterial;
         }
-        return m_materials[handle];
+
+        return m_materials[handle.Index()];
     }
 
     MeshHandle RenderResourceManager::GetMeshByName(const std::string &name) const {
@@ -334,7 +380,7 @@ namespace RTGDEngine {
             std::move(indices)
         });
 
-        LogInfo("RenderResourceManager: queued GPU upload → handle {}", handle);
+        LogInfo("RenderResourceManager: queued GPU upload - handle {}", handle);
     }
 
     void RenderResourceManager::FlushMeshUploads(Diligent::IRenderDevice &device) {
@@ -397,11 +443,12 @@ namespace RTGDEngine {
     }
 
     void RenderResourceManager::UpdateMesh(MeshHandle handle, MeshData data) {
-        if (handle == INVALID_MESH_HANDLE || handle >= m_meshes.size()) {
-            LogError("RenderResourceManager::UpdateMesh — invalid handle {}", handle);
+        if (handle == INVALID_MESH_HANDLE || handle.Index() >= m_meshes.size() || m_meshGenerations[handle.Index()] !=
+            handle.Generation()) {
+            LogError("Invalid handle {}", handle);
             return;
         }
 
-        m_meshes[handle] = std::move(data);
+        m_meshes[handle.Index()] = std::move(data);
     }
 } // RTGDEngine

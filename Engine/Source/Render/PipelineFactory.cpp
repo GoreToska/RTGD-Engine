@@ -35,7 +35,7 @@ namespace RTGDEngine
         if (!pVS)
         {
             LogError("Failed to create Triangle VS");
-            return INVALID_MESH_HANDLE;
+            return INVALID_MATERIAL_HANDLE;
         }
 
         RefCntAutoPtr<IShader> pPS;
@@ -47,7 +47,7 @@ namespace RTGDEngine
         if (!pPS)
         {
             LogError("Failed to create Triangle PS");
-            return INVALID_MESH_HANDLE;
+            return INVALID_MATERIAL_HANDLE;
         }
 
         GraphicsPipelineStateCreateInfo psoCI;
@@ -78,7 +78,7 @@ namespace RTGDEngine
         if (!data.PSO)
         {
             LogError("Failed to create Triangle PSO");
-            return INVALID_MESH_HANDLE;
+            return INVALID_MATERIAL_HANDLE;
         }
 
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
@@ -110,7 +110,7 @@ namespace RTGDEngine
         if (!pVS)
         {
             LogError("Failed to create Mesh VS");
-            return INVALID_MESH_HANDLE;
+            return INVALID_MATERIAL_HANDLE;
         }
 
         RefCntAutoPtr<IShader> pPS;
@@ -121,7 +121,7 @@ namespace RTGDEngine
         if (!pPS)
         {
             LogError("Failed to create Mesh PS");
-            return INVALID_MESH_HANDLE;
+            return INVALID_MATERIAL_HANDLE;
         }
 
         GraphicsPipelineStateCreateInfo psoCI;
@@ -150,7 +150,7 @@ namespace RTGDEngine
         if (!data.PSO)
         {
             LogError("Failed to create Mesh PSO");
-            return INVALID_MESH_HANDLE;
+            return INVALID_MATERIAL_HANDLE;
         }
 
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);

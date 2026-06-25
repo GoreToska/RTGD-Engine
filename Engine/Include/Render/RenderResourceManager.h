@@ -132,8 +132,16 @@ namespace RTGDEngine {
 
 
         std::vector<MeshData> m_meshes = {};
+        std::vector<uint32_t> m_meshGenerations = {};
+        std::vector<uint32_t> m_meshFreeList = {};
+
         std::vector<MaterialData> m_materials = {};
+        std::vector<uint32_t> m_materialGenerations = {};
+        std::vector<uint32_t> m_materialFreeList = {};
+
         std::vector<TextureData> m_textures = {};
+        std::vector<uint32_t> m_textureGenerations = {};
+        std::vector<uint32_t> m_textureFreeList = {};
 
         std::unordered_map<std::string, MeshHandle> m_meshNames = {};
         std::unordered_map<std::string, MaterialHandle> m_materialNames = {};

@@ -11,7 +11,7 @@ namespace RTGDEngine {
     template<typename AssetHandle>
     struct AssetRef {
         std::string Path;
-        AssetHandle Handle = AssetHandle(-1);
+        AssetHandle Handle = {};
 
         AssetRef() = default;
 
@@ -22,7 +22,7 @@ namespace RTGDEngine {
         }
 
         [[nodiscard]] bool IsResolved() const {
-            return Handle != AssetHandle(-1);
+            return Handle.IsValid();
         }
     };
 
