@@ -69,24 +69,19 @@ namespace RTGDEngine {
             RTGDRenderSystem::Instance().GetSwapChain(),
             "Shaders");
 
-        MeshHandle meshHandle = AssetManager::Instance().GetMesh("Assets/BoxTextured.gltf");
-
         AssetManager::Instance().GetTexture("Assets/CesiumLogoFlat.png");
         AssetManager::Instance().AssignTexture(meshMat, ETextureSlot::Diffuse, "Assets/CesiumLogoFlat.png", true);
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Cube")
                 .set(UUIDComponent{})
                 .set(TransformComponent{{2.0f, 0.0f, 0.0f}})
-                .set(MeshComponent{meshHandle, meshMat})
+                .set(MeshComponent{MeshRef{"Assets/BoxTextured.gltf"}, meshMat})
                 .set(RenderComponent{});
 
         MaterialHandle helmetMat = PipelineFactory::CreateMeshPipeline(
             RTGDRenderSystem::Instance().GetDevice(),
             RTGDRenderSystem::Instance().GetSwapChain(),
             "Shaders");
-
-
-        MeshHandle helmetMesh = AssetManager::Instance().GetMesh("Assets/Helmet/DamagedHelmet.gltf");
 
         AssetManager::Instance().GetTexture("Assets/Helmet/Default_albedo.jpg");
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Diffuse, "Assets/Helmet/Default_albedo.jpg",
@@ -107,7 +102,7 @@ namespace RTGDEngine {
                 .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
                 .set(RenderComponent{})
-                .set(MeshComponent{helmetMesh, helmetMat});
+                .set(MeshComponent{MeshRef{"Assets/Helmet/DamagedHelmet.gltf"}, MaterialRef{helmetMat}});
 
         entt.get_ref<TransformComponent>()->Rotation = {1, 1, 0, 1};
 
@@ -116,8 +111,6 @@ namespace RTGDEngine {
             RTGDRenderSystem::Instance().GetSwapChain(),
             "Shaders");
 
-
-        MeshHandle spheresMesh = AssetManager::Instance().GetMesh("Assets/PBRTest/MetalRoughSpheres.gltf");
 
         AssetManager::Instance().GetTexture("Assets/PBRTest/Spheres_BaseColor.png");
         AssetManager::Instance().AssignTexture(spheresMat, ETextureSlot::Diffuse,
@@ -130,7 +123,7 @@ namespace RTGDEngine {
         SceneManager::Instance().GetActiveScene()->CreateEntity("Spheres")
                 .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
-                .set(RenderComponent{}).set(MeshComponent{spheresMesh, spheresMat});
+                .set(RenderComponent{}).set(MeshComponent{{"Assets/PBRTest/MetalRoughSpheres.gltf"}, spheresMat});
 
 
         // Light

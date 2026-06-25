@@ -21,7 +21,7 @@ namespace RTGDEngine {
         AssetRef(AssetHandle handle) : Handle(handle) {
         }
 
-        bool IsResolved() {
+        [[nodiscard]] bool IsResolved() const {
             return Handle != AssetHandle(-1);
         }
     };

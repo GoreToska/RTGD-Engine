@@ -10,6 +10,14 @@
 #include "Render/RenderHandle.h"
 
 namespace RTGDEngine {
+    // Important!
+    // Never write MeshRef & MaterialRef handles like Mesh.Handle = MyHandle
+    // ECS-like setter should be used:
+    //      entity.set(MeshComponent{ MeshRef{"MyModel.gltf"}, MyMaterial);
+    // or in place:
+    //      e.get_ref<MeshComponent>()->Mesh.Path = "MyModel.gltf";
+    //      e.modified<MeshComponent>();   // this will emit OnSet
+
     struct MeshComponent {
         MeshRef Mesh;
         MaterialRef Material;
@@ -27,9 +35,10 @@ namespace RTGDEngine {
 
             world.observer<MeshComponent>()
                     .event(flecs::OnSet)
-                    .each([](MeshComponent &m) {
-                        if (!m.Mesh.Path.empty())
-                            m.Mesh.Handle = AssetManager::Instance().GetMesh(m.Mesh.Path);
+                    .each([](MeshComponent &mc) {
+                        auto &am = AssetManager::Instance();
+                        if (!mc.Mesh.Path.empty())
+                            mc.Mesh.Handle = am.GetMesh(mc.Mesh.Path);
                     });
         }
     };

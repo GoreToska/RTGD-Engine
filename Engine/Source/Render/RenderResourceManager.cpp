@@ -10,6 +10,9 @@
 #include "Tools/Logger.h"
 
 namespace RTGDEngine {
+    static const MeshData emptyMesh = {};
+    static const MaterialData emptyMaterial = {};
+
     void RenderResourceManager::Initialize(Diligent::IRenderDevice &device, Diligent::IDeviceContext &context) {
         using namespace Diligent;
 
@@ -297,10 +300,18 @@ namespace RTGDEngine {
     }
 
     const MeshData &RenderResourceManager::GetMesh(MeshHandle handle) const {
+        if (handle >= m_meshes.size()) {
+            LogError("Handle is greater than Meshes size.");
+            return emptyMesh;
+        }
         return m_meshes[handle];
     }
 
     const MaterialData &RenderResourceManager::GetMaterial(MaterialHandle handle) const {
+        if (handle >= m_materials.size()) {
+            LogError("Handle is greater than Materials size.");
+            return emptyMaterial;
+        }
         return m_materials[handle];
     }
 
