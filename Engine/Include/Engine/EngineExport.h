@@ -21,10 +21,13 @@
 
 #include <cstdint>
 
-typedef void (RTGD_CALLBACK*EntityCallback)(const char *name, uint64_t id);
+typedef void (RTGD_CALLBACK*EntityCallback)(const char* name, uint64_t id);
 
-extern "C" {
-ENGINE_API bool Engine_Initialize(void *nativeWindow, int width, int height);
+extern "C"
+{
+ENGINE_API bool Engine_Initialize(void* nativeWindow, int width, int height);
+
+ENGINE_API void Engine_Hello();
 
 ENGINE_API void Engine_Update(float deltaTime);
 

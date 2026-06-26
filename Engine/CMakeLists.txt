@@ -117,26 +117,25 @@ endif ()
 
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
-# TODO: make copy for new editor
-#[[if (WIN32)
+if (WIN32)
     add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Engine>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Engine.dll"
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.dll"
 
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_BINARY_DIR}/bin/GraphicsEngineD3D12_64d.dll"
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/GraphicsEngineD3D12_64d.dll"
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/GraphicsEngineD3D12_64d.dll"
 
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:gainput>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:gainput>"
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:gainput>"
 
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:assimp>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/$<TARGET_FILE_NAME:assimp>"
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:assimp>"
     )
-endif ()]]
+endif ()
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -152,19 +151,17 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMENT "Copying Assets to output directory"
 )
 
-# TODO: make copy for new editor
-#[[
+
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Shaders
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Shaders"
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Shaders"
         COMMENT "Copying shaders to Editor directory"
 )
 
-# TODO: make copy for new editor
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Assets
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net8.0-windows/Assets"
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Assets"
         COMMENT "Copying assets to Editor directory"
-)]]
+)
