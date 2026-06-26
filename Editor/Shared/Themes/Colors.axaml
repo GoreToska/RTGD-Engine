@@ -1,29 +1,27 @@
-<!-- TODO: Add support for light theme -->
-
 <ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!--  Backgrounds  -->
-    <Color x:Key="BgCanvas">#0B0E14</Color>
-    <Color x:Key="BgPanel">#12161F</Color>
-    <Color x:Key="BgPanelElevated">#181D28</Color>
-    <Color x:Key="BgIconRail">#0A0D12</Color>
-    <Color x:Key="BgToolbar">#0F1219</Color>
-    <Color x:Key="BgInput">#1A2030</Color>
-    <!--  Accents  -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <Color x:Key="BgCanvas">#D6E0E9</Color>
+            <Color x:Key="BgPanel">#F1F5F9</Color>
+            <Color x:Key="BgPanelElevated">#F1F5F9</Color>
+            <Color x:Key="BorderDefault">#D6E8FA</Color>
+            <Color x:Key="BgIconRail">#F1F5F9</Color>
+            <Color x:Key="BgToolbar">#F1F5F9</Color>
+            <Color x:Key="BgInput">#F1F5F9</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <Color x:Key="BgCanvas">#0B0E14</Color>
+            <Color x:Key="BgPanel">#12161F</Color>
+            <Color x:Key="BgPanelElevated">#181D28</Color>
+            <Color x:Key="BorderDefault">#2A3140</Color>
+            <Color x:Key="BgIconRail">#0A0D12</Color>
+            <Color x:Key="BgToolbar">#0F1219</Color>
+            <Color x:Key="BgInput">#1A2030</Color>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
     <Color x:Key="AccentPrimary">#2DD4BF</Color>
     <Color x:Key="AccentPrimaryHover">#5EEAD4</Color>
     <Color x:Key="AccentSecondary">#649ec4</Color>
     <Color x:Key="AccentTertiary">#86EFAC</Color>
-    <!--  Text  -->
-    <Color x:Key="TextPrimary">#F1F5F9</Color>
-    <Color x:Key="TextSecondary">#94A3B8</Color>
-    <Color x:Key="TextMuted">#64748B</Color>
-    <Color x:Key="TextAccent">#2DD4BF</Color>
-    <!--  Borders  -->
-    <Color x:Key="BorderSubtle">#1E2530</Color>
-    <Color x:Key="BorderDefault">#2A3140</Color>
-    <Color x:Key="BorderLight">#161b27</Color>
-    <!--  Brushes  -->
-    <SolidColorBrush x:Key="BgCanvasBrush" Color="{StaticResource BgCanvas}" />
-    <SolidColorBrush x:Key="BgPanelBrush" Color="{StaticResource BgPanel}" />
-    <SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimary}" />
 </ResourceDictionary>

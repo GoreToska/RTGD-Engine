@@ -1,0 +1,14 @@
+<UserControl
+    x:Class="Editor.Views.Panels.AssetBrowserPanel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Editor.ViewModels.Panels"
+    x:DataType="vm:AssetBrowserViewModel">
+
+    <Border
+        Background="{DynamicResource BgPanel}"
+        BorderBrush="{DynamicResource BorderDefault}"
+        BorderThickness="2">
+        <TextBlock Text="Asset Browser" />
+    </Border>
+</UserControl>
