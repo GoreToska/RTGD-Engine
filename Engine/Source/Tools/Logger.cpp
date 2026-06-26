@@ -19,6 +19,8 @@ namespace RTGDEngine
 
     void Logger::Initialize(const std::string& logFile)
     {
+        if (m_isInitialized) return;
+
         std::vector<spdlog::sink_ptr> sinks;
 
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();

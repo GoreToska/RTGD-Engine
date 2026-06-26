@@ -21,7 +21,13 @@ internal static class EngineNative
     private static extern void Engine_Shutdown();
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void Engine_Hello();
+    private static extern void Engine_InjectKey(int key, bool down);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void Engine_InjectMouseButton(int button, bool down);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void Engine_InjectMousePosition(float normX, float normY);
 
     public static bool Initialize(IntPtr nativeWindow, int width, int height) =>
         Engine_Initialize(nativeWindow, width, height);
@@ -35,5 +41,12 @@ internal static class EngineNative
     public static void Shutdown() =>
         Engine_Shutdown();
 
-    public static void Hello() => Engine_Hello();
+    public static void InjectKey(int key, bool isDown) =>
+        Engine_InjectKey(key, isDown);
+
+    public static void InjectMouseButton(int button, bool isDown) =>
+        Engine_InjectMouseButton(button, isDown);
+
+    public static void InjectMousePosition(float normalizedX, float normalizedY) =>
+        Engine_InjectMousePosition(normalizedX, normalizedY);
 }

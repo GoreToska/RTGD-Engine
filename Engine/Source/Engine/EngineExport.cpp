@@ -21,6 +21,8 @@ extern "C"
 {
 bool Engine_Initialize(void* nativeWindow, int width, int height)
 {
+    Logger::Instance().Initialize();
+
     std::unique_ptr<IPlatformWindow> platform;
     NativeWindowHandle windowHandle = {};
 #ifdef _WIN32
@@ -82,11 +84,5 @@ void Engine_GetEntities(EntityCallback callback)
             callback(e.name().c_str(), e.id());
         }
     });
-}
-
-void Engine_Hello()
-{
-    Logger::Instance().Initialize();
-    LogInfo("Hello world from engine!");
 }
 } // extern "C"

@@ -33,13 +33,13 @@ public class EngineViewportHost : NativeControlHost
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        TryInitializeEngine();
 
         if (!_initialized)
             return;
 
-        var w = Math.Max(1, (int)e.NewSize.Width);
-        var h = Math.Max(1, (int)e.NewSize.Height);
+        var dpi = TopLevel.GetTopLevel(this)?.RenderScaling;
+        var w = Math.Max(1, (int)(dpi * e.NewSize.Width)!);
+        var h = Math.Max(1, (int)(dpi * e.NewSize.Height)!);
         EngineNative.Resize(w, h);
     }
 
@@ -50,7 +50,7 @@ public class EngineViewportHost : NativeControlHost
 
         if (!OperatingSystem.IsWindows())
         {
-            Debug.WriteLine("EngineViewportHost: embedded engine is supported on Windows only.");
+            Console.WriteLine("EngineViewportHost: embedded engine is supported on Windows only.");
             return;
         }
 
@@ -63,13 +63,13 @@ public class EngineViewportHost : NativeControlHost
         {
             if (!EngineNative.Initialize(_controlHandle.Handle, w, h))
             {
-                Debug.WriteLine("EngineViewportHost: Engine_Initialize returned false.");
+                Console.WriteLine("EngineViewportHost: Engine_Initialize returned false.");
                 return;
             }
         }
         catch (DllNotFoundException ex)
         {
-            Debug.WriteLine($"EngineViewportHost: {ex.Message}");
+            Console.WriteLine($"EngineViewportHost: {ex.Message}");
             return;
         }
 
