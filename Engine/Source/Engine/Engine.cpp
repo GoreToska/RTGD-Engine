@@ -154,6 +154,11 @@ namespace RTGDEngine {
             entt.destruct();
         }, 3.0f, false);
 
+        TimerSystem::Instance().SetTimer([]() {
+            MeshHandle h = AssetManager::Instance().GetMesh("Assets/Helmet/DamagedHelmet.gltf");
+            LogInfo("Reused mesh handle = {}", h); // Handle(idx=1, gen=1)
+        }, 5.0f, false);
+
         return true;
     }
 
