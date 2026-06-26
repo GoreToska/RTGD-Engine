@@ -238,19 +238,19 @@ namespace RTGDEngine {
             m_gbuffer.DepthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
             RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
-        world.each([&](const MeshComponent &mesh,
+        world.each([&](const MeshComponent &meshComp,
                        const RenderComponent &render,
                        TransformComponent &transform) {
             if (!render.IsVisible)
                 return;
 
-            const MeshData &meshData = rm.GetMesh(mesh.meshHandle);
+            const MeshData &meshData = rm.GetMesh(meshComp.Mesh.Handle);
             const MaterialData &gbufMat = rm.GetMaterial(m_gbufferMaterial);
 
             if (!meshData.VertexBuffer || !gbufMat.PSO || !gbufMat.SRB)
                 return;
 
-            const MaterialData &objMat = rm.GetMaterial(mesh.materialHandle);
+            const MaterialData &objMat = rm.GetMaterial(meshComp.Material.Handle);
 
             auto bindTex = [&](const char *name, TextureHandle handle, TextureHandle fallback) {
                 TextureHandle h = (handle != INVALID_TEXTURE_HANDLE) ? handle : fallback;

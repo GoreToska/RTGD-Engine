@@ -35,8 +35,8 @@ add_library(Engine SHARED
         Include/Render/ConstBuffers.h
         Source/JobSystem/JobSystem.cpp
         Include/JobSystem/JobSystem.h
-        Source/AssetLoader/AssetLoader.cpp
-        Include/AssetLoader/AssetLoader.h
+        Source/AssetLoader/AssetManager.cpp
+        Include/AssetLoader/AssetManager.h
         Include/AssetLoader/MeshImporter.h
         Source/AssetLoader/MeshImporter.cpp
         Include/Tools/RTGDMacros.h
@@ -80,6 +80,10 @@ add_library(Engine SHARED
         Source/Platform/Windows/EmbeddedWindowsWindow.cpp
         Include/Platform/Windows/EmbeddedWindowsWindow.h
         Include/Input/PhysicalKeyMap.h
+        Include/AssetLoader/Refs/AssetRef.h
+        Source/AssetLoader/Refs/AssetRef.cpp
+        Source/Systems/TimerSystem.cpp
+        Include/Systems/TimerSystem.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
