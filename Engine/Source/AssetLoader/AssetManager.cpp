@@ -20,9 +20,11 @@ namespace RTGDEngine {
         {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end())
-                return it->second;
-
+            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end()) {
+                if (RenderResourceManager::Instance().IsAlive(it->second))
+                    return it->second;
+                m_meshByPath.erase(it);
+            }
 
             handle = RenderResourceManager::Instance().RegisterMesh(key, MeshData{});
             m_meshByPath[key] = handle;
@@ -59,8 +61,12 @@ namespace RTGDEngine {
         {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end())
-                return it->second;
+            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end()) {
+                if (RenderResourceManager::Instance().IsAlive(it->second))
+                    return it->second;
+                m_meshByPath.erase(it);
+            }
+
 
             handle = RenderResourceManager::Instance().RegisterMesh(absolutePath, MeshData{});
             m_meshByPath[key] = handle;
@@ -90,8 +96,11 @@ namespace RTGDEngine {
         {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end())
-                return it->second;
+            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end()) {
+                if (RenderResourceManager::Instance().IsAlive(it->second))
+                    return it->second;
+                m_textureByPath.erase(it);
+            }
 
             handle = RenderResourceManager::Instance().RegisterTexture(key, TextureData{});
             m_textureByPath[key] = handle;
@@ -126,9 +135,11 @@ namespace RTGDEngine {
         {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end())
-                return it->second;
-
+            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end()) {
+                if (RenderResourceManager::Instance().IsAlive(it->second))
+                    return it->second;
+                m_textureByPath.erase(it);
+            }
             handle = RenderResourceManager::Instance().RegisterTexture(absolutePath, TextureData{});
             m_textureByPath[key] = handle;
             m_textureHandleByPath[handle] = key;

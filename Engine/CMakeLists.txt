@@ -81,6 +81,7 @@ add_library(Engine SHARED
         Include/Platform/Windows/EmbeddedWindowsWindow.h
         Include/Input/PhysicalKeyMap.h
         Include/AssetLoader/Refs/AssetRef.h
+        Source/AssetLoader/Refs/AssetRef.cpp
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)

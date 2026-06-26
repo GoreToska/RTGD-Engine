@@ -87,13 +87,13 @@ namespace RTGDEngine {
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Diffuse, "Assets/Helmet/Default_albedo.jpg",
                                                true);
 
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_normal.jpg");
+        /*AssetManager::Instance().GetTexture("Assets/Helmet/Default_normal.jpg");
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_normal.jpg",
-                                               true);
+                                               true);*/
 
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_metalRoughness.jpg");
+        /*AssetManager::Instance().GetTexture("Assets/Helmet/Default_metalRoughness.jpg");
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::MetallicRoughness,
-                                               "Assets/Helmet/Default_metalRoughness.jpg", true);
+                                               "Assets/Helmet/Default_metalRoughness.jpg", true);*/
 
         AssetManager::Instance().GetTexture("Assets/Helmet/Default_AO.jpg");
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_AO.jpg", true);
@@ -219,6 +219,7 @@ namespace RTGDEngine {
 
         rm.FlushMeshUploads(device);
         rm.FlushTextureUploads(device, context);
+        rm.ProcessPendingDestroys();
 
 
         RTGDRenderSystem::Instance().SetActiveCameraCB(SceneManager::Instance().GetActiveScene()->GetWorld());

@@ -27,8 +27,9 @@ namespace RTGDEngine {
                     *data = value;
                 });
 
-        // MeshRef & MaterialRef are same
         flecs::component<MeshRef>(world, "AssetRef")
+                .member<std::string>("Path"); // handle is transient
+        flecs::component<MaterialRef>(world, "MaterialRef")
                 .member<std::string>("Path"); // handle is transient
 
         if (!MetaAlreadyRegistered(world, flecs::component<Float2>(world, "Float2")))

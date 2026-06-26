@@ -127,6 +127,26 @@ namespace RTGDEngine {
         TextureHandle GetDefaultTextureHandle() const { return m_defaultTexture; }
         TextureHandle GetDefaultNormalTextureHandle() const { return m_defaultNormalTexture; }
 
+        bool IsAlive(MeshHandle handle) const;
+
+        bool IsAlive(MaterialHandle handle) const;
+
+        bool IsAlive(TextureHandle handle) const;
+
+        void AcquireAsset(MeshHandle handle);
+
+        void ReleaseAsset(MeshHandle handle);
+
+        void AcquireAsset(MaterialHandle handle);
+
+        void ReleaseAsset(MaterialHandle handle);
+
+        void AcquireAsset(TextureHandle handle);
+
+        void ReleaseAsset(TextureHandle handle);
+
+        void ProcessPendingDestroys();
+
     private:
         void RebindPendingMaterials(TextureHandle texHandle);
 
@@ -134,14 +154,20 @@ namespace RTGDEngine {
         std::vector<MeshData> m_meshes = {};
         std::vector<uint32_t> m_meshGenerations = {};
         std::vector<uint32_t> m_meshFreeList = {};
+        std::vector<uint32_t> m_meshRefCounts = {};
+        std::vector<uint8_t> m_meshPendingDestroy = {};
 
         std::vector<MaterialData> m_materials = {};
         std::vector<uint32_t> m_materialGenerations = {};
         std::vector<uint32_t> m_materialFreeList = {};
+        std::vector<uint32_t> m_materialRefCounts = {};
+        std::vector<uint8_t> m_materialPendingDestroy = {};
 
         std::vector<TextureData> m_textures = {};
         std::vector<uint32_t> m_textureGenerations = {};
         std::vector<uint32_t> m_textureFreeList = {};
+        std::vector<uint32_t> m_textureRefCounts = {};
+        std::vector<uint8_t> m_texturePendingDestroy = {};
 
         std::unordered_map<std::string, MeshHandle> m_meshNames = {};
         std::unordered_map<std::string, MaterialHandle> m_materialNames = {};
@@ -150,10 +176,14 @@ namespace RTGDEngine {
         std::mutex m_textureUploadMutex = {};
         std::mutex m_uploadMutex = {};
         std::mutex m_bindMutex = {};
+        std::mutex m_lifetimeMutex = {};
 
         std::vector<PendingGPUUpload> m_pendingUploads = {};
         std::vector<PendingTextureUpload> m_pendingTextureUploads = {};
         std::vector<PendingTextureBind> m_pendingBinds = {};
+        std::vector<uint32_t> m_pendingMeshDestroys = {};
+        std::vector<uint32_t> m_pendingMaterialDestroys = {};
+        std::vector<uint32_t> m_pendingTextureDestroys = {};
 
         Diligent::IRenderDevice *m_device = nullptr;
         Diligent::IDeviceContext *m_context = nullptr;
