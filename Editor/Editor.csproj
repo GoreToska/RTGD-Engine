@@ -3,14 +3,26 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <!-- <ApplicationManifest>app.manifest</ApplicationManifest> -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <EngineBuildDir>$(MSBuildThisFileDirectory)..\build\bin\</EngineBuildDir>
   </PropertyGroup>
 
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
+
+  <!-- Copy native engine binaries when CMake build output exists -->
+  <!-- <ItemGroup Condition="Exists('$(EngineBuildDir)Engine.dll')">
+    <Content Include="$(EngineBuildDir)Engine.dll" Link="Engine.dll" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(EngineBuildDir)GraphicsEngineD3D12_64d.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(EngineBuildDir)GraphicsEngineD3D12_64d.dll')" />
+    <Content Include="$(EngineBuildDir)GraphicsEngineD3D12_64.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(EngineBuildDir)GraphicsEngineD3D12_64.dll')" />
+    <Content Include="$(EngineBuildDir)gainput.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(EngineBuildDir)gainput.dll')" />
+    <Content Include="$(EngineBuildDir)assimp-vc143-mt.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(EngineBuildDir)assimp-vc143-mt.dll')" />
+    <Content Include="$(EngineBuildDir)Shaders\**\*" CopyToOutputDirectory="PreserveNewest" DestinationFolder="Shaders\%(RecursiveDir)" />
+    <Content Include="$(EngineBuildDir)Assets\**\*" CopyToOutputDirectory="PreserveNewest" DestinationFolder="Assets\%(RecursiveDir)" />
+  </ItemGroup> -->
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.0.5" />

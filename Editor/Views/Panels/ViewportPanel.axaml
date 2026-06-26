@@ -2,6 +2,7 @@
     x:Class="Editor.Views.Panels.ViewportPanel"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Editor.Controls"
     xmlns:vm="using:Editor.ViewModels.Panels"
     x:DataType="vm:ViewportViewModel">
 
@@ -9,6 +10,6 @@
         Background="{DynamicResource BgCanvas}"
         BorderBrush="{DynamicResource BorderDefault}"
         BorderThickness="2,0">
-        <TextBlock Text="Viewport" />
+        <controls:EngineViewportHost />
     </Border>
 </UserControl>
