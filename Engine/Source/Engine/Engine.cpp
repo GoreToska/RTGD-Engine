@@ -22,6 +22,7 @@
 #include "Systems/EditorCameraSystem.h"
 #include "Systems/LightSystem.h"
 #include "Systems/MovementSystem.h"
+#include "Systems/TimerSystem.h"
 #include "Tools/Logger.h"
 
 namespace RTGDEngine {
@@ -87,13 +88,13 @@ namespace RTGDEngine {
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Diffuse, "Assets/Helmet/Default_albedo.jpg",
                                                true);
 
-        /*AssetManager::Instance().GetTexture("Assets/Helmet/Default_normal.jpg");
+        AssetManager::Instance().GetTexture("Assets/Helmet/Default_normal.jpg");
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_normal.jpg",
-                                               true);*/
+                                               true);
 
-        /*AssetManager::Instance().GetTexture("Assets/Helmet/Default_metalRoughness.jpg");
+        AssetManager::Instance().GetTexture("Assets/Helmet/Default_metalRoughness.jpg");
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::MetallicRoughness,
-                                               "Assets/Helmet/Default_metalRoughness.jpg", true);*/
+                                               "Assets/Helmet/Default_metalRoughness.jpg", true);
 
         AssetManager::Instance().GetTexture("Assets/Helmet/Default_AO.jpg");
         AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_AO.jpg", true);
@@ -148,6 +149,10 @@ namespace RTGDEngine {
                     .Intensity = 5.0f,
                     .Radius = 10.0f
                 });*/
+
+        TimerSystem::Instance().SetTimer([entt]() {
+            entt.destruct();
+        }, 3.0f, false);
 
         return true;
     }
@@ -248,6 +253,7 @@ namespace RTGDEngine {
 
     void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {
         InputSystem::Instance().Update();
+        TimerSystem::Instance().Update(deltaTime);
         CameraSystem::Update(world, deltaTime);
         EditorCameraSystem::Update(world, deltaTime);
         MovementSystem::Update(world, deltaTime);

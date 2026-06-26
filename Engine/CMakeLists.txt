@@ -82,6 +82,8 @@ add_library(Engine SHARED
         Include/Input/PhysicalKeyMap.h
         Include/AssetLoader/Refs/AssetRef.h
         Source/AssetLoader/Refs/AssetRef.cpp
+        Source/Systems/TimerSystem.cpp
+        Include/Systems/TimerSystem.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
