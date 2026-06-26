@@ -1,0 +1,11 @@
+<UserControl
+    x:Class="Editor.Views.Panels.InspectorPanel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Editor.ViewModels.Panels"
+    x:DataType="vm:InspectorViewModel">
+
+    <Border Background="{DynamicResource BgPanel}">
+        <TextBlock Text="Inspector" />
+    </Border>
+</UserControl>

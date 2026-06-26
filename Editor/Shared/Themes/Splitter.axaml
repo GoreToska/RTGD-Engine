@@ -13,7 +13,7 @@
                         x:Name="Line"
                         Width="2"
                         HorizontalAlignment="Center"
-                        Background="{StaticResource AccentSecondary}"
+                        Background="{DynamicResource AccentSecondary}"
                         Opacity="0">
                         <Border.Transitions>
                             <Transitions>
@@ -38,7 +38,7 @@
                         x:Name="Line"
                         Height="2"
                         VerticalAlignment="Center"
-                        Background="{StaticResource AccentSecondary}"
+                        Background="{DynamicResource AccentSecondary}"
                         Opacity="0">
                         <Border.Transitions>
                             <Transitions>

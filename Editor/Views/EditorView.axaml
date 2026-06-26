@@ -1,42 +1,29 @@
-<!-- TODO: Decompose this file into smaller files -->
-
 <UserControl
     x:Class="Editor.Views.EditorView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:panels="using:Editor.Views.Panels"
     xmlns:vm="using:Editor.ViewModels"
     x:DataType="vm:EditorViewModel">
 
     <Grid ColumnDefinitions="240, 0, *, 0, 320" RowDefinitions="*, 0, 200">
-
-        <!--  Hierarchy  -->
-        <Border
+        <panels:HierarchyPanel
             Grid.Row="0"
             Grid.Column="0"
-            Background="{StaticResource BgPanelBrush}" />
-
-        <!--  Viewport  -->
-        <Border
+            DataContext="{Binding Hierarchy}" />
+        <panels:ViewportPanel
             Grid.Row="0"
             Grid.Column="2"
-            Background="{StaticResource BgPanelBrush}"
-            BorderBrush="{StaticResource BorderDefault}"
-            BorderThickness="2,0" />
-
-        <!--  Inspector  -->
-        <Border
+            DataContext="{Binding Viewport}" />
+        <panels:InspectorPanel
             Grid.Row="0"
             Grid.Column="4"
-            Background="{StaticResource BgPanelBrush}" />
-
-        <!--  AssetBrowser  -->
-        <Border
+            DataContext="{Binding Inspector}" />
+        <panels:AssetBrowserPanel
             Grid.Row="2"
             Grid.Column="0"
             Grid.ColumnSpan="5"
-            Background="{StaticResource BgPanelBrush}"
-            BorderBrush="{StaticResource BorderDefault}"
-            BorderThickness="2" />
+            DataContext="{Binding AssetBrowser}" />
 
         <GridSplitter
             Grid.Row="0"
