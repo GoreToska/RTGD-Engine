@@ -5,11 +5,13 @@
 #include "Platform/Windows/WindowsPlatformWindow.h"
 #if defined(_WIN32)
 
-namespace RTGDEngine {
-    constexpr const char *kWindowClassName = "RTGDEngineWindow";
+namespace RTGDEngine
+{
+    constexpr const char* kWindowClassName = "RTGDEngineWindow";
 
 
-    bool WindowsPlatformWindow::Create(const WindowDesc &desc) {
+    bool WindowsPlatformWindow::Create(const WindowDesc& desc)
+    {
         m_hinstance = GetModuleHandle(nullptr);
 
         WNDCLASSEXA wc{};
@@ -22,7 +24,8 @@ namespace RTGDEngine {
         wc.lpszClassName = kWindowClassName;
 
         // Registering the same class twice is ok
-        if (!RegisterClassExA(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
+        if (!RegisterClassExA(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+        {
             return false;
         }
 
@@ -44,7 +47,8 @@ namespace RTGDEngine {
             this
         );
 
-        if (!m_hwnd) {
+        if (!m_hwnd)
+        {
             return false;
         }
 
@@ -53,20 +57,33 @@ namespace RTGDEngine {
         return true;
     }
 
-    bool WindowsPlatformWindow::PollEvents() {
-        MSG msg;
-        while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
+    bool WindowsPlatformWindow::PollEvents()
+    {
+        MSG msg = {};
+        while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT)
+            {
                 m_running = false;
                 break;
             }
+
+            if (OnNativeEvent)
+            {
+                NativeWindowEvent event{};
+                event.Hwnd = m_hwnd;
+                event.Msg = msg;
+                OnNativeEvent(event);
+            }
+
             TranslateMessage(&msg);
             DispatchMessageA(&msg);
         }
         return m_running;
     }
 
-    NativeWindowHandle WindowsPlatformWindow::GetHandle() const {
+    NativeWindowHandle WindowsPlatformWindow::GetHandle() const
+    {
         NativeWindowHandle handle;
         handle.hwnd = m_hwnd;
         handle.hinstance = m_hinstance;
@@ -75,23 +92,28 @@ namespace RTGDEngine {
         return handle;
     }
 
-    EInputSource WindowsPlatformWindow::GetInputSource() const {
+    EInputSource WindowsPlatformWindow::GetInputSource() const
+    {
         return EInputSource::NativeEvents;
     }
 
-    void WindowsPlatformWindow::Destroy() {
-        if (m_hwnd) {
+    void WindowsPlatformWindow::Destroy()
+    {
+        if (m_hwnd)
+        {
             DestroyWindow(m_hwnd);
             m_hwnd = nullptr;
         }
     }
 
-    void WindowsPlatformWindow::SetCursorVisible(const bool visible) {
-
+    void WindowsPlatformWindow::SetCursorVisible(const bool visible)
+    {
     }
 
-    void WindowsPlatformWindow::SetMouseCapture(const bool capture) {
-        if (capture) {
+    void WindowsPlatformWindow::SetMouseCapture(const bool capture)
+    {
+        if (capture)
+        {
             SetCapture(m_hwnd);
 
             RECT rc;
@@ -103,52 +125,54 @@ namespace RTGDEngine {
 
             RECT clip{topLeft.x, topLeft.y, bottomRight.x, bottomRight.y};
             ClipCursor(&clip);
-        } else {
+        }
+        else
+        {
             ReleaseCapture();
             ClipCursor(nullptr);
         }
     }
 
-    void WindowsPlatformWindow::CenterCursor() {
+    void WindowsPlatformWindow::CenterCursor()
+    {
         POINT center{m_width / 2, m_height / 2};
         ClientToScreen(m_hwnd, &center);
         SetCursorPos(center.x, center.y);
     }
 
-    LRESULT CALLBACK WindowsPlatformWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-        if (msg == WM_NCCREATE) {
-            auto *cs = reinterpret_cast<CREATESTRUCTA *>(lParam);
+    LRESULT CALLBACK WindowsPlatformWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    {
+        if (msg == WM_NCCREATE)
+        {
+            auto* cs = reinterpret_cast<CREATESTRUCTA*>(lParam);
             SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
             return DefWindowProcA(hwnd, msg, wParam, lParam);
         }
 
-        auto *self = reinterpret_cast<WindowsPlatformWindow *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-        if (!self) {
+        auto* self = reinterpret_cast<WindowsPlatformWindow*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+        if (!self)
+        {
             return DefWindowProcA(hwnd, msg, wParam, lParam);
         }
 
-        if (self->OnNativeEvent) {
-            NativeWindowEvent event{};
-            event.Hwnd = hwnd;
-            event.Msg = msg;
-            event.WParam = wParam;
-            event.LParam = lParam;
-            self->OnNativeEvent(event);
-        }
-
-        switch (msg) {
-            case WM_SIZE: {
+        switch (msg)
+        {
+            case WM_SIZE:
+            {
                 const int width = LOWORD(lParam);
                 const int height = HIWORD(lParam);
-                if (width > 0 && height > 0) {
+                if (width > 0 && height > 0)
+                {
                     self->m_width = width;
                     self->m_height = height;
-                    if (self->OnResize) self->OnResize(width, height);
+                    if (self->OnResize)
+                        self->OnResize(width, height);
                 }
                 break;
             }
             case WM_CLOSE:
-                if (self->OnClose) self->OnClose();
+                if (self->OnClose)
+                    self->OnClose();
                 self->m_running = false;
                 DestroyWindow(hwnd);
                 return 0;

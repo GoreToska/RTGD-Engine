@@ -4,18 +4,24 @@
 
 #pragma once
 
-struct NativeWindowEvent {
 #ifdef _WIN32
-    void *Hwnd;
-    unsigned Msg;
-    unsigned long long WParam;
-    unsigned long long LParam;
+#include <Windows.h>
 #elif __linux__
-    void *XEvent;
+
+#endif
+
+struct NativeWindowEvent
+{
+#ifdef _WIN32
+    void* Hwnd;
+    MSG Msg;
+#elif __linux__
+    void *XEvent; // TODO: change to XEvent type
 #endif
 };
 
-enum class EInputSource {
+enum class EInputSource
+{
     NativeEvents, // XEvent/MSG
     Injected // Injection by embedded host
 };
