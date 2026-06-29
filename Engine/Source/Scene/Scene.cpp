@@ -4,6 +4,8 @@
 
 #include "Scene/Scene.h"
 
+#include <fstream>
+
 #include "Components/SceneEntity.h"
 #include "Components/UUIDComponent.h"
 #include "Tools/Logger.h"
@@ -81,5 +83,24 @@ namespace RTGDEngine {
 
     void Scene::Clear() {
         m_world.delete_with(m_world.component<SceneEntity>());
+    }
+
+    void Scene::SaveToFile(const std::string &absolutePath) const {
+        std::ofstream f(absolutePath.c_str());
+        f << Serialize();
+        LogInfo("Saved to {}", absolutePath.c_str());
+    }
+
+    bool Scene::LoadFromFile(const std::string &absolutePath) {
+        std::ifstream f(absolutePath.c_str());
+        if (!f) {
+            LogError("Scene not found '{}'", absolutePath.c_str());
+            return false;
+        }
+
+        std::stringstream ss;
+        ss << f.rdbuf();
+        Deserialize(ss.str());
+        return true;
     }
 } // RTGDEngine

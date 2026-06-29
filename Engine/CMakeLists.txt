@@ -83,6 +83,7 @@ add_library(Engine SHARED
         Source/Systems/TimerSystem.cpp
         Include/Systems/TimerSystem.h
         Include/Components/SceneEntity.h
+        Include/AssetLoader/PathResolve.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)

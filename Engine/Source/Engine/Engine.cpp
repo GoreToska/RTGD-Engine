@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "AssetLoader/AssetManager.h"
+#include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/UUIDComponent.h"
 #include "Components/LightComponent.h"
@@ -53,7 +54,7 @@ namespace RTGDEngine {
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
 
-        CameraComponent cam;
+        /*CameraComponent cam;
         cam.AspectRatio = static_cast<float>(m_platformWindow->GetWidth()) / static_cast<float>(m_platformWindow->
                               GetHeight());
 
@@ -65,66 +66,33 @@ namespace RTGDEngine {
                 .set(VelocityComponent{});
 
 
-        MaterialHandle meshMat = PipelineFactory::CreateMeshPipeline(
-            RTGDRenderSystem::Instance().GetDevice(),
-            RTGDRenderSystem::Instance().GetSwapChain(),
-            "Shaders");
-
-        AssetManager::Instance().GetTexture("Assets/CesiumLogoFlat.png");
-        AssetManager::Instance().AssignTexture(meshMat, ETextureSlot::Diffuse, "Assets/CesiumLogoFlat.png", true);
-
         SceneManager::Instance().GetActiveScene()->CreateEntity("Cube")
                 .set(UUIDComponent{})
                 .set(TransformComponent{{2.0f, 0.0f, 0.0f}})
-                .set(MeshComponent{MeshRef{"Assets/BoxTextured.gltf"}, meshMat})
+                .set(MeshComponent{
+                    MeshRef{GetAbsolutePath("Assets/BoxTextured.gltf")},
+                    MaterialRef{GetAbsolutePath("Assets/Materials/Cube.mat")}
+                })
                 .set(RenderComponent{});
-
-        MaterialHandle helmetMat = PipelineFactory::CreateMeshPipeline(
-            RTGDRenderSystem::Instance().GetDevice(),
-            RTGDRenderSystem::Instance().GetSwapChain(),
-            "Shaders");
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_albedo.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Diffuse, "Assets/Helmet/Default_albedo.jpg",
-                                               true);
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_normal.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_normal.jpg",
-                                               true);
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_metalRoughness.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::MetallicRoughness,
-                                               "Assets/Helmet/Default_metalRoughness.jpg", true);
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_AO.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_AO.jpg", true);
 
         auto entt = SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
                 .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
                 .set(RenderComponent{})
-                .set(MeshComponent{MeshRef{"Assets/Helmet/DamagedHelmet.gltf"}, MaterialRef{helmetMat}});
+                .set(MeshComponent{
+                    MeshRef{GetAbsolutePath("Assets/Helmet/DamagedHelmet.gltf")},
+                    MaterialRef{GetAbsolutePath("Assets/Materials/Helmet.mat")}
+                });
 
         entt.get_ref<TransformComponent>()->Rotation = {1, 1, 0, 1};
-
-        MaterialHandle spheresMat = PipelineFactory::CreateMeshPipeline(
-            RTGDRenderSystem::Instance().GetDevice(),
-            RTGDRenderSystem::Instance().GetSwapChain(),
-            "Shaders");
-
-
-        AssetManager::Instance().GetTexture("Assets/PBRTest/Spheres_BaseColor.png");
-        AssetManager::Instance().AssignTexture(spheresMat, ETextureSlot::Diffuse,
-                                               "Assets/PBRTest/Spheres_BaseColor.png", true);
-
-        AssetManager::Instance().GetTexture("Assets/PBRTest/Spheres_MetalRough.png");
-        AssetManager::Instance().AssignTexture(spheresMat, ETextureSlot::MetallicRoughness,
-                                               "Assets/PBRTest/Spheres_MetalRough.png", true);
 
         SceneManager::Instance().GetActiveScene()->CreateEntity("Spheres")
                 .set(UUIDComponent{})
                 .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
-                .set(RenderComponent{}).set(MeshComponent{{"Assets/PBRTest/MetalRoughSpheres.gltf"}, spheresMat});
+                .set(RenderComponent{}).set(MeshComponent{
+                    {GetAbsolutePath("Assets/PBRTest/MetalRoughSpheres.gltf")},
+                    {GetAbsolutePath("Assets/Materials/Spheres.mat")}
+                });
 
         // Light
         SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
@@ -147,15 +115,10 @@ namespace RTGDEngine {
             auto saved = scene->Serialize();
             LogInfo("Scene saved to json: {}", saved);
 
-            scene->Deserialize(saved);
+            SceneManager::Instance().GetActiveScene()->SaveToFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
+        }, 5);*/
 
-            auto h = scene->Find("Helmet");
-
-            LogInfo("Helmet found: {}", h.is_valid());
-            LogInfo("Helmet position: {} {} {}", h.get<TransformComponent>().Position.x,
-                    h.get<TransformComponent>().Position.y, h.get<TransformComponent>().Position.z);
-        }, 5);
-
+            SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
 
         return true;
     }

@@ -4,6 +4,7 @@
 
 #include "Render/PipelineFactory.h"
 
+#include "AssetLoader/PathResolve.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
 #include "Render/Vertex.h"
@@ -13,13 +14,13 @@ namespace RTGDEngine
 {
     MaterialHandle PipelineFactory::CreateTrianglePipeline(Diligent::IRenderDevice& device,
                                                            Diligent::ISwapChain& swapChain,
-                                                           const std::string& shadersPath)
+                                                           const std::string& absolutePath)
     {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
         RTGDRenderSystem::Instance().GetFactory().CreateDefaultShaderSourceStreamFactory(
-            shadersPath.c_str(), &pShaderFactory);
+            absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
         shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
@@ -89,13 +90,13 @@ namespace RTGDEngine
     }
 
     MaterialHandle PipelineFactory::CreateMeshPipeline(Diligent::IRenderDevice& device, Diligent::ISwapChain& swapChain,
-                                                       const std::string& shadersPath)
+                                                       const std::string& absolutePath)
     {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
         RTGDRenderSystem::Instance().GetFactory().CreateDefaultShaderSourceStreamFactory(
-            shadersPath.c_str(), &pShaderFactory);
+            absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
         shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
@@ -160,13 +161,13 @@ namespace RTGDEngine
     }
 
     MaterialHandle PipelineFactory::CreateGBufferPipeline(Diligent::IRenderDevice& device, const GBuffer& gbuffer,
-                                                          const std::string& shadersPath)
+                                                          const std::string& absolutePath)
     {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
         RTGDRenderSystem::Instance().GetFactory()
-                .CreateDefaultShaderSourceStreamFactory(shadersPath.c_str(), &pShaderFactory);
+                .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
         shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
@@ -246,13 +247,13 @@ namespace RTGDEngine
 
     MaterialHandle PipelineFactory::CreateLightingPipeline(Diligent::IRenderDevice& device,
                                                            Diligent::ISwapChain& swapChain,
-                                                           const std::string& shadersPath)
+                                                           const std::string& absolutePath)
     {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
         RTGDRenderSystem::Instance().GetFactory()
-                .CreateDefaultShaderSourceStreamFactory(shadersPath.c_str(), &pShaderFactory);
+                .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
         shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;

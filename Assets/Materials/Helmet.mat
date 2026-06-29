@@ -1,0 +1,8 @@
+  {
+    "Textures": {
+      "Diffuse": "Assets/Helmet/Default_albedo.jpg",
+      "Normal": "Assets/Helmet/Default_normal.jpg",
+      "MetallicRoughness": "Assets/Helmet/Default_metalRoughness.jpg",
+      "AO": "Assets/Helmet/Default_AO.jpg"
+    }
+  }

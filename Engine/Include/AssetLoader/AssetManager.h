@@ -26,6 +26,8 @@ namespace RTGDEngine {
             bool isSRGB = true,
             std::function<void(TextureHandle)> onComplete = nullptr);
 
+        MaterialHandle GetMaterial(const std::string &absolutePath);
+
         TextureHandle GetTextureSync(const std::string &absolutePath, bool isSRGB = true);
 
         void AssignTexture(MaterialHandle material, ETextureSlot slot, const std::string &meshAbsPath,
@@ -40,8 +42,12 @@ namespace RTGDEngine {
 
         std::unordered_map<std::string, MeshHandle> m_meshByPath = {};
         std::unordered_map<MeshHandle, std::string> m_meshPathByHandle = {};
+
         std::unordered_map<std::string, TextureHandle> m_textureByPath = {};
         std::unordered_map<TextureHandle, std::string> m_textureHandleByPath = {};
+
+        std::unordered_map<std::string, MaterialHandle> m_materialByPath = {};
+        std::unordered_map<MaterialHandle, std::string> m_materialPathByHandle = {};
 
         mutable std::mutex m_registryMutex = {};
     };

@@ -8,35 +8,39 @@
 #include <flecs.h>
 #include <string>
 
-namespace RTGDEngine
-{
-    class ENGINE_API Scene
-    {
+namespace RTGDEngine {
+    class ENGINE_API Scene {
     public:
-        explicit Scene(const std::string& name);
+        explicit Scene(const std::string &name);
 
         ~Scene() = default;
 
-        flecs::entity CreateEntity(const std::string& name);
+        flecs::entity CreateEntity(const std::string &name);
 
         void DestroyEntity(flecs::entity entity);
 
-        flecs::entity Find(const std::string& name);
+        flecs::entity Find(const std::string &name);
 
-        flecs::world& GetWorld();
+        flecs::world &GetWorld();
 
-        [[nodiscard]] const flecs::world& GetWorld() const;
+        [[nodiscard]] const flecs::world &GetWorld() const;
 
-        [[nodiscard]] const std::string& GetName() const;
+        [[nodiscard]] const std::string &GetName() const;
 
-        void SetName(const std::string& name);
+        void SetName(const std::string &name);
 
         template<typename Func>
-        void Each(Func&& func) { m_world.each(std::forward<Func>(func)); }
+        void Each(Func &&func) { m_world.each(std::forward<Func>(func)); }
 
         std::string Serialize() const;
-        void Deserialize(const std::string& json);
+
+        void Deserialize(const std::string &json);
+
         void Clear();
+
+        void SaveToFile(const std::string &absolutePath) const;
+
+        bool LoadFromFile(const std::string &absolutePath);
 
     private:
         flecs::world m_world = flecs::world();

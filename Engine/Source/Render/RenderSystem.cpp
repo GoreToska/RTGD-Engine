@@ -14,6 +14,7 @@
 #include <Shader.h>
 
 
+#include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RenderComponent.h"
@@ -96,9 +97,9 @@ namespace RTGDEngine {
 
         m_gbuffer = GBufferFactory::Create(*m_device, width, height);
         m_gbufferMaterial = PipelineFactory::CreateGBufferPipeline(
-            *m_device, m_gbuffer, "Shaders");
+            *m_device, m_gbuffer, GetAbsolutePath("Shaders"));
         m_lightingMaterial = PipelineFactory::CreateLightingPipeline(
-            *m_device, *m_swapChain, "Shaders");
+            *m_device, *m_swapChain, GetAbsolutePath("Shaders"));
 
         LogInfo("Render system initialized.");
         return true;

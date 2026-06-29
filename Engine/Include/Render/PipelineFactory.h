@@ -20,22 +20,22 @@ namespace RTGDEngine
         static MaterialHandle CreateTrianglePipeline(
             Diligent::IRenderDevice& device,
             Diligent::ISwapChain& swapChain,
-            const std::string& shadersPath);
+            const std::string& absolutePath);
 
         static MaterialHandle CreateMeshPipeline(
             Diligent::IRenderDevice& device,
             Diligent::ISwapChain& swapChain,
-            const std::string& shadersPath);
+            const std::string& absolutePath);
 
         static MaterialHandle CreateGBufferPipeline(
             Diligent::IRenderDevice& device,
             const GBuffer& gbuffer,
-            const std::string& shadersPath);
+            const std::string& absolutePath);
 
         static MaterialHandle CreateLightingPipeline(
             Diligent::IRenderDevice& device,
             Diligent::ISwapChain& swapChain,
-            const std::string& shadersPath);
+            const std::string& absolutePath);
 
         static void BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb);
 

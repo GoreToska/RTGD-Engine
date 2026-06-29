@@ -39,6 +39,8 @@ namespace RTGDEngine {
                         auto &am = AssetManager::Instance();
                         if (!mc.Mesh.Path.empty())
                             mc.Mesh.Resolve(am.GetMesh(mc.Mesh.Path));
+                        if (!mc.Material.Path.empty())
+                            mc.Material.Resolve(am.GetMaterial(mc.Material.Path));
                     });
         }
     };
