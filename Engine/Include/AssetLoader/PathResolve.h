@@ -23,4 +23,8 @@ namespace RTGDEngine {
     inline std::string GetAbsolutePath(const std::string &relativePath) {
         return (ExecutableDir() / relativePath).generic_string();
     }
+
+    inline std::string GetRelativePath(const std::string &absolutePath) {
+        return std::filesystem::relative(absolutePath, ExecutableDir()).generic_string();
+    }
 }
