@@ -34,6 +34,10 @@ namespace RTGDEngine
         template<typename Func>
         void Each(Func&& func) { m_world.each(std::forward<Func>(func)); }
 
+        std::string Serialize() const;
+        void Deserialize(const std::string& json);
+        void Clear();
+
     private:
         flecs::world m_world = flecs::world();
         std::string m_name;

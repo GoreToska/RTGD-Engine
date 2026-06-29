@@ -11,7 +11,7 @@ namespace RTGDEngine
 {
     void SceneManager::Initialize()
     {
-        m_activeScene = std::make_shared<Scene>("Untiteled");
+        CreateScene("Untitled");
     }
 
     std::shared_ptr<Scene> SceneManager::CreateScene(const std::string& name)

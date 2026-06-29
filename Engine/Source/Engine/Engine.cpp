@@ -142,22 +142,20 @@ namespace RTGDEngine {
                     .Intensity = 0.05f
                 });
 
-        /*m_world.entity("PointLight1")
-                .set(TransformComponent{{2.0f, 2.0f, 0.0f}})
-                .set(PointLightComponent{
-                    .Color = {1.0f, 0.5f, 0.1f},
-                    .Intensity = 5.0f,
-                    .Radius = 10.0f
-                });*/
-
-        TimerSystem::Instance().SetTimer([entt]() {
-            entt.destruct();
-        }, 3.0f, false);
-
         TimerSystem::Instance().SetTimer([]() {
-            MeshHandle h = AssetManager::Instance().GetMesh("Assets/Helmet/DamagedHelmet.gltf");
-            LogInfo("Reused mesh handle = {}", h); // Handle(idx=1, gen=1)
-        }, 5.0f, false);
+            auto scene = SceneManager::Instance().GetActiveScene();
+            auto saved = scene->Serialize();
+            LogInfo("Scene saved to json: {}", saved);
+
+            scene->Deserialize(saved);
+
+            auto h = scene->Find("Helmet");
+
+            LogInfo("Helmet found: {}", h.is_valid());
+            LogInfo("Helmet position: {} {} {}", h.get<TransformComponent>().Position.x,
+                    h.get<TransformComponent>().Position.y, h.get<TransformComponent>().Position.z);
+        }, 5);
+
 
         return true;
     }
