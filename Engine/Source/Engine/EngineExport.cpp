@@ -17,10 +17,8 @@
 
 using namespace RTGDEngine;
 
-extern "C"
-{
-bool Engine_Initialize(void* nativeWindow, int width, int height)
-{
+extern "C" {
+bool Engine_Initialize(void *nativeWindow, int width, int height) {
     Logger::Instance().Initialize();
 
     std::unique_ptr<IPlatformWindow> platform;
@@ -39,50 +37,42 @@ bool Engine_Initialize(void* nativeWindow, int width, int height)
     return Engine::Instance().Initialize(std::move(platform));
 }
 
-void Engine_Update(float deltaTime)
-{
+void Engine_Update(float deltaTime) {
     if (Engine::Instance().PollEvents())
         Engine::Instance().Update(deltaTime);
 }
 
-void Engine_InjectKey(int key, bool down)
-{
+void Engine_InjectKey(int key, bool down) {
     InputSystem::Instance().InjectKey(static_cast<gainput::Key>(key), down);
 }
 
-void Engine_InjectMouseButton(int button, bool down)
-{
+void Engine_InjectMouseButton(int button, bool down) {
     InputSystem::Instance().InjectMouseButton(static_cast<gainput::MouseButton>(button), down);
 }
 
-void Engine_InjectMousePosition(float normX, float normY)
-{
+void Engine_InjectMousePosition(float normX, float normY) {
     InputSystem::Instance().InjectMousePosition(normX, normY);
 }
 
-void Engine_Resize(int w, int h)
-{
+void Engine_Resize(int w, int h) {
     Engine::Instance().Resize(w, h);
 }
 
-void Engine_Shutdown()
-{
+void Engine_Shutdown() {
     Engine::Instance().Shutdown();
 }
 
-void Engine_GetEntities(EntityCallback callback)
-{
+void Engine_GetEntities(EntityCallback callback) {
     auto scene = SceneManager::Instance().GetActiveScene();
     if (!scene || !callback)
         return;
 
-    scene->GetWorld().each([&](flecs::entity e, UUIDComponent go)
-    {
-        if (e.name().length() > 0)
-        {
-            LogInfo(e.name().c_str());
-            callback(e.name().c_str(), e.id());
-        }
-    });
+    SceneManager::Instance().GetWorld().query_builder<UUIDComponent>()
+            .with(flecs::ChildOf, scene->GetRoot()) // only active scene? maybe need to have separate func to get all additive scenes
+            .build()
+            .each([&](flecs::entity e, UUIDComponent) {
+                if (e.name().length() > 0)
+                    callback(e.name().c_str(), e.id());
+            });
 }
 } // extern "C"

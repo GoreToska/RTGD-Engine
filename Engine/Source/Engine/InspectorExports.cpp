@@ -221,7 +221,7 @@ INSPECTOR_API int Inspector_GetComponentCount(uint64_t entityId) {
     if (!scene)
         return 0;
 
-    auto &world = scene->GetWorld();
+    auto &world = RTGDEngine::SceneManager::Instance().GetWorld();
     s_world = world.get_world();
     s_entityId = entityId;
 

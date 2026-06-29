@@ -6,25 +6,21 @@
 
 #include <fstream>
 
-#include "Components/SceneEntity.h"
 #include "Components/UUIDComponent.h"
 #include "Tools/Logger.h"
-#include "Tools/MetaTypes.h"
 
 #include <nlohmann/json.hpp>
 
 namespace RTGDEngine {
-    Scene::Scene(const std::string &name)
-        : m_name(name) {
-        RegisterMetaTypes(m_world);
-
+    Scene::Scene(flecs::world &world, const std::string &name)
+        : m_name(name), m_world(&world) {
+        m_root = m_world->entity(name.c_str());
         LogInfo("Scene created: '{}'", m_name);
     }
 
     flecs::entity Scene::CreateEntity(const std::string &name) {
-        auto entity = m_world.entity(name.c_str());
+        auto entity = m_world->entity(name.c_str()).child_of(m_root);
         entity.add<UUIDComponent>();
-        entity.add<SceneEntity>();
 
         LogInfo("Scene '{}': entity created '{}'", m_name, name);
         return entity;
@@ -38,15 +34,11 @@ namespace RTGDEngine {
     }
 
     flecs::entity Scene::Find(const std::string &name) {
-        return m_world.lookup(name.c_str());
+        return m_root.lookup(name.c_str());
     }
 
-    flecs::world &Scene::GetWorld() {
-        return m_world;
-    }
-
-    const flecs::world &Scene::GetWorld() const {
-        return m_world;
+    flecs::entity Scene::GetRoot() const {
+        return m_root;
     }
 
     const std::string &Scene::GetName() const {
@@ -60,11 +52,12 @@ namespace RTGDEngine {
     std::string Scene::Serialize() const {
         nlohmann::json json = nlohmann::json::array();
 
-        m_world.query_builder<>().with<SceneEntity>().build()
+        m_world->query_builder<>().with(flecs::ChildOf, m_root).build()
                 .each([&](const flecs::entity entity) {
+                    nlohmann::json full = nlohmann::json::parse(entity.to_json().c_str());
                     nlohmann::json obj;
                     obj["Name"] = entity.name().c_str();
-                    obj["Data"] = nlohmann::json::parse(entity.to_json().c_str());
+                    obj["Data"]["components"] = full["components"];
                     json.push_back(std::move(obj));
                 });
 
@@ -73,21 +66,18 @@ namespace RTGDEngine {
 
     void Scene::Deserialize(const std::string &json) {
         Clear();
-        auto arr = nlohmann::json::parse(json);
-
-        for (auto &obj: arr) {
-            auto e = CreateEntity(obj["Name"].get<std::string>());
-            e.from_json(obj["Data"].dump().c_str());
-        }
+        ApplyEntities(ParseScene(json));
     }
 
     void Scene::Clear() {
-        m_world.delete_with(m_world.component<SceneEntity>());
+        m_world->delete_with(m_world->pair(flecs::ChildOf, m_root));
     }
 
     void Scene::SaveToFile(const std::string &absolutePath) const {
-        std::ofstream f(absolutePath.c_str());
-        f << Serialize();
+        auto json = Serialize();
+        if (json == "[]" || json == "[\n]") { LogWarn("SaveToFile: scene '{}' empty, skip", m_name); return; }
+        std::ofstream f(absolutePath.c_str()    );
+        f << json;
         LogInfo("Saved to {}", absolutePath.c_str());
     }
 
@@ -102,5 +92,26 @@ namespace RTGDEngine {
         ss << f.rdbuf();
         Deserialize(ss.str());
         return true;
+    }
+
+    std::vector<Scene::EntityData> Scene::ParseScene(const std::string &json) {
+        std::vector<EntityData> entities;
+        auto arr = nlohmann::json::parse(json);
+        for (auto &obj: arr) {
+            nlohmann::json data;
+            data["components"] = obj["Data"]["components"];
+            entities.push_back({obj["Name"].get<std::string>(), data.dump()});
+        }
+
+        return entities;
+    }
+
+    void Scene::ApplyEntities(const std::vector<EntityData> &entities) {
+        for (auto &entity: entities) {
+            auto e = m_world->entity();
+            e.from_json(entity.data.c_str());
+            e.child_of(m_root);
+            e.set_name(entity.name.c_str());
+        }
     }
 } // RTGDEngine

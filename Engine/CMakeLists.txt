@@ -82,7 +82,6 @@ add_library(Engine SHARED
         Source/AssetLoader/Refs/AssetRef.cpp
         Source/Systems/TimerSystem.cpp
         Include/Systems/TimerSystem.h
-        Include/Components/SceneEntity.h
         Include/AssetLoader/PathResolve.h
 )
 

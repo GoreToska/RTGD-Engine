@@ -54,71 +54,18 @@ namespace RTGDEngine {
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
 
-        /*CameraComponent cam;
-        cam.AspectRatio = static_cast<float>(m_platformWindow->GetWidth()) / static_cast<float>(m_platformWindow->
-                              GetHeight());
+        SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
+        SceneManager::Instance().GetActiveScene()->SaveToFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
 
-        SceneManager::Instance().GetActiveScene()->CreateEntity("EditorCamera")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{0.0f, 0.0f, -3.0f}})
-                .set(cam)
-                .set(EditorCameraMovementComponent{})
-                .set(VelocityComponent{});
+        TimerSystem::Instance().SetTimer([] {
+            SceneManager::Instance().RequestLoadScene(GetAbsolutePath("Assets/Scenes/Additive.scene"));
+            LogInfo("Timer: requested LOAD Additive");
+        }, 3.0f);
 
-
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Cube")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{2.0f, 0.0f, 0.0f}})
-                .set(MeshComponent{
-                    MeshRef{GetAbsolutePath("Assets/BoxTextured.gltf")},
-                    MaterialRef{GetAbsolutePath("Assets/Materials/Cube.mat")}
-                })
-                .set(RenderComponent{});
-
-        auto entt = SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
-                .set(RenderComponent{})
-                .set(MeshComponent{
-                    MeshRef{GetAbsolutePath("Assets/Helmet/DamagedHelmet.gltf")},
-                    MaterialRef{GetAbsolutePath("Assets/Materials/Helmet.mat")}
-                });
-
-        entt.get_ref<TransformComponent>()->Rotation = {1, 1, 0, 1};
-
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Spheres")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
-                .set(RenderComponent{}).set(MeshComponent{
-                    {GetAbsolutePath("Assets/PBRTest/MetalRoughSpheres.gltf")},
-                    {GetAbsolutePath("Assets/Materials/Spheres.mat")}
-                });
-
-        // Light
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
-                .set(UUIDComponent{})
-                .set(DirectionalLightComponent{
-                    .Direction = {-0.5f, -1.0f, -0.3f},
-                    .Color = {1.0f, 0.95f, 0.8f},
-                    .Intensity = 3.0f
-                });
-
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Ambient")
-                .set(UUIDComponent{})
-                .set(AmbientLightComponent{
-                    .Color = {0.2f, 0.2f, 0.2f},
-                    .Intensity = 0.05f
-                });
-
-        TimerSystem::Instance().SetTimer([]() {
-            auto scene = SceneManager::Instance().GetActiveScene();
-            auto saved = scene->Serialize();
-            LogInfo("Scene saved to json: {}", saved);
-
-            SceneManager::Instance().GetActiveScene()->SaveToFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
-        }, 5);*/
-
-            SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
+        TimerSystem::Instance().SetTimer([] {
+            SceneManager::Instance().RequestUnloadScene("Additive");
+            LogInfo("Timer: requested UNLOAD Additive");
+        }, 8.0f);
 
         return true;
     }
@@ -169,19 +116,20 @@ namespace RTGDEngine {
 
     void Engine::Update(const float deltaTime) {
         JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
+        SceneManager::Instance().ApplyPendingSceneChanges();
 
-        UpdateSystems(SceneManager::Instance().GetActiveScene()->GetWorld(), deltaTime);
+        UpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
 
         if (m_gameModule)
             m_gameModule->Update(deltaTime);
 
-        PostUpdateSystems(SceneManager::Instance().GetActiveScene()->GetWorld(), deltaTime);
+        PostUpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
 
         Render();
     }
 
     void Engine::Render() {
-        RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetActiveScene()->GetWorld());
+        RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetWorld());
 
         auto &rs = RTGDRenderSystem::Instance();
         auto &device = rs.GetDevice();
@@ -193,8 +141,8 @@ namespace RTGDEngine {
         rm.ProcessPendingDestroys();
 
 
-        RTGDRenderSystem::Instance().SetActiveCameraCB(SceneManager::Instance().GetActiveScene()->GetWorld());
-        RTGDRenderSystem::Instance().RenderGeometry(SceneManager::Instance().GetActiveScene()->GetWorld());
+        RTGDRenderSystem::Instance().SetActiveCameraCB(SceneManager::Instance().GetWorld());
+        RTGDRenderSystem::Instance().RenderGeometry(SceneManager::Instance().GetWorld());
         RTGDRenderSystem::Instance().RenderLighting();
         RTGDRenderSystem::Instance().Present();
 
