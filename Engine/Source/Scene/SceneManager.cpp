@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include "Components/UUIDComponent.h"
 #include "JobSystem/JobSystem.h"
 #include "Scene/Scene.h"
 #include "Tools/Logger.h"
@@ -15,6 +16,16 @@
 namespace RTGDEngine {
     void SceneManager::Initialize() {
         RegisterMetaTypes(m_world);
+
+        m_world.observer<>().with<SceneEntity>().event(flecs::OnAdd)
+                .each([](flecs::entity entity) {
+                    EventBus::Instance().Emit(Events::OnEntityCreated, {entity.id()});
+                });
+
+        m_world.observer<>().with<SceneEntity>().event(flecs::OnRemove)
+                .each([](flecs::entity entity) {
+                    EventBus::Instance().Emit(Events::OnEntityDestroyed, {entity.id()});
+                });
 
         CreateScene("Untitled");
     }
@@ -59,7 +70,9 @@ namespace RTGDEngine {
             return;
         }
 
+        uint64_t prev = m_activeScene ? m_activeScene->GetRoot() : 0;
         m_activeScene = it->second;
+        EventBus::Instance().Emit(Events::OnActiveSceneChanged, {prev, m_activeScene->GetRoot()});
         LogInfo("SceneManager: active scene → '{}'", name);
     }
 
@@ -92,6 +105,7 @@ namespace RTGDEngine {
         for (auto &load: ready) {
             auto scene = CreateScene(load.name);
             scene->ApplyEntities(load.entities);
+            EventBus::Instance().Emit(Events::OnSceneLoaded, {scene->GetRoot()});
         }
 
         if (!m_pendingActive.empty() && HasScene(m_pendingActive)) {

@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Scene.h"
+#include "Event/EventBus.h"
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine {
@@ -19,6 +20,30 @@ namespace RTGDEngine {
 }
 
 namespace RTGDEngine {
+    namespace Events {
+        struct SceneLoadedEvent {
+            uint64_t sceneRoot;
+        };
+
+        struct SceneUnloadedEvent {
+            uint64_t sceneRoot;
+        };
+
+        struct SceneCreatedEvent {
+            uint64_t sceneRoot;
+        };
+
+        struct ActiveSceneChangedEvent {
+            uint64_t previousRoot;
+            uint64_t currentRoot;
+        };
+
+        inline constexpr EventKey<SceneLoadedEvent> OnSceneLoaded{"scene.loaded"};
+        inline constexpr EventKey<SceneUnloadedEvent> OnSceneUnloaded{"scene.unloaded"};
+        inline constexpr EventKey<SceneCreatedEvent> OnSceneCreated{"scene.created"};
+        inline constexpr EventKey<ActiveSceneChangedEvent> OnActiveSceneChanged{"scene.active_changed"};
+    }
+
     class ENGINE_API SceneManager {
         DECLARE_SINGLETON(SceneManager);
 

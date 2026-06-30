@@ -83,6 +83,8 @@ add_library(Engine SHARED
         Source/Systems/TimerSystem.cpp
         Include/Systems/TimerSystem.h
         Include/AssetLoader/PathResolve.h
+        Include/Event/EventBus.h
+        Source/Event/EventBus.cpp
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)

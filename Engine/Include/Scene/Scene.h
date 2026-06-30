@@ -9,7 +9,22 @@
 #include <string>
 #include <vector>
 
+#include "Event/EventBus.h"
+
 namespace RTGDEngine {
+    namespace Events {
+        struct EntityCreatedEvent {
+            uint64_t entity;
+        };
+
+        struct EntityDestroyedEvent {
+            uint64_t entity;
+        };
+
+        inline constexpr EventKey<EntityCreatedEvent> OnEntityCreated{"entity.created"};
+        inline constexpr EventKey<EntityDestroyedEvent> OnEntityDestroyed{"entity.destroyed"};
+    }
+
     class ENGINE_API Scene {
     public:
         struct EntityData {
