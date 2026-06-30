@@ -85,6 +85,7 @@ add_library(Engine SHARED
         Include/AssetLoader/PathResolve.h
         Include/Event/EventBus.h
         Source/Event/EventBus.cpp
+        Include/Event/Events.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)

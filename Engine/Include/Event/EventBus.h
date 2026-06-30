@@ -28,7 +28,7 @@ namespace RTGDEngine {
         return EventID({str, n});
     }
 
-    template<typename Payload>
+    template<typename Payload, typename Owner = void>
     struct EventKey {
         uint64_t ID;
 
@@ -39,6 +39,14 @@ namespace RTGDEngine {
         }
     };
 
+    // token that can be constructed only by owner
+    template<class T>
+    class EmitBadge {
+        friend T;
+
+        EmitBadge() = default;
+    };
+
     using SubID = uint64_t;
     using OwnerID = uint64_t;
 
@@ -46,15 +54,22 @@ namespace RTGDEngine {
         DECLARE_SINGLETON(EventBus);
 
     public:
-        template<typename T, typename Fn>
-        SubID Subscribe(EventKey<T> key, Fn &&callback, OwnerID owner = 0) {
-            return SubscribeRaw(key.ID, [fn = std::move(callback)](const void *p, uint32_t) {
+        template<typename T, typename Owner, typename Fn>
+        SubID Subscribe(EventKey<T, Owner> key, Fn &&callback, OwnerID owner = 0) {
+            return SubscribeRaw(key.ID, [fn = std::forward<Fn>(callback)](const void *p, uint32_t) {
                 fn(*static_cast<const T *>(p));
             }, owner);
         }
 
         template<typename P>
         void Emit(EventKey<P> key, const P &payload) {
+            static_assert(std::is_trivially_copyable_v<P>,
+                          "Event payload must be trivially copyable (POD): no std::string/vector/pointers");
+            EmitRaw(key.ID, &payload, sizeof(P));
+        }
+
+        template<typename P, typename Owner>
+        void Emit(EventKey<P, Owner> key, const P &payload, EmitBadge<Owner>) {
             static_assert(std::is_trivially_copyable_v<P>,
                           "Event payload must be trivially copyable (POD): no std::string/vector/pointers");
             EmitRaw(key.ID, &payload, sizeof(P));
