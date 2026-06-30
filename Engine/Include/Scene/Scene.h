@@ -7,35 +7,53 @@
 #include "Engine/EngineExport.h"
 #include <flecs.h>
 #include <string>
+#include <vector>
 
-namespace RTGDEngine
-{
-    class ENGINE_API Scene
-    {
+namespace RTGDEngine {
+    class ENGINE_API Scene {
     public:
-        explicit Scene(const std::string& name);
+        struct EntityData {
+            std::string name;
+            std::string data;
+        };
+
+        explicit Scene(flecs::world &world, const std::string &name);
 
         ~Scene() = default;
 
-        flecs::entity CreateEntity(const std::string& name);
+        flecs::entity CreateEntity(const std::string &name);
 
         void DestroyEntity(flecs::entity entity);
 
-        flecs::entity Find(const std::string& name);
+        flecs::entity Find(const std::string &name);
 
-        flecs::world& GetWorld();
+        [[nodiscard]] flecs::entity GetRoot() const;
 
-        [[nodiscard]] const flecs::world& GetWorld() const;
+        [[nodiscard]] const std::string &GetName() const;
 
-        [[nodiscard]] const std::string& GetName() const;
+        void SetName(const std::string &name);
 
-        void SetName(const std::string& name);
+        std::string Serialize() const;
+
+        void Deserialize(const std::string &json);
+
+        void Clear();
+
+        void SaveToFile(const std::string &absolutePath) const;
+
+        bool LoadFromFile(const std::string &absolutePath);
+
+        static std::vector<EntityData> ParseScene(const std::string &json); // thread safe for async scene loading
+        void ApplyEntities(const std::vector<EntityData> &entities);
 
         template<typename Func>
-        void Each(Func&& func) { m_world.each(std::forward<Func>(func)); }
+        void Each(Func &&func) {
+            m_world->query_builder<>().with(flecs::ChildOf, m_root).build().each(std::forward<Func>(func));
+        }
 
     private:
-        flecs::world m_world = flecs::world();
         std::string m_name;
+        flecs::world *m_world;
+        flecs::entity m_root;
     };
 } // RTGDEngine

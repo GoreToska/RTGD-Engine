@@ -24,6 +24,9 @@ set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/assimp)
 
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(JSON_Install OFF CACHE INTERNAL "")
+add_subdirectory(ThirdParty/json)
 
 add_subdirectory(Engine)
 add_subdirectory(Game)
@@ -39,6 +42,15 @@ set_target_properties(RTGD-Engine PROPERTIES WIN32_EXECUTABLE FALSE)
 target_link_libraries(RTGD-Engine PRIVATE
         Engine
 )
+
+add_custom_target(SyncAssets ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        ${CMAKE_SOURCE_DIR}/Assets  ${CMAKE_BINARY_DIR}/bin/Assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        ${CMAKE_SOURCE_DIR}/Shaders ${CMAKE_BINARY_DIR}/bin/Shaders
+        COMMENT "Syncing assets/shaders to output"
+)
+add_dependencies(RTGD-Engine SyncAssets)
 
 if(WIN32)
     add_custom_command(TARGET RTGD-Engine POST_BUILD

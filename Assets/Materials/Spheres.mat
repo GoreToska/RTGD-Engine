@@ -1,0 +1,6 @@
+  {
+    "Textures": {
+      "Diffuse": "Assets/PBRTest/Spheres_BaseColor.png",
+      "MetallicRoughness": "Assets/PBRTest/Spheres_MetalRough.png"
+    }
+  }

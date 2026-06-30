@@ -1,0 +1,21 @@
+  [
+    {
+      "Data": {
+        "components": {
+          "MeshComponent": {
+            "Material": { "Path": "Assets/Materials/Helmet.mat" },
+            "Mesh": { "Path": "Assets/Helmet/DamagedHelmet.gltf" }
+          },
+          "RenderComponent": { "CastShadows": true, "IsVisible": true },
+          "TransformComponent": {
+            "Position": { "x": -3, "y": 0, "z": 0 },
+            "Rotation": { "w": 1, "x": 0, "y": 0, "z": 0 },
+            "Scale": { "x": 1, "y": 1, "z": 1 }
+          },
+          "UUIDComponent": { "ID": 0 }
+        },
+        "name": "SecondHelmet"
+      },
+      "Name": "SecondHelmet"
+    }
+  ]

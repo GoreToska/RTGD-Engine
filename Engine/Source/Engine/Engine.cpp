@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "AssetLoader/AssetManager.h"
+#include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/UUIDComponent.h"
 #include "Components/LightComponent.h"
@@ -53,111 +54,18 @@ namespace RTGDEngine {
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
 
-        CameraComponent cam;
-        cam.AspectRatio = static_cast<float>(m_platformWindow->GetWidth()) / static_cast<float>(m_platformWindow->
-                              GetHeight());
+        SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
+        SceneManager::Instance().GetActiveScene()->SaveToFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
 
-        SceneManager::Instance().GetActiveScene()->CreateEntity("EditorCamera")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{0.0f, 0.0f, -3.0f}})
-                .set(cam)
-                .set(EditorCameraMovementComponent{})
-                .set(VelocityComponent{});
+        TimerSystem::Instance().SetTimer([] {
+            SceneManager::Instance().RequestLoadScene(GetAbsolutePath("Assets/Scenes/Additive.scene"));
+            LogInfo("Timer: requested LOAD Additive");
+        }, 3.0f);
 
-
-        MaterialHandle meshMat = PipelineFactory::CreateMeshPipeline(
-            RTGDRenderSystem::Instance().GetDevice(),
-            RTGDRenderSystem::Instance().GetSwapChain(),
-            "Shaders");
-
-        AssetManager::Instance().GetTexture("Assets/CesiumLogoFlat.png");
-        AssetManager::Instance().AssignTexture(meshMat, ETextureSlot::Diffuse, "Assets/CesiumLogoFlat.png", true);
-
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Cube")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{2.0f, 0.0f, 0.0f}})
-                .set(MeshComponent{MeshRef{"Assets/BoxTextured.gltf"}, meshMat})
-                .set(RenderComponent{});
-
-        MaterialHandle helmetMat = PipelineFactory::CreateMeshPipeline(
-            RTGDRenderSystem::Instance().GetDevice(),
-            RTGDRenderSystem::Instance().GetSwapChain(),
-            "Shaders");
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_albedo.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Diffuse, "Assets/Helmet/Default_albedo.jpg",
-                                               true);
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_normal.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_normal.jpg",
-                                               true);
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_metalRoughness.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::MetallicRoughness,
-                                               "Assets/Helmet/Default_metalRoughness.jpg", true);
-
-        AssetManager::Instance().GetTexture("Assets/Helmet/Default_AO.jpg");
-        AssetManager::Instance().AssignTexture(helmetMat, ETextureSlot::Normal, "Assets/Helmet/Default_AO.jpg", true);
-
-        auto entt = SceneManager::Instance().GetActiveScene()->CreateEntity("Helmet")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{0.0f, 0.0f, 0.0f}, Quaternion::RotationFromAxisAngle({1, 0, 0}, 45.0f)})
-                .set(RenderComponent{})
-                .set(MeshComponent{MeshRef{"Assets/Helmet/DamagedHelmet.gltf"}, MaterialRef{helmetMat}});
-
-        entt.get_ref<TransformComponent>()->Rotation = {1, 1, 0, 1};
-
-        MaterialHandle spheresMat = PipelineFactory::CreateMeshPipeline(
-            RTGDRenderSystem::Instance().GetDevice(),
-            RTGDRenderSystem::Instance().GetSwapChain(),
-            "Shaders");
-
-
-        AssetManager::Instance().GetTexture("Assets/PBRTest/Spheres_BaseColor.png");
-        AssetManager::Instance().AssignTexture(spheresMat, ETextureSlot::Diffuse,
-                                               "Assets/PBRTest/Spheres_BaseColor.png", true);
-
-        AssetManager::Instance().GetTexture("Assets/PBRTest/Spheres_MetalRough.png");
-        AssetManager::Instance().AssignTexture(spheresMat, ETextureSlot::MetallicRoughness,
-                                               "Assets/PBRTest/Spheres_MetalRough.png", true);
-
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Spheres")
-                .set(UUIDComponent{})
-                .set(TransformComponent{{0.0f, 5.0f, 0.0f}})
-                .set(RenderComponent{}).set(MeshComponent{{"Assets/PBRTest/MetalRoughSpheres.gltf"}, spheresMat});
-
-        // Light
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Sun")
-                .set(UUIDComponent{})
-                .set(DirectionalLightComponent{
-                    .Direction = {-0.5f, -1.0f, -0.3f},
-                    .Color = {1.0f, 0.95f, 0.8f},
-                    .Intensity = 3.0f
-                });
-
-        SceneManager::Instance().GetActiveScene()->CreateEntity("Ambient")
-                .set(UUIDComponent{})
-                .set(AmbientLightComponent{
-                    .Color = {0.2f, 0.2f, 0.2f},
-                    .Intensity = 0.05f
-                });
-
-        /*m_world.entity("PointLight1")
-                .set(TransformComponent{{2.0f, 2.0f, 0.0f}})
-                .set(PointLightComponent{
-                    .Color = {1.0f, 0.5f, 0.1f},
-                    .Intensity = 5.0f,
-                    .Radius = 10.0f
-                });*/
-
-        TimerSystem::Instance().SetTimer([entt]() {
-            entt.destruct();
-        }, 3.0f, false);
-
-        TimerSystem::Instance().SetTimer([]() {
-            MeshHandle h = AssetManager::Instance().GetMesh("Assets/Helmet/DamagedHelmet.gltf");
-            LogInfo("Reused mesh handle = {}", h); // Handle(idx=1, gen=1)
-        }, 5.0f, false);
+        TimerSystem::Instance().SetTimer([] {
+            SceneManager::Instance().RequestUnloadScene("Additive");
+            LogInfo("Timer: requested UNLOAD Additive");
+        }, 8.0f);
 
         return true;
     }
@@ -208,19 +116,20 @@ namespace RTGDEngine {
 
     void Engine::Update(const float deltaTime) {
         JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
+        SceneManager::Instance().ApplyPendingSceneChanges();
 
-        UpdateSystems(SceneManager::Instance().GetActiveScene()->GetWorld(), deltaTime);
+        UpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
 
         if (m_gameModule)
             m_gameModule->Update(deltaTime);
 
-        PostUpdateSystems(SceneManager::Instance().GetActiveScene()->GetWorld(), deltaTime);
+        PostUpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
 
         Render();
     }
 
     void Engine::Render() {
-        RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetActiveScene()->GetWorld());
+        RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetWorld());
 
         auto &rs = RTGDRenderSystem::Instance();
         auto &device = rs.GetDevice();
@@ -232,8 +141,8 @@ namespace RTGDEngine {
         rm.ProcessPendingDestroys();
 
 
-        RTGDRenderSystem::Instance().SetActiveCameraCB(SceneManager::Instance().GetActiveScene()->GetWorld());
-        RTGDRenderSystem::Instance().RenderGeometry(SceneManager::Instance().GetActiveScene()->GetWorld());
+        RTGDRenderSystem::Instance().SetActiveCameraCB(SceneManager::Instance().GetWorld());
+        RTGDRenderSystem::Instance().RenderGeometry(SceneManager::Instance().GetWorld());
         RTGDRenderSystem::Instance().RenderLighting();
         RTGDRenderSystem::Instance().Present();
 

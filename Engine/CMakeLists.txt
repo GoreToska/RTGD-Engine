@@ -52,9 +52,7 @@ add_library(Engine SHARED
         Include/Scene/Scene.h
         Source/Scene/SceneManager.cpp
         Include/Scene/SceneManager.h
-        Include/Components/GameObject.h
         Include/Tools/MetaTypes.h
-        Include/Components/GameObject.h
         Source/Tools/MetaTypes.cpp
         Source/Engine/InspectorExports.cpp
         Include/Engine/InspectorExports.h
@@ -84,6 +82,7 @@ add_library(Engine SHARED
         Source/AssetLoader/Refs/AssetRef.cpp
         Source/Systems/TimerSystem.cpp
         Include/Systems/TimerSystem.h
+        Include/AssetLoader/PathResolve.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
@@ -103,6 +102,7 @@ target_link_libraries(Engine PUBLIC
         gainput
         assimp
         enkiTS
+        nlohmann_json::nlohmann_json
 )
 
 if (WIN32)

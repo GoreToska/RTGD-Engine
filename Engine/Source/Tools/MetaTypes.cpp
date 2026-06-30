@@ -5,7 +5,6 @@
 #include "Tools/MetaTypes.h"
 
 #include "Components/CameraComponent.h"
-#include "Components/GameObject.h"
 #include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RenderComponent.h"
@@ -62,7 +61,6 @@ namespace RTGDEngine {
         TransformComponent::RegisterMeta(world);
         CameraComponent::RegisterMeta(world);
         EditorCameraMovementComponent::RegisterMeta(world);
-        GameObject::RegisterMeta(world);
         AmbientLightComponent::RegisterMeta(world);
         DirectionalLightComponent::RegisterMeta(world);
         SpotLightComponent::RegisterMeta(world);

@@ -3,11 +3,10 @@
 //
 
 #pragma once
-#include "Buffer.h"
-#include "RefCntAutoPtr.hpp"
 #include "AssetLoader/AssetManager.h"
 #include "AssetLoader/Refs/AssetRef.h"
 #include "Render/RenderHandle.h"
+#include "AssetLoader/PathResolve.h"
 
 namespace RTGDEngine {
     // Important!
@@ -38,7 +37,9 @@ namespace RTGDEngine {
                     .each([](MeshComponent &mc) {
                         auto &am = AssetManager::Instance();
                         if (!mc.Mesh.Path.empty())
-                            mc.Mesh.Resolve(am.GetMesh(mc.Mesh.Path));
+                            mc.Mesh.Resolve(am.GetMesh(GetAbsolutePath(mc.Mesh.Path)));
+                        if (!mc.Material.Path.empty())
+                            mc.Material.Resolve(am.GetMaterial(GetAbsolutePath(mc.Material.Path)));
                     });
         }
     };

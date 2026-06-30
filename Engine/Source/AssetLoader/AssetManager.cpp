@@ -5,11 +5,15 @@
 #include "AssetLoader/AssetManager.h"
 
 #include <filesystem>
+#include <fstream>
 
 #include "AssetLoader/MeshImporter.h"
+#include "AssetLoader/PathResolve.h"
 #include "AssetLoader/TextureImporter.h"
 #include "JobSystem/JobSystem.h"
+#include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
+#include "Render/RenderSystem.h"
 #include "Tools/Logger.h"
 
 namespace RTGDEngine {
@@ -126,6 +130,65 @@ namespace RTGDEngine {
         });
 
         return handle;
+    }
+
+    MaterialHandle AssetManager::GetMaterial(const std::string &absolutePath) {
+        const std::string key = Normalize(absolutePath);
+        {
+            std::lock_guard lock(m_registryMutex);
+            if (auto it = m_materialByPath.find(key); it != m_materialByPath.end()) {
+                if (RenderResourceManager::Instance().IsAlive(it->second))
+                    return it->second;
+
+                m_materialByPath.erase(it);
+            }
+        }
+
+        std::ifstream f(key);
+        if (!f) {
+            LogError("Material not found '{}'", key);
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        nlohmann::json j;
+        try {
+            f >> j;
+
+            auto &rs = RTGDRenderSystem::Instance();
+
+            MaterialHandle mat = PipelineFactory::CreateMeshPipeline(
+                rs.GetDevice(), rs.GetSwapChain(), GetAbsolutePath("Shaders"));
+
+            static const std::unordered_map<std::string, ETextureSlot> slots = {
+                {"Diffuse", ETextureSlot::Diffuse},
+                {"Normal", ETextureSlot::Normal},
+                {"MetallicRoughness", ETextureSlot::MetallicRoughness},
+                {"AO", ETextureSlot::AO}
+            };
+
+            if (j.contains("Textures")) {
+                for (auto &[name, path]: j["Textures"].items()) {
+                    auto it = slots.find(name);
+
+                    if (it == slots.end())
+                        continue;
+
+                    const bool srgb = it->second == ETextureSlot::Diffuse;
+                    AssignTexture(mat, it->second, GetAbsolutePath(path.get<std::string>()), srgb);
+                }
+            }
+
+            {
+                std::lock_guard lock(m_registryMutex);
+                m_materialByPath[key] = mat;
+                m_materialPathByHandle[mat] = key;
+            }
+
+            return mat;
+        } catch (const nlohmann::json::exception &e) {
+            LogError("Material parse error '{}': {}", key, e.what());
+            return INVALID_MATERIAL_HANDLE;
+        }
     }
 
     TextureHandle AssetManager::GetTextureSync(const std::string &absolutePath, bool isSRGB) {
