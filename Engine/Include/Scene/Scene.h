@@ -12,7 +12,6 @@
 #include "Event/EventBus.h"
 
 namespace RTGDEngine {
-
     class ENGINE_API Scene {
     public:
         struct EntityData {

@@ -7,6 +7,12 @@ internal static class EngineNative
 {
     private const string LibName = "Engine";
 
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate void EntityCallbackDelegate(
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string name,
+        long id,
+        long parentId);
+
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.I1)]
     private static extern bool Engine_Initialize(IntPtr nativeWindow, int width, int height);
@@ -29,6 +35,9 @@ internal static class EngineNative
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void Engine_InjectMousePosition(float normX, float normY);
 
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void Engine_GetEntities(EntityCallbackDelegate callback);
+
     public static bool Initialize(IntPtr nativeWindow, int width, int height) =>
         Engine_Initialize(nativeWindow, width, height);
 
@@ -49,4 +58,7 @@ internal static class EngineNative
 
     public static void InjectMousePosition(float normalizedX, float normalizedY) =>
         Engine_InjectMousePosition(normalizedX, normalizedY);
+
+    public static void GetEntities(Action<string, long, long> callback) =>
+        Engine_GetEntities((name, id, parentId) => callback(name, id, parentId));
 }

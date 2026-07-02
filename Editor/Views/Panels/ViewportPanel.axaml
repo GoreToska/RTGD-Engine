@@ -10,6 +10,6 @@
         Background="{DynamicResource BgCanvas}"
         BorderBrush="{DynamicResource BorderDefault}"
         BorderThickness="2,0">
-        <controls:EngineViewportHost />
+        <controls:EngineViewportHost x:Name="ViewportHost" />
     </Border>
 </UserControl>
