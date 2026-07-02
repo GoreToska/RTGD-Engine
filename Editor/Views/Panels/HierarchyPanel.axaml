@@ -6,6 +6,33 @@
     x:DataType="vm:HierarchyViewModel">
 
     <Border Background="{DynamicResource BgPanel}">
-        <TextBlock Text="Hierarchy" />
+        <DockPanel Margin="15 10">
+            <TextBlock Margin="0 5" DockPanel.Dock="Top">HIERARCHY</TextBlock>
+
+            <TreeView  ItemsSource="{Binding Entities}"
+                    SelectionMode="Multiple"
+                     Background="{DynamicResource BgPanel}">
+
+                <TreeView.Styles>
+                    <Style Selector="TreeViewItem">
+                        <Setter Property="Padding" Value="3"/>
+                        <Setter Property="CornerRadius" Value="10"/>
+                        <Setter Property="MinHeight" Value="30"/>
+                    </Style>
+                    <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+                        <Setter Property="Background" Value="{DynamicResource BorderDefault}" />
+                    </Style>
+                </TreeView.Styles>
+
+                <TreeView.ItemTemplate>
+                    <TreeDataTemplate ItemsSource="{Binding Children}">
+                        <Border VerticalAlignment="Center" Padding="10 0">
+                            <TextBlock Text="{Binding Name}"/>
+                        </Border>
+                    </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+
+        </DockPanel>
     </Border>
 </UserControl>

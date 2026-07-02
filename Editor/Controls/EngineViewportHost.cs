@@ -15,6 +15,9 @@ public class EngineViewportHost : NativeControlHost
     private DispatcherTimer? _timer;
     private readonly Stopwatch _stopwatch = new();
 
+    public event Action? EngineInitialized;
+    public event Action? EngineShutdown;
+
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
         _controlHandle = base.CreateNativeControlCore(parent);
@@ -75,6 +78,7 @@ public class EngineViewportHost : NativeControlHost
 
         _initialized = true;
         StartRenderLoop();
+        EngineInitialized?.Invoke();
     }
 
     private void StartRenderLoop()
@@ -116,5 +120,6 @@ public class EngineViewportHost : NativeControlHost
 
         EngineNative.Shutdown();
         _initialized = false;
+        EngineShutdown?.Invoke();
     }
 }
