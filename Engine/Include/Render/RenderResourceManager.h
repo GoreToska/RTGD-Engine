@@ -11,8 +11,10 @@
 #include "PipelineState.h"
 #include "RefCntAutoPtr.hpp"
 #include "RenderHandle.h"
+#include "ResourcePool.h"
 #include "Texture.h"
 #include "Vertex.h"
+#include "AssetLoader/AssetType.h"
 #include "Tools/RTGDMacros.h"
 
 
@@ -82,13 +84,16 @@ namespace RTGDEngine {
     public:
         void Initialize(Diligent::IRenderDevice &device, Diligent::IDeviceContext &context);
 
-        MeshHandle RegisterMesh(const std::string &name, MeshData data);
+        MeshHandle RegisterMesh(const std::string &name, MeshData data, uint64_t assetID = 0);
 
-        MaterialHandle RegisterMaterial(const std::string &name, MaterialData data);
+        MaterialHandle RegisterMaterial(const std::string &name, MaterialData data, uint64_t assetID = 0);
 
-        TextureHandle RegisterTexture(const std::string &name, TextureData data);
+        TextureHandle RegisterTexture(const std::string &name, TextureData data, uint64_t assetID = 0);
 
-        TextureHandle RegisterTexture(const std::string &name, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+        TextureHandle RegisterTexture(const std::string &name, uint8_t r, uint8_t g, uint8_t b, uint8_t a,
+                                      uint64_t assetID = 0);
+
+        void MarkMaterialLoaded(MaterialHandle handle, uint64_t assetID);
 
         [[nodiscard]] const MeshData &GetMesh(MeshHandle handle) const;
 
@@ -147,27 +152,20 @@ namespace RTGDEngine {
 
         void ProcessPendingDestroys();
 
+        std::function<void(uint32_t, EAssetType)> OnAssetDestroyed = {};
+
     private:
         void RebindPendingMaterials(TextureHandle texHandle);
 
+        struct DestroyedAsset {
+            uint32_t handleValue;
+            uint64_t assetId;
+            EAssetType type;
+        };
 
-        std::vector<MeshData> m_meshes = {};
-        std::vector<uint32_t> m_meshGenerations = {};
-        std::vector<uint32_t> m_meshFreeList = {};
-        std::vector<uint32_t> m_meshRefCounts = {};
-        std::vector<uint8_t> m_meshPendingDestroy = {};
-
-        std::vector<MaterialData> m_materials = {};
-        std::vector<uint32_t> m_materialGenerations = {};
-        std::vector<uint32_t> m_materialFreeList = {};
-        std::vector<uint32_t> m_materialRefCounts = {};
-        std::vector<uint8_t> m_materialPendingDestroy = {};
-
-        std::vector<TextureData> m_textures = {};
-        std::vector<uint32_t> m_textureGenerations = {};
-        std::vector<uint32_t> m_textureFreeList = {};
-        std::vector<uint32_t> m_textureRefCounts = {};
-        std::vector<uint8_t> m_texturePendingDestroy = {};
+        ResourcePool<MeshData> m_meshes = {};
+        ResourcePool<MaterialData> m_materials = {};
+        ResourcePool<TextureData> m_textures = {};
 
         std::unordered_map<std::string, MeshHandle> m_meshNames = {};
         std::unordered_map<std::string, MaterialHandle> m_materialNames = {};
@@ -181,9 +179,6 @@ namespace RTGDEngine {
         std::vector<PendingGPUUpload> m_pendingUploads = {};
         std::vector<PendingTextureUpload> m_pendingTextureUploads = {};
         std::vector<PendingTextureBind> m_pendingBinds = {};
-        std::vector<uint32_t> m_pendingMeshDestroys = {};
-        std::vector<uint32_t> m_pendingMaterialDestroys = {};
-        std::vector<uint32_t> m_pendingTextureDestroys = {};
 
         Diligent::IRenderDevice *m_device = nullptr;
         Diligent::IDeviceContext *m_context = nullptr;

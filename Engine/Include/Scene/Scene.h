@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "Event/EventBus.h"
+
 namespace RTGDEngine {
     class ENGINE_API Scene {
     public:

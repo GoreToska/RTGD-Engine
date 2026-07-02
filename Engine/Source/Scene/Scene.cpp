@@ -19,8 +19,9 @@ namespace RTGDEngine {
     }
 
     flecs::entity Scene::CreateEntity(const std::string &name) {
-        auto entity = m_world->entity(name.c_str()).child_of(m_root);
-        entity.add<UUIDComponent>();
+        auto entity = m_world->entity(name.c_str()).child_of(m_root)
+                .add<UUIDComponent>()
+                .add<SceneEntity>();
 
         LogInfo("Scene '{}': entity created '{}'", m_name, name);
         return entity;
@@ -75,8 +76,11 @@ namespace RTGDEngine {
 
     void Scene::SaveToFile(const std::string &absolutePath) const {
         auto json = Serialize();
-        if (json == "[]" || json == "[\n]") { LogWarn("SaveToFile: scene '{}' empty, skip", m_name); return; }
-        std::ofstream f(absolutePath.c_str()    );
+        if (json == "[]" || json == "[\n]") {
+            LogWarn("SaveToFile: scene '{}' empty, skip", m_name);
+            return;
+        }
+        std::ofstream f(absolutePath.c_str());
         f << json;
         LogInfo("Saved to {}", absolutePath.c_str());
     }
@@ -112,6 +116,7 @@ namespace RTGDEngine {
             e.from_json(entity.data.c_str());
             e.child_of(m_root);
             e.set_name(entity.name.c_str());
+            e.add<SceneEntity>();
         }
     }
 } // RTGDEngine

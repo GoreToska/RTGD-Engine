@@ -5,6 +5,9 @@
 #include "Render/RenderResourceManager.h"
 
 #include "RenderDevice.h"
+#include "AssetLoader/AssetManager.h"
+#include "Event/EventBus.h"
+#include "Event/Events.h"
 #include "Render/RenderSystem.h"
 #include "Render/Vertex.h"
 #include "Tools/Logger.h"
@@ -86,72 +89,70 @@ namespace RTGDEngine {
         LogInfo("Default normal texture created → handle {}", m_defaultNormalTexture);
     }
 
-    MeshHandle RenderResourceManager::RegisterMesh(const std::string &name, MeshData data) {
+    MeshHandle RenderResourceManager::RegisterMesh(const std::string &name, MeshData data, uint64_t assetID) {
         std::lock_guard lock(m_lifetimeMutex);
         uint32_t index;
 
-        if (!m_meshFreeList.empty()) {
-            index = m_meshFreeList.back();
-            m_meshFreeList.pop_back();
-            m_meshes[index] = std::move(data);
-            m_meshRefCounts[index] = 0;
-            m_meshPendingDestroy[index] = 0;
+        if (!m_meshes.FreeList.empty()) {
+            index = m_meshes.FreeList.back();
+            m_meshes.FreeList.pop_back();
+            auto &slot = m_meshes[index];
+            slot.data = std::move(data);
+            slot.refCount = 0;
+            slot.pendingDestroy = 0;
+            slot.assetID = assetID;
         } else {
-            index = static_cast<uint32_t>(m_meshes.size());
-            m_meshes.push_back(std::move(data));
-            m_meshGenerations.push_back(0);
-            m_meshRefCounts.push_back(0);
-            m_meshPendingDestroy.push_back(0);
+            index = m_meshes.size();
+            m_meshes.Slots.push_back({std::move(data), 0, 0, 0, assetID});
         }
 
-        return MeshHandle{index, m_meshGenerations[index]};
+        return MeshHandle{index, m_meshes[index].generation};
     }
 
-    MaterialHandle RenderResourceManager::RegisterMaterial(const std::string &name, MaterialData data) {
+    MaterialHandle
+    RenderResourceManager::RegisterMaterial(const std::string &name, MaterialData data, uint64_t assetID) {
         std::lock_guard lock(m_lifetimeMutex);
         uint32_t index;
 
-        if (!m_materialFreeList.empty()) {
-            index = m_materialFreeList.back();
-            m_materialFreeList.pop_back();
-            m_materials[index] = std::move(data);
-            m_materialRefCounts[index] = 0;
-            m_materialPendingDestroy[index] = 0;
+        if (!m_materials.FreeList.empty()) {
+            index = m_materials.FreeList.back();
+            m_materials.FreeList.pop_back();
+            auto &slot = m_materials[index];
+            slot.data = std::move(data);
+            slot.refCount = 0;
+            slot.pendingDestroy = 0;
+            slot.assetID = assetID;
         } else {
-            index = static_cast<uint32_t>(m_materials.size());
-            m_materials.push_back(std::move(data));
-            m_materialGenerations.push_back(0);
-            m_materialRefCounts.push_back(0);
-            m_materialPendingDestroy.push_back(0);
+            index = m_materials.size();
+            m_materials.Slots.push_back({std::move(data), 0, 0, 0, assetID});
         }
 
-        return MaterialHandle{index, m_materialGenerations[index]};
+        return MaterialHandle{index, m_materials[index].generation};
     }
 
-    TextureHandle RenderResourceManager::RegisterTexture(const std::string &name, TextureData data) {
+    TextureHandle RenderResourceManager::RegisterTexture(const std::string &name, TextureData data, uint64_t assetID) {
         std::lock_guard lock(m_lifetimeMutex);
 
         uint32_t index;
 
-        if (!m_textureFreeList.empty()) {
-            index = m_textureFreeList.back();
-            m_textureFreeList.pop_back();
-            m_textures[index] = std::move(data);
-            m_textureRefCounts[index] = 0;
-            m_texturePendingDestroy[index] = 0;
+        if (!m_textures.FreeList.empty()) {
+            index = m_textures.FreeList.back();
+            m_textures.FreeList.pop_back();
+            auto &slot = m_textures[index];
+            slot.data = std::move(data);
+            slot.refCount = 0;
+            slot.pendingDestroy = 0;
+            slot.assetID = assetID;
         } else {
-            index = static_cast<uint32_t>(m_textures.size());
-            m_textures.push_back(std::move(data));
-            m_textureGenerations.push_back(0);
-            m_textureRefCounts.push_back(0);
-            m_texturePendingDestroy.push_back(0);
+            index = m_textures.size();
+            m_textures.Slots.push_back({std::move(data), 0, 0, 0, assetID});
         }
 
-        return TextureHandle{index, m_textureGenerations[index]};
+        return TextureHandle{index, m_textures[index].generation};
     }
 
     TextureHandle RenderResourceManager::RegisterTexture(const std::string &name, uint8_t r, uint8_t g, uint8_t b,
-                                                         uint8_t a) {
+                                                         uint8_t a, uint64_t assetID) {
         using namespace Diligent;
 
         if (auto it = m_textureNames.find(name); it != m_textureNames.end())
@@ -187,15 +188,15 @@ namespace RTGDEngine {
         samplerDesc.MipFilter = FILTER_TYPE_POINT;
         m_device->CreateSampler(samplerDesc, &data.Sampler);
 
-        return RegisterTexture(name, std::move(data));
+        return RegisterTexture(name, std::move(data), assetID);
     }
 
     const TextureData &RenderResourceManager::GetTexture(TextureHandle handle) const {
-        if (handle.Index() >= m_textures.size() || m_textureGenerations[handle.Index()] != handle.Generation()) {
+        if (handle.Index() >= m_textures.size() || m_textures[handle.Index()].generation != handle.Generation()) {
             return emptyTexture;
         }
 
-        return m_textures[handle.Index()];
+        return m_textures[handle.Index()].data;
     }
 
     void RenderResourceManager::QueueTextureUpload(TextureHandle handle, std::vector<uint8_t> pixels, uint32_t width,
@@ -207,7 +208,7 @@ namespace RTGDEngine {
     }
 
     void RenderResourceManager::QueueTextureBind(MaterialHandle mat, TextureHandle tex, ETextureSlot slot) {
-        if (tex.Index() < m_textures.size() && m_textures[tex.Index()].SRV) {
+        if (tex.Index() < m_textures.size() && m_textures[tex.Index()].data.SRV) {
             BindTextureToMaterial(mat, tex, slot);
             return;
         }
@@ -276,31 +277,35 @@ namespace RTGDEngine {
 
             RebindPendingMaterials(upload.Handle);
 
+            if (IsAlive(upload.Handle))
+                EventBus::Instance().Emit(Events::OnAssetLoaded,
+                                          {m_textures[upload.Handle.Index()].assetID, EAssetType::Texture}, {});
+
             LogInfo("FlushTextureUploads: done → handle {}, {}x{}",
                     upload.Handle, upload.Width, upload.Height);
         }
     }
 
     void RenderResourceManager::UpdateTexture(TextureHandle handle, TextureData data) {
-        if (handle == INVALID_TEXTURE_HANDLE || handle.Index() >= m_textures.size() || m_textureGenerations[handle.
-                Index()] != handle.Generation()) {
+        if (handle == INVALID_TEXTURE_HANDLE || handle.Index() >= m_textures.size() || m_textures[handle.Index()].
+            generation != handle.Generation()) {
             LogError("Invalid handle {}", handle);
             return;
         }
 
-        m_textures[handle.Index()] = std::move(data);
+        m_textures[handle.Index()].data = std::move(data);
     }
 
     void RenderResourceManager::BindTexturesToMaterial(MaterialHandle matHandle, TextureHandle albedo,
                                                        TextureHandle normal, TextureHandle metallicRoughness,
                                                        TextureHandle ao) {
-        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle.Index() >= m_materials.size() || m_materialGenerations[
-                matHandle.Index()] != matHandle.Generation()) {
+        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle.Index() >= m_materials.size() || m_materials[
+                matHandle.Index()].generation != matHandle.Generation()) {
             LogError("Invalid handle {}", matHandle);
             return;
         }
 
-        auto &mat = m_materials[matHandle.Index()];
+        auto &mat = m_materials[matHandle.Index()].data;
 
         mat.DiffuseTexture = albedo;
         mat.NormalTexture = normal;
@@ -310,18 +315,18 @@ namespace RTGDEngine {
 
     void RenderResourceManager::BindTextureToMaterial(MaterialHandle matHandle, TextureHandle texHandle,
                                                       ETextureSlot slot) {
-        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle.Index() >= m_materials.size() || m_materialGenerations[
-                matHandle.Index()] != matHandle.Generation()) {
+        if (matHandle == INVALID_MATERIAL_HANDLE || matHandle.Index() >= m_materials.size() || m_materials[
+                matHandle.Index()].generation != matHandle.Generation()) {
             LogError("Invalid handle {}", matHandle);
             return;
         }
-        if (texHandle == INVALID_TEXTURE_HANDLE || texHandle.Index() >= m_textures.size() || m_textureGenerations[
-                texHandle.Index()] != texHandle.Generation()) {
+        if (texHandle == INVALID_TEXTURE_HANDLE || texHandle.Index() >= m_textures.size() || m_textures[
+                texHandle.Index()].generation != texHandle.Generation()) {
             LogError("Invalid handle {}", texHandle);
             return;
         }
 
-        auto &mat = m_materials[matHandle.Index()];
+        auto &mat = m_materials[matHandle.Index()].data;
 
         switch (slot) {
             case ETextureSlot::Diffuse:
@@ -343,15 +348,15 @@ namespace RTGDEngine {
     }
 
     bool RenderResourceManager::IsAlive(MeshHandle handle) const {
-        return handle.Index() < m_meshes.size() && m_meshGenerations[handle.Index()] == handle.Generation();
+        return handle.Index() < m_meshes.size() && m_meshes[handle.Index()].generation == handle.Generation();
     }
 
     bool RenderResourceManager::IsAlive(MaterialHandle handle) const {
-        return handle.Index() < m_materials.size() && m_materialGenerations[handle.Index()] == handle.Generation();
+        return handle.Index() < m_materials.size() && m_materials[handle.Index()].generation == handle.Generation();
     }
 
     bool RenderResourceManager::IsAlive(TextureHandle handle) const {
-        return handle.Index() < m_textures.size() && m_textureGenerations[handle.Index()] == handle.Generation();
+        return handle.Index() < m_textures.size() && m_textures[handle.Index()].generation == handle.Generation();
     }
 
     void RenderResourceManager::AcquireAsset(MeshHandle handle) {
@@ -359,7 +364,7 @@ namespace RTGDEngine {
 
         if (!IsAlive(handle)) return;
 
-        ++m_meshRefCounts[handle.Index()];
+        ++m_meshes[handle.Index()].refCount;
     }
 
     void RenderResourceManager::ReleaseAsset(MeshHandle handle) {
@@ -367,13 +372,12 @@ namespace RTGDEngine {
 
         if (!IsAlive(handle)) return;
 
-        const uint32_t i = handle.Index();
-        uint32_t &rc = m_meshRefCounts[i];
+        auto &slot = m_meshes[handle.Index()];
 
-        if (rc == 0) return;
-        if (--rc == 0 && !m_meshPendingDestroy[i]) {
-            m_meshPendingDestroy[i] = 1;
-            m_pendingMeshDestroys.push_back(i);
+        if (slot.refCount == 0) return;
+        if (--slot.refCount == 0 && !slot.pendingDestroy) {
+            slot.pendingDestroy = 1;
+            m_meshes.PendingDestroys.push_back(handle.Index());
         }
     }
 
@@ -382,7 +386,7 @@ namespace RTGDEngine {
 
         if (!IsAlive(handle)) return;
 
-        ++m_materialRefCounts[handle.Index()];
+        ++m_materials[handle.Index()].refCount;
     }
 
     void RenderResourceManager::ReleaseAsset(MaterialHandle handle) {
@@ -390,13 +394,12 @@ namespace RTGDEngine {
 
         if (!IsAlive(handle)) return;
 
-        const uint32_t i = handle.Index();
-        uint32_t &rc = m_materialRefCounts[i];
+        auto &slot = m_materials[handle.Index()];
 
-        if (rc == 0) return;
-        if (--rc == 0 && !m_materialPendingDestroy[i]) {
-            m_materialPendingDestroy[i] = 1;
-            m_pendingMaterialDestroys.push_back(i);
+        if (slot.refCount == 0) return;
+        if (--slot.refCount == 0 && !slot.pendingDestroy) {
+            slot.pendingDestroy = 1;
+            m_materials.PendingDestroys.push_back(handle.Index());
         }
     }
 
@@ -405,7 +408,7 @@ namespace RTGDEngine {
 
         if (!IsAlive(handle)) return;
 
-        ++m_textureRefCounts[handle.Index()];
+        ++m_textures[handle.Index()].refCount;
     }
 
     void RenderResourceManager::ReleaseAsset(TextureHandle handle) {
@@ -413,13 +416,12 @@ namespace RTGDEngine {
 
         if (!IsAlive(handle)) return;
 
-        const uint32_t i = handle.Index();
-        uint32_t &rc = m_textureRefCounts[i];
+        auto &slot = m_textures[handle.Index()];
 
-        if (rc == 0) return;
-        if (--rc == 0 && !m_texturePendingDestroy[i]) {
-            m_texturePendingDestroy[i] = 1;
-            m_pendingTextureDestroys.push_back(i);
+        if (slot.refCount == 0) return;
+        if (--slot.refCount == 0 && !slot.pendingDestroy) {
+            slot.pendingDestroy = 1;
+            m_textures.PendingDestroys.push_back(handle.Index());
         }
     }
 
@@ -441,58 +443,95 @@ namespace RTGDEngine {
     }
 
     void RenderResourceManager::ProcessPendingDestroys() {
-        std::lock_guard lock(m_lifetimeMutex);
+        std::vector<DestroyedAsset> destroyed = {};
+        {
+            std::lock_guard lock(m_lifetimeMutex);
 
-        for (uint32_t i: m_pendingMeshDestroys) {
-            m_meshPendingDestroy[i] = 0;
-            if (m_meshRefCounts[i] != 0) continue;
+            for (uint32_t i: m_meshes.PendingDestroys) {
+                auto &slot = m_meshes[i];
+                slot.pendingDestroy = 0;
+                if (slot.refCount != 0) continue;
 
-            m_meshes[i] = {};
-            ++m_meshGenerations[i];
-            m_meshFreeList.push_back(i);
+                destroyed.push_back({MeshHandle{i, slot.generation}.value, slot.assetID, EAssetType::Mesh});
+                slot.data = {};
+                ++slot.generation;
+                m_meshes.FreeList.push_back(i);
+            }
+
+            m_meshes.PendingDestroys.clear();
         }
 
-        m_pendingMeshDestroys.clear();
+        {
+            std::lock_guard lock(m_lifetimeMutex);
 
-        for (uint32_t i: m_pendingMaterialDestroys) {
-            m_materialPendingDestroy[i] = 0;
-            if (m_materialRefCounts[i] != 0) continue;
+            for (uint32_t i: m_materials.PendingDestroys) {
+                auto &slot = m_materials[i];
+                slot.pendingDestroy = 0;
+                if (slot.refCount != 0) continue;
 
-            m_materials[i] = {};
-            ++m_materialGenerations[i];
-            m_materialFreeList.push_back(i);
+                destroyed.push_back({
+                    MaterialHandle{i, slot.generation}.value, slot.assetID, EAssetType::Material
+                });
+                slot.data = {};
+                ++slot.generation;
+                m_materials.FreeList.push_back(i);
+            }
+
+            m_materials.PendingDestroys.clear();
         }
 
-        m_pendingMaterialDestroys.clear();
+        {
+            std::lock_guard lock(m_lifetimeMutex);
 
-        for (uint32_t i: m_pendingTextureDestroys) {
-            m_texturePendingDestroy[i] = 0;
-            if (m_textureRefCounts[i] != 0) continue;
+            for (uint32_t i: m_textures.PendingDestroys) {
+                auto &slot = m_textures[i];
+                slot.pendingDestroy = 0;
+                if (slot.refCount != 0) continue;
 
-            m_textures[i] = {};
-            ++m_textureGenerations[i];
-            m_textureFreeList.push_back(i);
+                destroyed.push_back({
+                    TextureHandle{i, slot.generation}.value, slot.assetID, EAssetType::Texture
+                });
+                slot.data = {};
+                ++slot.generation;
+                m_textures.FreeList.push_back(i);
+            }
+
+            m_textures.PendingDestroys.clear();
+        }
+        for (auto &d: destroyed) {
+            if (OnAssetDestroyed)
+                OnAssetDestroyed(d.handleValue, d.type);
+            if (d.assetId)
+                EventBus::Instance().Emit(Events::OnAssetUnloaded, {d.assetId, d.type}, {});
+        }
+    }
+
+    void RenderResourceManager::MarkMaterialLoaded(MaterialHandle handle, uint64_t assetID) {
+        if (!IsAlive(handle)) {
+            LogError("Invalid handle");
+            return;
         }
 
-        m_pendingTextureDestroys.clear();
+        m_materials[handle.Index()].assetID = assetID;
+        EventBus::Instance().Emit(Events::OnAssetLoaded, {assetID, EAssetType::Material}, {});
     }
 
     const MeshData &RenderResourceManager::GetMesh(MeshHandle handle) const {
-        if (handle.Index() >= m_meshes.size() || m_meshGenerations[handle.Index()] != handle.Generation()) {
+        if (handle.Index() >= m_meshes.size() || m_meshes[handle.Index()].generation != handle.Generation()) {
             LogError("Mesh handle generation missmatch.");
             return emptyMesh;
         }
 
-        return m_meshes[handle.Index()];
+        return m_meshes[handle.Index()].data;
     }
 
     const MaterialData &RenderResourceManager::GetMaterial(MaterialHandle handle) const {
-        if (handle.Index() >= m_materials.size() || m_materialGenerations[handle.Index()] != handle.Generation()) {
+        if (handle.Index() >= m_materials.size() || m_materials[handle.Index()].generation != handle.Generation()) {
             LogError("Material handle generation missmatch.");
             return emptyMaterial;
         }
 
-        return m_materials[handle.Index()];
+        return m_materials[handle.Index()].data;
     }
 
     MeshHandle RenderResourceManager::GetMeshByName(const std::string &name) const {
@@ -569,6 +608,10 @@ namespace RTGDEngine {
 
             UpdateMesh(upload.Handle, std::move(data));
 
+            if (IsAlive(upload.Handle))
+                EventBus::Instance().Emit(Events::OnAssetLoaded,
+                                          {m_meshes[upload.Handle.Index()].assetID, EAssetType::Mesh}, {});
+
             LogInfo("RenderResourceManager: GPU upload done → handle {}, {} vertices, {} indices",
                     upload.Handle,
                     upload.Vertices.size(),
@@ -577,12 +620,12 @@ namespace RTGDEngine {
     }
 
     void RenderResourceManager::UpdateMesh(MeshHandle handle, MeshData data) {
-        if (handle == INVALID_MESH_HANDLE || handle.Index() >= m_meshes.size() || m_meshGenerations[handle.Index()] !=
-            handle.Generation()) {
+        if (handle == INVALID_MESH_HANDLE || handle.Index() >= m_meshes.size() || m_meshes[handle.Index()].generation
+            != handle.Generation()) {
             LogError("Invalid handle {}", handle);
             return;
         }
 
-        m_meshes[handle.Index()] = std::move(data);
+        m_meshes[handle.Index()].data = std::move(data);
     }
 } // RTGDEngine

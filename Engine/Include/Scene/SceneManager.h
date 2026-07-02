@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Scene.h"
+#include "Event/EventBus.h"
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine {
@@ -54,6 +55,8 @@ namespace RTGDEngine {
         void RequestLoadScene(const std::string &absolutePath);
 
         void ApplyPendingSceneChanges();
+
+        static void ReparentEntity(flecs::entity entity, flecs::entity parent);
 
     private:
         std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};

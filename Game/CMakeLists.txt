@@ -4,6 +4,7 @@ add_library(Game SHARED
 )
 
 target_include_directories(Game PRIVATE
+        ${CMAKE_SOURCE_DIR}/Game/Include
         ${CMAKE_SOURCE_DIR}/Engine/include
         ${CMAKE_SOURCE_DIR}/ThirdParty/flecs/include
 )

@@ -35,7 +35,10 @@ namespace RTGDEngine {
 
         void Resize(int w, int h) const;
 
+
     private:
+        void OnClose();
+
         // TODO: Engine owns window for now, but need to refactor this in future
         std::unique_ptr<IPlatformWindow> m_platformWindow = nullptr;
         std::unique_ptr<IGameModule> m_gameModule = nullptr;

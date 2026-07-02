@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "Components/UUIDComponent.h"
+#include "Event/Events.h"
 #include "JobSystem/JobSystem.h"
 #include "Scene/Scene.h"
 #include "Tools/Logger.h"
@@ -15,6 +17,21 @@
 namespace RTGDEngine {
     void SceneManager::Initialize() {
         RegisterMetaTypes(m_world);
+
+        m_world.observer<>().with<SceneEntity>().event(flecs::OnAdd)
+                .each([](flecs::entity entity) {
+                    EventBus::Instance().Emit(Events::OnEntityCreated, {entity.id()}, {});
+                });
+
+        m_world.observer<>().with<SceneEntity>().event(flecs::OnRemove)
+                .each([](flecs::entity entity) {
+                    EventBus::Instance().Emit(Events::OnEntityDestroyed, {entity.id()}, {});
+                });
+
+        m_world.observer<>().with<SceneEntity>().with<flecs::Identifier>(flecs::Name).event(flecs::OnSet)
+                .each([](flecs::entity entity) {
+                    EventBus::Instance().Emit(Events::OnEntityRenamed, {entity.id()}, {});
+                });
 
         CreateScene("Untitled");
     }
@@ -32,6 +49,8 @@ namespace RTGDEngine {
             m_activeScene = scene;
 
         LogInfo("SceneManager: created scene '{}'", name);
+        EventBus::Instance().Emit(Events::OnSceneCreated, {scene->GetRoot()}, {});
+
         return scene;
     }
 
@@ -42,6 +61,8 @@ namespace RTGDEngine {
             LogWarn("SceneManager: cannot unload active scene '{}'", name);
             return;
         }
+
+        EventBus::Instance().Emit(Events::OnSceneUnloaded, {it->second->GetRoot()}, {});
 
         it->second->GetRoot().destruct();
         m_scenes.erase(it);
@@ -59,7 +80,9 @@ namespace RTGDEngine {
             return;
         }
 
+        uint64_t prev = m_activeScene ? m_activeScene->GetRoot() : 0;
         m_activeScene = it->second;
+        EventBus::Instance().Emit(Events::OnActiveSceneChanged, {prev, m_activeScene->GetRoot()}, {});
         LogInfo("SceneManager: active scene → '{}'", name);
     }
 
@@ -92,6 +115,7 @@ namespace RTGDEngine {
         for (auto &load: ready) {
             auto scene = CreateScene(load.name);
             scene->ApplyEntities(load.entities);
+            EventBus::Instance().Emit(Events::OnSceneLoaded, {scene->GetRoot()}, {});
         }
 
         if (!m_pendingActive.empty() && HasScene(m_pendingActive)) {
@@ -100,6 +124,12 @@ namespace RTGDEngine {
         }
         for (auto &n: m_pendingUnloads) UnloadScene(n);
         m_pendingUnloads.clear();
+    }
+
+    void SceneManager::ReparentEntity(flecs::entity entity, flecs::entity parent) {
+        uint64_t oldParent = entity.parent().id();
+        entity.child_of(parent);
+        EventBus::Instance().Emit(Events::OnEntityReparented, {entity.id(), oldParent, parent.id()}, {});
     }
 
     flecs::world &SceneManager::GetWorld() {
