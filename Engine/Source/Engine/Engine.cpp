@@ -6,15 +6,9 @@
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/UUIDComponent.h"
-#include "Components/LightComponent.h"
-#include "Components/MeshComponent.h"
-#include "Components/RenderComponent.h"
-#include "Components/TransformComponent.h"
-#include "Components/VelocityComponent.h"
 #include "Input/InputSystem.h"
 #include "JobSystem/JobSystem.h"
 #include "Platform/IPlatformWindow.h"
-#include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
 #include "Scene/Scene.h"
@@ -25,6 +19,8 @@
 #include "Systems/MovementSystem.h"
 #include "Systems/TimerSystem.h"
 #include "Tools/Logger.h"
+#include "Event/Events.h"
+#include "Event/EventBus.h"
 
 namespace RTGDEngine {
     constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
@@ -47,6 +43,7 @@ namespace RTGDEngine {
         InputSystem::Instance().AddWindowHandle(m_platformWindow.get());
 
         m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
+        m_platformWindow->OnClose = []() { Instance().OnClose(); };
 
 #ifdef _WIN32
         LogInfo("Engine initialized with HWND: {}");
@@ -71,6 +68,8 @@ namespace RTGDEngine {
     }
 
     void Engine::Shutdown() {
+        EventBus::Instance().Process();
+
         if (m_gameModule && m_destroyFunc) {
             m_destroyFunc(m_gameModule.release());
         }
@@ -164,6 +163,11 @@ namespace RTGDEngine {
         RTGDRenderSystem::Instance().Resize(w, h);
         InputSystem::Instance().Resize(w, h);
         m_platformWindow->SetSize(w, h);
+        EventBus::Instance().Emit(Events::OnWindowResized, {w, h}, {});
+    }
+
+    void Engine::OnClose() {
+        EventBus::Instance().Emit(Events::OnWindowClosed, {}, {});
     }
 
     void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {

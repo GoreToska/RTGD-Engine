@@ -10,6 +10,8 @@
 #include "AssetLoader/MeshImporter.h"
 #include "AssetLoader/PathResolve.h"
 #include "AssetLoader/TextureImporter.h"
+#include "Event/EventBus.h"
+#include "Event/Events.h"
 #include "JobSystem/JobSystem.h"
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
@@ -17,6 +19,12 @@
 #include "Tools/Logger.h"
 
 namespace RTGDEngine {
+    void AssetManager::Initialize() {
+        RenderResourceManager::Instance().OnAssetDestroyed = [](uint32_t v, EAssetType t) {
+            Instance().OnResourceDestroyed(v, t);
+        };
+    }
+
     MeshHandle AssetManager::GetMesh(const std::string &absolutePath, std::function<void(MeshHandle)> onComplete) {
         const std::string key = Normalize(absolutePath);
 
@@ -30,7 +38,7 @@ namespace RTGDEngine {
                 m_meshByPath.erase(it);
             }
 
-            handle = RenderResourceManager::Instance().RegisterMesh(key, MeshData{});
+            handle = RenderResourceManager::Instance().RegisterMesh(key, MeshData{}, AssetID(key));
             m_meshByPath[key] = handle;
             m_meshPathByHandle[handle] = key;
         }
@@ -72,7 +80,7 @@ namespace RTGDEngine {
             }
 
 
-            handle = RenderResourceManager::Instance().RegisterMesh(absolutePath, MeshData{});
+            handle = RenderResourceManager::Instance().RegisterMesh(absolutePath, MeshData{}, AssetID(key));
             m_meshByPath[key] = handle;
             m_meshPathByHandle[handle] = key;
         }
@@ -106,7 +114,7 @@ namespace RTGDEngine {
                 m_textureByPath.erase(it);
             }
 
-            handle = RenderResourceManager::Instance().RegisterTexture(key, TextureData{});
+            handle = RenderResourceManager::Instance().RegisterTexture(key, TextureData{}, AssetID(key));
             m_textureByPath[key] = handle;
             m_textureHandleByPath[handle] = key;
         }
@@ -182,6 +190,7 @@ namespace RTGDEngine {
                 std::lock_guard lock(m_registryMutex);
                 m_materialByPath[key] = mat;
                 m_materialPathByHandle[mat] = key;
+                RenderResourceManager::Instance().MarkMaterialLoaded(mat, AssetID(key));
             }
 
             return mat;
@@ -203,7 +212,8 @@ namespace RTGDEngine {
                     return it->second;
                 m_textureByPath.erase(it);
             }
-            handle = RenderResourceManager::Instance().RegisterTexture(absolutePath, TextureData{});
+
+            handle = RenderResourceManager::Instance().RegisterTexture(absolutePath, TextureData{}, AssetID(key));
             m_textureByPath[key] = handle;
             m_textureHandleByPath[handle] = key;
         }
@@ -242,7 +252,58 @@ namespace RTGDEngine {
         return it != m_textureHandleByPath.end() ? it->second : empty;
     }
 
+    uint64_t AssetManager::AssetID(const std::string &key) {
+        const std::string relative = GetRelativePath(key);
+        return EventID(relative.empty() ? key : relative);
+    }
+
     std::string AssetManager::Normalize(const std::string &path) {
         return std::filesystem::path(path).lexically_normal().generic_string();
+    }
+
+    void AssetManager::OnResourceDestroyed(uint32_t handle, EAssetType type) {
+        std::string path;
+
+        {
+            std::lock_guard lock(m_registryMutex);
+
+            switch (type) {
+                case EAssetType::Mesh: {
+                    MeshHandle h{};
+                    h.value = handle;
+                    if (auto it = m_meshPathByHandle.find(h); it != m_meshPathByHandle.end()) {
+                        path = it->second;
+                        m_meshByPath.erase(path);
+                        m_meshPathByHandle.erase(it);
+                    }
+                    break;
+                }
+
+                case EAssetType::Texture: {
+                    TextureHandle h{};
+                    h.value = handle;
+                    if (auto it = m_textureHandleByPath.find(h); it != m_textureHandleByPath.end()) {
+                        path = it->second;
+                        m_textureByPath.erase(path);
+                        m_textureHandleByPath.erase(it);
+                    }
+                    break;
+                }
+                case EAssetType::Material: {
+                    MaterialHandle h{};
+                    h.value = handle;
+                    if (auto it = m_materialPathByHandle.find(h); it != m_materialPathByHandle.end()) {
+                        path = it->second;
+                        m_materialByPath.erase(path);
+                        m_materialPathByHandle.erase(it);
+                    }
+                    break;
+                }
+                case EAssetType::None: {
+                    LogError("Trying to destroy 'None' asset type.");
+                    break;
+                }
+            }
+        }
     }
 } // RTGDEngine

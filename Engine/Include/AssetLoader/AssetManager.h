@@ -15,6 +15,8 @@ namespace RTGDEngine {
         DECLARE_SINGLETON(AssetManager);
 
     public:
+        void Initialize();
+
         MeshHandle GetMesh(
             const std::string &absolutePath,
             std::function<void(MeshHandle)> onComplete = nullptr);
@@ -37,8 +39,12 @@ namespace RTGDEngine {
 
         const std::string &GetTexturePath(TextureHandle texture) const;
 
+        static uint64_t AssetID(const std::string &key);
+
     private:
         static std::string Normalize(const std::string &path);
+
+        void OnResourceDestroyed(uint32_t handle, EAssetType type);
 
         std::unordered_map<std::string, MeshHandle> m_meshByPath = {};
         std::unordered_map<MeshHandle, std::string> m_meshPathByHandle = {};

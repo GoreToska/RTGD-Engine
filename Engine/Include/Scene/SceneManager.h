@@ -56,6 +56,8 @@ namespace RTGDEngine {
 
         void ApplyPendingSceneChanges();
 
+        static void ReparentEntity(flecs::entity entity, flecs::entity parent);
+
     private:
         std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};
         std::shared_ptr<Scene> m_activeScene = nullptr;

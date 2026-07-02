@@ -28,6 +28,11 @@ namespace RTGDEngine {
                     EventBus::Instance().Emit(Events::OnEntityDestroyed, {entity.id()}, {});
                 });
 
+        m_world.observer<>().with<SceneEntity>().with<flecs::Identifier>(flecs::Name).event(flecs::OnSet)
+                .each([](flecs::entity entity) {
+                    EventBus::Instance().Emit(Events::OnEntityRenamed, {entity.id()}, {});
+                });
+
         CreateScene("Untitled");
     }
 
@@ -44,6 +49,8 @@ namespace RTGDEngine {
             m_activeScene = scene;
 
         LogInfo("SceneManager: created scene '{}'", name);
+        EventBus::Instance().Emit(Events::OnSceneCreated, {scene->GetRoot()}, {});
+
         return scene;
     }
 
@@ -54,6 +61,8 @@ namespace RTGDEngine {
             LogWarn("SceneManager: cannot unload active scene '{}'", name);
             return;
         }
+
+        EventBus::Instance().Emit(Events::OnSceneUnloaded, {it->second->GetRoot()}, {});
 
         it->second->GetRoot().destruct();
         m_scenes.erase(it);
@@ -115,6 +124,12 @@ namespace RTGDEngine {
         }
         for (auto &n: m_pendingUnloads) UnloadScene(n);
         m_pendingUnloads.clear();
+    }
+
+    void SceneManager::ReparentEntity(flecs::entity entity, flecs::entity parent) {
+        uint64_t oldParent = entity.parent().id();
+        entity.child_of(parent);
+        EventBus::Instance().Emit(Events::OnEntityReparented, {entity.id(), oldParent, parent.id()}, {});
     }
 
     flecs::world &SceneManager::GetWorld() {

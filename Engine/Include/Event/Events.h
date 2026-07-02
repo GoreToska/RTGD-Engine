@@ -7,6 +7,11 @@
 
 namespace RTGDEngine {
     class SceneManager;
+    class Engine;
+    class AssetManager;
+    class RenderResourceManager;
+    enum class EAssetType : uint8_t;
+
 
     namespace Events {
         struct EntityCreatedEvent {
@@ -69,22 +74,22 @@ namespace RTGDEngine {
 
         struct AssetLoadedEvent {
             uint64_t ID;
-            // TODO: EAssetType?
+            EAssetType Type;
         };
 
         struct AssetUnloadedEvent {
             uint64_t ID;
-            // TODO: EAssetType?
+            EAssetType Type;
         };
 
         struct AssetReloadedEvent {
             uint64_t ID;
-            // TODO: EAssetType?
+            EAssetType Type;
         };
 
         struct OnAssetImportedEvent {
             uint64_t ID;
-            // TODO: EAssetType?
+            EAssetType Type;
         };
 
         struct SelectionChangedEvent {
@@ -105,15 +110,14 @@ namespace RTGDEngine {
         inline constexpr EventKey<SceneCreatedEvent, SceneManager> OnSceneCreated{"scene.created"};
         inline constexpr EventKey<ActiveSceneChangedEvent, SceneManager> OnActiveSceneChanged{"scene.active_changed"};
 
-        inline constexpr EventKey<WindowResizeEvent> OnWindowResized{"window.resized"};
-        inline constexpr EventKey<WindowFocusEvent> OnWindowFocusChanged{"window.focus_changed"};
-        inline constexpr EventKey<WindowClosedEvent> OnWindowClosed{"window.closed"};
-        inline constexpr EventKey<WindowMinimizedEvent> OnWindowMinimized{"window.minimized"};
-        inline constexpr EventKey<WindowMaximizedEvent> OnWindowMaximized{"window.maximized"};
+        inline constexpr EventKey<WindowResizeEvent, Engine> OnWindowResized{"window.resized"};
+        inline constexpr EventKey<WindowFocusEvent, Engine> OnWindowFocusChanged{"window.focus_changed"};
+        inline constexpr EventKey<WindowClosedEvent, Engine> OnWindowClosed{"window.closed"};
+        inline constexpr EventKey<WindowMinimizedEvent, Engine> OnWindowMinimized{"window.minimized"};
+        inline constexpr EventKey<WindowMaximizedEvent, Engine> OnWindowMaximized{"window.maximized"};
 
-        class AssetManager;
-        inline constexpr EventKey<AssetLoadedEvent, AssetManager> OnAssetLoaded{"asset.loaded"};
-        inline constexpr EventKey<AssetUnloadedEvent, AssetManager> OnAssetUnloaded{"asset.unloaded"};
+        inline constexpr EventKey<AssetLoadedEvent, RenderResourceManager> OnAssetLoaded{"asset.loaded"};
+        inline constexpr EventKey<AssetUnloadedEvent, RenderResourceManager> OnAssetUnloaded{"asset.unloaded"};
         inline constexpr EventKey<AssetReloadedEvent, AssetManager> OnAssetReloaded{"asset.reloaded"};
         inline constexpr EventKey<OnAssetImportedEvent, AssetManager> OnAssetImported{"asset.imported"};
 
