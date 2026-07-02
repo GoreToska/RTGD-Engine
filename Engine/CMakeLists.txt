@@ -87,6 +87,7 @@ add_library(Engine SHARED
         Source/Event/EventBus.cpp
         Include/Event/Events.h
         Include/AssetLoader/AssetType.h
+        Include/Render/ResourcePool.h
 )
 
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
