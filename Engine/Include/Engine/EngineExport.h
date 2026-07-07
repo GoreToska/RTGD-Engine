@@ -21,19 +21,16 @@
 
 #include <cstdint>
 
-typedef void (RTGD_CALLBACK*EntityCallback)(const char* name, uint64_t id, uint64_t parentID);
+typedef void (RTGD_CALLBACK*EntityCallback)(const char *name, uint64_t id, uint64_t parentID);
 
-extern "C"
-{
-ENGINE_API bool Engine_Initialize(void* nativeWindow, int width, int height);
+extern "C" {
+ENGINE_API bool Engine_Initialize(void *nativeWindow, int width, int height);
 
 ENGINE_API void Engine_Update(float deltaTime);
 
 ENGINE_API void Engine_InjectKey(int key, bool down);
 
 ENGINE_API void Engine_InjectMouseButton(int button, bool down);
-
-ENGINE_API void Engine_InjectMousePosition(float normX, float normY); // x and y [0 ... 1]
 
 ENGINE_API void Engine_Resize(int w, int h);
 

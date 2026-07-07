@@ -35,6 +35,11 @@ namespace RTGDEngine {
 
         virtual void CenterCursor() = 0;
 
+        virtual void WarpCursor(int x, int y) {
+        };
+
+        virtual bool GetMouseDelta(float &dx, float &dy) { return false; }
+
         [[nodiscard]] int GetWidth() const { return m_width; }
         [[nodiscard]] int GetHeight() const { return m_height; }
 

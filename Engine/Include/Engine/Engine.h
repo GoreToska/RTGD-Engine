@@ -35,7 +35,6 @@ namespace RTGDEngine {
 
         void Resize(int w, int h) const;
 
-
     private:
         void OnClose();
 

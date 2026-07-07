@@ -2,6 +2,8 @@ using System;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Editor.Interop;
@@ -17,6 +19,76 @@ public class EngineViewportHost : NativeControlHost
 
     public event Action? EngineInitialized;
     public event Action? EngineShutdown;
+
+    public EngineViewportHost()
+    {
+        Focusable = true;
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        var top = TopLevel.GetTopLevel(this);
+        top?.AddHandler(KeyDownEvent, OnTopLevelKeyDown,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+        top?.AddHandler(KeyUpEvent, OnTopLevelKeyUp,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
+        top?.AddHandler(PointerPressedEvent, OnTopLevelPointerDown,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
+        top?.AddHandler(PointerReleasedEvent, OnTopLevelPointerUp,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+    }
+
+    private bool IsInsideViewport(PointerEventArgs e)
+    {
+        var p = e.GetPosition(this);
+        return p is { X: >= 0, Y: >= 0 } && p.X <= Bounds.Width && p.Y <= Bounds.Height;
+    }
+
+    private void OnTopLevelPointerUp(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_initialized) return;
+
+        var kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
+        if (kind.TryMouseMap(out var button, out var isDown))
+            EngineNative.InjectMouseButton((int)button, isDown);
+    }
+
+    private void OnTopLevelPointerDown(object? sender, PointerPressedEventArgs e)
+    {
+        if (!_initialized || !IsInsideViewport(e)) return;
+
+        var kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
+        if (kind.TryMouseMap(out var button, out var isDown))
+            EngineNative.InjectMouseButton((int)button, isDown);
+    }
+
+    private void OnTopLevelKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!_initialized) return;
+
+        var key = e.Key.ToEngineKey();
+        if (key == EngineKey.Unknown)
+            return;
+
+        EngineNative.InjectKey((int)key, isDown: true);
+        e.Handled = true;
+    }
+
+    private void OnTopLevelKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (!_initialized) return;
+
+        var key = e.Key.ToEngineKey();
+        if (key == EngineKey.Unknown)
+            return;
+
+        EngineNative.InjectKey((int)key, isDown: false);
+        e.Handled = true;
+    }
 
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
@@ -50,12 +122,6 @@ public class EngineViewportHost : NativeControlHost
     {
         if (_initialized || _controlHandle is null)
             return;
-
-        if (!OperatingSystem.IsWindows())
-        {
-            Console.WriteLine("EngineViewportHost: embedded engine is supported on Windows only.");
-            return;
-        }
 
         var w = Math.Max(1, (int)Bounds.Width);
         var h = Math.Max(1, (int)Bounds.Height);

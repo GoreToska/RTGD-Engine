@@ -30,6 +30,8 @@ namespace RTGDEngine {
 
         void CenterCursor() override;
 
+        void WarpCursor(int x, int y) override;
+
     private:
         HWND m_hwnd = nullptr; // We DON'T own this (the editor owns it)
         HINSTANCE m_hinstance = nullptr;

@@ -50,10 +50,6 @@ void Engine_InjectMouseButton(int button, bool down) {
     InputSystem::Instance().InjectMouseButton(static_cast<gainput::MouseButton>(button), down);
 }
 
-void Engine_InjectMousePosition(float normX, float normY) {
-    InputSystem::Instance().InjectMousePosition(normX, normY);
-}
-
 void Engine_Resize(int w, int h) {
     Engine::Instance().Resize(w, h);
 }
@@ -77,3 +73,4 @@ void Engine_GetEntities(EntityCallback callback) {
             });
 }
 } // extern "C"
+

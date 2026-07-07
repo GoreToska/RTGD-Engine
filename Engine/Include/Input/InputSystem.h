@@ -49,8 +49,6 @@ namespace RTGDEngine {
 
         void InjectMouseButton(gainput::MouseButton button, bool down) const;
 
-        void InjectMousePosition(float normX, float normY) const;
-
     private:
         void CreateKeyboardDevice();
 
@@ -73,7 +71,6 @@ namespace RTGDEngine {
 
         IInjectableButton *m_injectKeyboard = nullptr;
         IInjectableButton *m_injectMouseButton = nullptr;
-        IInjectableAxis *m_injectMouseAxis = nullptr;
 
         IPlatformWindow *m_platformWindow = nullptr;
 

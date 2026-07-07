@@ -75,6 +75,12 @@ namespace RTGDEngine {
 
     void EmbeddedWindowsWindow::CenterCursor() {
     }
+
+    void EmbeddedWindowsWindow::WarpCursor(int x, int y) {
+        POINT p{x, y};
+        ClientToScreen(m_hwnd, &p);
+        SetCursorPos(p.x, p.y);
+    }
 }
 
 #endif

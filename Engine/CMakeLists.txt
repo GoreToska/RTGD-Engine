@@ -122,24 +122,30 @@ endif ()
 
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
+add_custom_command(TARGET Engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:gainput>
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:gainput>"
+
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:assimp>
+        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:assimp>"
+)
+
 if (WIN32)
     add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:Engine>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.dll"
-
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.dll")
+    add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_BINARY_DIR}/bin/GraphicsEngineD3D12_64d.dll"
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/GraphicsEngineD3D12_64d.dll"
-
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/GraphicsEngineD3D12_64d.dll")
+elseif (UNIX AND NOT APPLE)
+    add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:gainput>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:gainput>"
-
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:assimp>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:assimp>"
-    )
+            $<TARGET_FILE:Engine>
+            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.so")
 endif ()
 
 add_custom_command(TARGET Engine POST_BUILD

@@ -33,9 +33,6 @@ internal static class EngineNative
     private static extern void Engine_InjectMouseButton(int button, bool down);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void Engine_InjectMousePosition(float normX, float normY);
-
-    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void Engine_GetEntities(EntityCallbackDelegate callback);
 
     public static bool Initialize(IntPtr nativeWindow, int width, int height) =>
@@ -55,9 +52,6 @@ internal static class EngineNative
 
     public static void InjectMouseButton(int button, bool isDown) =>
         Engine_InjectMouseButton(button, isDown);
-
-    public static void InjectMousePosition(float normalizedX, float normalizedY) =>
-        Engine_InjectMousePosition(normalizedX, normalizedY);
 
     public static void GetEntities(Action<string, long, long> callback) =>
         Engine_GetEntities((name, id, parentId) => callback(name, id, parentId));
