@@ -68,11 +68,12 @@ void Engine_GetEntities(EntityCallback callback) {
         return;
 
     SceneManager::Instance().GetWorld().query_builder<UUIDComponent>()
-            .with(flecs::ChildOf, scene->GetRoot()) // only active scene? maybe need to have separate func to get all additive scenes
+            .with(flecs::ChildOf, scene->GetRoot())
+            // only active scene? maybe need to have separate func to get all additive scenes
             .build()
             .each([&](flecs::entity e, UUIDComponent) {
                 if (e.name().length() > 0)
-                    callback(e.name().c_str(), e.id());
+                    callback(e.name().c_str(), e.id(), e.parent().id());
             });
 }
 } // extern "C"

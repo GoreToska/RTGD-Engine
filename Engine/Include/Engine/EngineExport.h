@@ -21,7 +21,7 @@
 
 #include <cstdint>
 
-typedef void (RTGD_CALLBACK*EntityCallback)(const char* name, uint64_t id);
+typedef void (RTGD_CALLBACK*EntityCallback)(const char* name, uint64_t id, uint64_t parentID);
 
 extern "C"
 {
