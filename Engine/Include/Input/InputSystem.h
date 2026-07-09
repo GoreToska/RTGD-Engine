@@ -13,7 +13,6 @@
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine {
-    class IInjectableAxis;
     class IInjectableButton;
     class IPlatformWindow;
 

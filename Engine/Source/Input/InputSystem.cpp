@@ -126,22 +126,24 @@ namespace RTGDEngine {
 
         float dx = 0.0f, dy = 0.0f;
         const bool hasDelta = m_platformWindow->GetMouseDelta(dx, dy);
+        LogInfo("captured={} hasDelta={} dx={} dy={}", m_mouseCaptured, hasDelta, dx, dy);
 
         if (!IsMouseCaptured())
             return;
 
         if (hasDelta) {
             if (m_ignoreNextDelta) {
-                m_mouseDeltaX = 0.0f;
-                m_mouseDeltaY = 0.0f;
+                m_mouseDeltaX = m_mouseDeltaY = 0.0f;
                 m_ignoreNextDelta = false;
             } else {
                 m_mouseDeltaX = dx;
                 m_mouseDeltaY = dy;
             }
         } else {
-            m_currentMouseX = m_map->GetFloat(ID(EInputAction::LookX)) * static_cast<float>(m_platformWindow->GetWidth());
-            m_currentMouseY = m_map->GetFloat(ID(EInputAction::LookY)) * static_cast<float>(m_platformWindow->GetHeight());
+            m_currentMouseX = m_map->GetFloat(ID(EInputAction::LookX)) * static_cast<float>(m_platformWindow->
+                                  GetWidth());
+            m_currentMouseY = m_map->GetFloat(ID(EInputAction::LookY)) * static_cast<float>(m_platformWindow->
+                                  GetHeight());
             CalculateMouseDelta();
             m_platformWindow->CenterCursor();
         }
@@ -212,21 +214,16 @@ namespace RTGDEngine {
     }
 
     void InputSystem::CaptureMouse(const bool capture) {
-        if (m_mouseCaptured == capture)
-            return;
-        m_mouseCaptured = capture;
-
-        if (!m_platformWindow)
-            return;
+        if (!m_platformWindow) return;
+        if (m_mouseCaptured == capture) return;
 
         if (capture) {
             m_platformWindow->SetCursorVisible(false);
-            m_platformWindow->SetMouseCapture(true);
             m_platformWindow->CenterCursor();
             m_ignoreNextDelta = true;
         } else {
             m_platformWindow->SetCursorVisible(true);
-            m_platformWindow->SetMouseCapture(false);
         }
+        m_mouseCaptured = capture;
     }
 }

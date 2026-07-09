@@ -62,6 +62,8 @@ namespace RTGDEngine {
                 continue;
 
             if (ev.xcookie.evtype == XI_RawMotion) {
+                LogInfo("RawMotion dx={} dy={}", m_deltaX, m_deltaY);
+
                 auto *re = static_cast<XIRawEvent *>(ev.xcookie.data);
                 const double *val = re->raw_values;
                 for (int i = 0; i < re->valuators.mask_len * 8; ++i) {

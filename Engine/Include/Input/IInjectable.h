@@ -12,11 +12,4 @@ namespace RTGDEngine {
 
         virtual void InjectButton(gainput::DeviceButtonId, bool) = 0;
     };
-
-    class IInjectableAxis {
-    public:
-        virtual ~IInjectableAxis() = default;
-
-        virtual void InjectAxis(gainput::DeviceButtonId, float) = 0;
-    };
 }

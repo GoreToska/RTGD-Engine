@@ -47,6 +47,7 @@ void Engine_InjectKey(int key, bool down) {
 }
 
 void Engine_InjectMouseButton(int button, bool down) {
+    LogInfo("InjectMouseButton {} down={}", button, down);
     InputSystem::Instance().InjectMouseButton(static_cast<gainput::MouseButton>(button), down);
 }
 
@@ -73,4 +74,3 @@ void Engine_GetEntities(EntityCallback callback) {
             });
 }
 } // extern "C"
-

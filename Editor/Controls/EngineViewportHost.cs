@@ -14,6 +14,7 @@ public class EngineViewportHost : NativeControlHost
 {
     private IPlatformHandle? _controlHandle;
     private bool _initialized;
+    private bool _viewportFocused;
     private DispatcherTimer? _timer;
     private readonly Stopwatch _stopwatch = new();
 
@@ -59,8 +60,15 @@ public class EngineViewportHost : NativeControlHost
 
     private void OnTopLevelPointerDown(object? sender, PointerPressedEventArgs e)
     {
-        if (!_initialized || !IsInsideViewport(e)) return;
+        if (!_initialized) return;
 
+        _viewportFocused = IsInsideViewport(e);
+
+        Console.WriteLine($"PointerDown fired, inside={IsInsideViewport(e)}");
+
+        if (!_viewportFocused) return;
+
+        Focus();
         var kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
         if (kind.TryMouseMap(out var button, out var isDown))
             EngineNative.InjectMouseButton((int)button, isDown);
@@ -68,7 +76,7 @@ public class EngineViewportHost : NativeControlHost
 
     private void OnTopLevelKeyDown(object? sender, KeyEventArgs e)
     {
-        if (!_initialized) return;
+        if (!_initialized || !_viewportFocused) return;
 
         var key = e.Key.ToEngineKey();
         if (key == EngineKey.Unknown)
@@ -87,7 +95,6 @@ public class EngineViewportHost : NativeControlHost
             return;
 
         EngineNative.InjectKey((int)key, isDown: false);
-        e.Handled = true;
     }
 
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)

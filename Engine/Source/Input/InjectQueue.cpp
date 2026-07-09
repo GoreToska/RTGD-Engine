@@ -9,11 +9,7 @@
 
 namespace RTGDEngine {
     void InjectQueue::PushButton(gainput::DeviceButtonId id, bool v) {
-        Push({id, false, v, 0.0f});
-    }
-
-    void InjectQueue::PushAxis(gainput::DeviceButtonId id, float v) {
-        Push({id, true, false, v});
+        Push({id, v});
     }
 
     void InjectQueue::Flush(gainput::InputDevice &device, gainput::InputState &state, gainput::InputDeltaState *delta) {
@@ -24,9 +20,8 @@ namespace RTGDEngine {
             batch.swap(m_pending);
         }
 
-        for (auto &[ID, IsAxis, BValue, FValue]: batch) {
-            if (IsAxis) gainput::HandleAxis(device, state, delta, ID, FValue);
-            else gainput::HandleButton(device, state, delta, ID, BValue);
+        for (auto &[ID, Value]: batch) {
+            gainput::HandleButton(device, state, delta, ID, Value);
         }
     }
 
