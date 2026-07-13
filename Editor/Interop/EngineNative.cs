@@ -44,6 +44,10 @@ internal static class EngineNative
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void Engine_GetEntities(EntityCallbackDelegate callback);
 
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ulong Engine_PickEntity(int x, int y);
+
+
     public static bool Initialize(IntPtr nativeWindow, int width, int height) =>
         Engine_Initialize(nativeWindow, width, height);
 
@@ -73,4 +77,6 @@ internal static class EngineNative
 
     public static void GetEntities(Action<string, long, long> callback) =>
         Engine_GetEntities((name, id, parentId) => callback(name, id, parentId));
+
+    public static ulong PickEntity(int x, int y) => Engine_PickEntity(x, y);
 }

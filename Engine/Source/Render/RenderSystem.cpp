@@ -200,9 +200,70 @@ namespace RTGDEngine {
         if (pMapped) {
             auto *dst = static_cast<ObjectConstantBuffer *>(pMapped);
             dst->Model = data.Model.Transpose();
+
+#ifdef RTGD_EDITOR
+            dst->EntityID = data.EntityID;
+#endif
+
             m_pImmediateContext->UnmapBuffer(m_objectCB, MAP_WRITE);
         }
     }
+
+#ifdef RTGD_EDITOR
+    flecs::entity RTGDRenderSystem::PickEntity(uint32_t x, uint32_t y) {
+        using namespace Diligent;
+        if (!m_gbuffer.IDTexture || !m_gbuffer.IDReadbackTexture) {
+            return flecs::entity::null();
+        }
+
+        if (x >= m_gbuffer.Width || y >= m_gbuffer.Height) {
+            return flecs::entity::null();
+        }
+
+        Box srcBox;
+        srcBox.MinX = x;
+        srcBox.MaxX = x + 1;
+        srcBox.MinY = y;
+        srcBox.MaxY = y + 1;
+        srcBox.MinZ = 0;
+        srcBox.MaxZ = 1;
+
+        CopyTextureAttribs copy;
+        copy.pSrcTexture = m_gbuffer.IDTexture;
+        copy.pSrcBox = &srcBox;
+        copy.SrcTextureTransitionMode = RESOURCE_STATE_TRANSITION_MODE_TRANSITION;
+        copy.pDstTexture = m_gbuffer.IDReadbackTexture;
+        copy.DstX = 0;
+        copy.DstY = 0;
+        copy.DstZ = 0;
+        copy.DstTextureTransitionMode = RESOURCE_STATE_TRANSITION_MODE_TRANSITION;
+        m_pImmediateContext->CopyTexture(copy);
+
+        if (!m_pickFence) {
+            FenceDesc fd;
+            fd.Name = "Pick Fence";
+            m_device->CreateFence(fd, &m_pickFence);
+        }
+
+        ++m_pickFenceValue;
+        m_pImmediateContext->EnqueueSignal(m_pickFence, m_pickFenceValue);
+        m_pImmediateContext->Flush();
+
+        MappedTextureSubresource mapped;
+        m_pImmediateContext->MapTextureSubresource(
+            m_gbuffer.IDReadbackTexture, 0, 0,
+            MAP_READ, MAP_FLAG_DO_NOT_WAIT, nullptr, mapped);
+
+        const uint32_t id = mapped.pData ? *static_cast<const uint32_t *>(mapped.pData) : 0;
+
+        m_pImmediateContext->UnmapTextureSubresource(m_gbuffer.IDReadbackTexture, 0, 0);
+
+        if (id == 0 || id > m_pickEntities.size())
+            return {};
+
+        return m_pickEntities[id - 1];
+    }
+#endif
 
     void RTGDRenderSystem::Shutdown() {
         LogInfo("Render System Shutdown");
@@ -221,7 +282,10 @@ namespace RTGDEngine {
             m_gbuffer.DiffuseRTV,
             m_gbuffer.NormalRTV,
             m_gbuffer.PositionRTV,
-            m_gbuffer.PBRRTV
+            m_gbuffer.PBRRTV,
+#ifdef RTGD_EDITOR
+            m_gbuffer.IDRTV,
+#endif
         };
         m_pImmediateContext->SetRenderTargets(
             std::size(rtvs), rtvs, m_gbuffer.DepthDSV,
@@ -235,11 +299,18 @@ namespace RTGDEngine {
         m_pImmediateContext->ClearRenderTarget(m_gbuffer.PositionRTV, clearColor,
                                                RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
         m_pImmediateContext->ClearRenderTarget(m_gbuffer.PBRRTV, clearColor, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+#ifdef RTGD_EDITOR
+        m_pImmediateContext->ClearRenderTarget(m_gbuffer.IDRTV, clearColor, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+        m_pickEntities.clear();
+#endif
+
         m_pImmediateContext->ClearDepthStencil(
             m_gbuffer.DepthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
             RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
-        world.each([&](const MeshComponent &meshComp,
+        world.each([&](flecs::entity e,
+                       const MeshComponent &meshComp,
                        const RenderComponent &render,
                        TransformComponent &transform) {
             if (!render.IsVisible)
@@ -280,6 +351,10 @@ namespace RTGDEngine {
             }
 
             m_objectCBData.Model = transform.GetWorldMatrix();
+#ifdef RTGD_EDITOR
+            m_pickEntities.push_back(e);
+            m_objectCBData.EntityID = static_cast<uint32_t>(m_pickEntities.size());
+#endif
             UpdateObjectConstantBuffer(m_objectCBData);
 
             m_pImmediateContext->SetPipelineState(gbufMat.PSO);

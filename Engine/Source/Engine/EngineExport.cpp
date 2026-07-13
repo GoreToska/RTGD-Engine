@@ -84,4 +84,16 @@ void Engine_GetEntities(EntityCallback callback) {
                     callback(e.name().c_str(), e.id(), e.parent().id());
             });
 }
+
+uint64_t Engine_PickEntity(int x, int y) {
+#ifdef RTGD_EDITOR
+    if (x < 0 || y < 0)
+        return 0;
+
+    const flecs::entity e = RTGDRenderSystem::Instance().PickEntity(x, y);
+    return e.id();
+#else
+    return 0;
+#endif
+}
 } // extern "C"
