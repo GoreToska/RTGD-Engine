@@ -107,10 +107,9 @@ namespace RTGDEngine {
             return;
 
         float dx = 0.0f, dy = 0.0f;
-        if (const bool hasDelta = m_platformWindow->GetMouseDelta(dx, dy)) {
+        if (m_platformWindow->GetMouseDelta(dx, dy)) {
             m_mouseDeltaX = dx;
             m_mouseDeltaY = dy;
-            LogInfo("captured={} hasDelta={} dx={} dy={}", m_mouseCaptured, hasDelta, dx, dy);
         }
     }
 
@@ -167,6 +166,21 @@ namespace RTGDEngine {
 
         m_mouseCaptured = relative;
         m_platformWindow->SetRelativeMouseMode(relative);
+    }
+
+    void InputSystem::InjectMouseMove(float dx, float dy) const {
+        if (m_platformWindow)
+            m_platformWindow->InjectMouseMove(dx, dy);
+    }
+
+    void InputSystem::WarpCursorToCenter() const {
+        if (m_platformWindow)
+            m_platformWindow->WarpCursorToCenter();
+    }
+
+    void InputSystem::SetCursorVisible(bool visible) const {
+        if (m_platformWindow)
+            m_platformWindow->SetCursorVisible(visible);
     }
 
     void InputSystem::CreateKeyboardDevice() {

@@ -31,11 +31,16 @@ namespace RTGDEngine {
 
         void SetRelativeMouseMode(bool relative) override;
 
+        void InjectMouseMove(float dx, float dy) override;
+
+        void WarpCursorToCenter() override;
+
     private:
         Display *m_display = nullptr; // We own this
         Window m_windowHandle = {}; // We DON'T own this
         XWindowAttributes m_windowAttributes = {};
-        int m_xiOpcode = -1;
+        float m_deltaX = 0.0f;
+        float m_deltaY = 0.0f;
     };
 }
 

@@ -95,6 +95,41 @@ namespace RTGDEngine {
     }
 
     void WindowsPlatformWindow::SetCursorVisible(const bool visible) {
+        if (visible) {
+            while (ShowCursor(TRUE) < 0) {
+            }
+        } else {
+            while (ShowCursor(FALSE) >= 0) {
+            }
+        }
+    }
+
+    void WindowsPlatformWindow::SetRelativeMouseMode(const bool relative) {
+        RAWINPUTDEVICE rid{};
+        rid.usUsagePage = 0x01;
+        rid.usUsage = 0x02;
+
+        if (relative) {
+            rid.dwFlags = RIDEV_INPUTSINK;
+            rid.hwndTarget = m_hwnd;
+            RegisterRawInputDevices(&rid, 1, sizeof(rid));
+            SetCursorVisible(false);
+            m_deltaX = 0.0f;
+            m_deltaY = 0.0f;
+        } else {
+            rid.dwFlags = RIDEV_REMOVE;
+            rid.hwndTarget = nullptr;
+            RegisterRawInputDevices(&rid, 1, sizeof(rid));
+            SetCursorVisible(true);
+        }
+    }
+
+    bool WindowsPlatformWindow::GetMouseDelta(float &dx, float &dy) {
+        dx = m_deltaX;
+        dy = m_deltaY;
+        m_deltaX = 0.0f;
+        m_deltaY = 0.0f;
+        return true;
     }
 
     LRESULT CALLBACK WindowsPlatformWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -118,6 +153,17 @@ namespace RTGDEngine {
                     self->m_height = height;
                     if (self->OnResize)
                         self->OnResize(width, height);
+                }
+                break;
+            }
+            case WM_INPUT: {
+                RAWINPUT raw{};
+                UINT size = sizeof(raw);
+                if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &size,
+                                    sizeof(RAWINPUTHEADER)) != static_cast<UINT>(-1)
+                    && raw.header.dwType == RIM_TYPEMOUSE) {
+                    self->m_deltaX += static_cast<float>(raw.data.mouse.lLastX);
+                    self->m_deltaY += static_cast<float>(raw.data.mouse.lLastY);
                 }
                 break;
             }

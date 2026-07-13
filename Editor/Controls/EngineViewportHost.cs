@@ -15,6 +15,8 @@ public class EngineViewportHost : NativeControlHost
     private IPlatformHandle? _controlHandle;
     private bool _initialized;
     private bool _viewportFocused;
+    private bool _looking;
+    private Point _lastPos;
     private DispatcherTimer? _timer;
     private readonly Stopwatch _stopwatch = new();
 
@@ -41,6 +43,9 @@ public class EngineViewportHost : NativeControlHost
 
         top?.AddHandler(PointerReleasedEvent, OnTopLevelPointerUp,
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
+        top?.AddHandler(PointerMovedEvent, OnTopLevelPointerMove,
+            RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     private bool IsInsideViewport(PointerEventArgs e)
@@ -56,6 +61,9 @@ public class EngineViewportHost : NativeControlHost
         var kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
         if (kind.TryMouseMap(out var button, out var isDown))
             EngineNative.InjectMouseButton((int)button, isDown);
+
+        if (kind == PointerUpdateKind.RightButtonReleased)
+            EndLook(e);
     }
 
     private void OnTopLevelPointerDown(object? sender, PointerPressedEventArgs e)
@@ -63,15 +71,67 @@ public class EngineViewportHost : NativeControlHost
         if (!_initialized) return;
 
         _viewportFocused = IsInsideViewport(e);
-
-        Console.WriteLine($"PointerDown fired, inside={IsInsideViewport(e)}");
-
         if (!_viewportFocused) return;
 
         Focus();
         var kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
         if (kind.TryMouseMap(out var button, out var isDown))
             EngineNative.InjectMouseButton((int)button, isDown);
+
+        if (kind == PointerUpdateKind.RightButtonPressed)
+            BeginLook(e);
+    }
+
+    private void BeginLook(PointerEventArgs e)
+    {
+        if (_looking) return;
+
+        _looking = true;
+        e.Pointer.Capture(this);
+        EngineNative.SetCursorVisible(false);
+        EngineNative.WarpCursorToCenter();
+        _lastPos = new Point(Bounds.Width / 2, Bounds.Height / 2);
+    }
+
+    private void EndLook(PointerEventArgs e)
+    {
+        if (!_looking) return;
+
+        _looking = false;
+        e.Pointer.Capture(null);
+        EngineNative.SetCursorVisible(true);
+    }
+
+    private void OnTopLevelPointerMove(object? sender, PointerEventArgs e)
+    {
+        if (!_initialized || !_looking) return;
+
+        var pos = e.GetPosition(this);
+        var dx = pos.X - _lastPos.X;
+        var dy = pos.Y - _lastPos.Y;
+        _lastPos = pos;
+
+        if (dx != 0 || dy != 0)
+            EngineNative.InjectMouseMove((float)dx, (float)dy);
+
+        var marginX = Bounds.Width / 4;
+        var marginY = Bounds.Height / 4;
+        if (pos.X < marginX || pos.X > Bounds.Width - marginX ||
+            pos.Y < marginY || pos.Y > Bounds.Height - marginY)
+        {
+            EngineNative.WarpCursorToCenter();
+            _lastPos = new Point(Bounds.Width / 2, Bounds.Height / 2);
+        }
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+
+        if (!_looking) return;
+
+        _looking = false;
+        EngineNative.SetCursorVisible(true);
     }
 
     private void OnTopLevelKeyDown(object? sender, KeyEventArgs e)

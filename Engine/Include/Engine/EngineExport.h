@@ -32,6 +32,12 @@ ENGINE_API void Engine_InjectKey(int key, bool down);
 
 ENGINE_API void Engine_InjectMouseButton(int button, bool down);
 
+ENGINE_API void Engine_InjectMouseMove(float dx, float dy);
+
+ENGINE_API void Engine_WarpCursorToCenter();
+
+ENGINE_API void Engine_SetCursorVisible(bool visible);
+
 ENGINE_API void Engine_Resize(int w, int h);
 
 ENGINE_API void Engine_Shutdown();

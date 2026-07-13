@@ -47,8 +47,19 @@ void Engine_InjectKey(int key, bool down) {
 }
 
 void Engine_InjectMouseButton(int button, bool down) {
-    LogInfo("InjectMouseButton {} down={}", button, down);
     InputSystem::Instance().InjectMouseButton(static_cast<gainput::MouseButton>(button), down);
+}
+
+void Engine_InjectMouseMove(float dx, float dy) {
+    InputSystem::Instance().InjectMouseMove(dx, dy);
+}
+
+void Engine_WarpCursorToCenter() {
+    InputSystem::Instance().WarpCursorToCenter();
+}
+
+void Engine_SetCursorVisible(bool visible) {
+    InputSystem::Instance().SetCursorVisible(visible);
 }
 
 void Engine_Resize(int w, int h) {

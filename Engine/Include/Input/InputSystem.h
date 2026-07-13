@@ -50,6 +50,12 @@ namespace RTGDEngine {
 
         void SetRelativeMouseMode(bool relative);
 
+        void InjectMouseMove(float dx, float dy) const;
+
+        void WarpCursorToCenter() const;
+
+        void SetCursorVisible(bool visible) const;
+
     private:
         void CreateKeyboardDevice();
 

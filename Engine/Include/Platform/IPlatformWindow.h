@@ -35,6 +35,10 @@ namespace RTGDEngine {
 
         virtual bool GetMouseDelta(float &dx, float &dy) { return false; }
 
+        virtual void InjectMouseMove(float dx, float dy) {}
+
+        virtual void WarpCursorToCenter() {}
+
         [[nodiscard]] int GetWidth() const { return m_width; }
         [[nodiscard]] int GetHeight() const { return m_height; }
 
