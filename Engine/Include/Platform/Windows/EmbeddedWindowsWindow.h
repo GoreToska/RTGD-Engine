@@ -26,13 +26,19 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) override;
 
-        void SetMouseCapture(bool capture) override;
+        void SetRelativeMouseMode(bool relative) override;
 
-        void CenterCursor() override;
+        bool GetMouseDelta(float &dx, float &dy) override;
+
+        void InjectMouseMove(float dx, float dy) override;
+
+        void WarpCursorToCenter() override;
 
     private:
         HWND m_hwnd = nullptr; // We DON'T own this (the editor owns it)
         HINSTANCE m_hinstance = nullptr;
+        float m_deltaX = 0.0f;
+        float m_deltaY = 0.0f;
     };
 }
 

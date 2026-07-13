@@ -13,16 +13,12 @@ namespace RTGDEngine {
     public:
         void PushButton(gainput::DeviceButtonId id, bool v);
 
-        void PushAxis(gainput::DeviceButtonId id, float v);
-
         void Flush(gainput::InputDevice &device, gainput::InputState &state, gainput::InputDeltaState *delta);
 
     private:
         struct Entry {
             gainput::DeviceButtonId ID;
-            bool IsAxis;
-            bool BValue;
-            float FValue;
+            bool Value;
         };
 
         void Push(const Entry &e);

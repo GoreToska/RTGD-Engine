@@ -50,8 +50,16 @@ void Engine_InjectMouseButton(int button, bool down) {
     InputSystem::Instance().InjectMouseButton(static_cast<gainput::MouseButton>(button), down);
 }
 
-void Engine_InjectMousePosition(float normX, float normY) {
-    InputSystem::Instance().InjectMousePosition(normX, normY);
+void Engine_InjectMouseMove(float dx, float dy) {
+    InputSystem::Instance().InjectMouseMove(dx, dy);
+}
+
+void Engine_WarpCursorToCenter() {
+    InputSystem::Instance().WarpCursorToCenter();
+}
+
+void Engine_SetCursorVisible(bool visible) {
+    InputSystem::Instance().SetCursorVisible(visible);
 }
 
 void Engine_Resize(int w, int h) {
@@ -68,11 +76,12 @@ void Engine_GetEntities(EntityCallback callback) {
         return;
 
     SceneManager::Instance().GetWorld().query_builder<UUIDComponent>()
-            .with(flecs::ChildOf, scene->GetRoot()) // only active scene? maybe need to have separate func to get all additive scenes
+            .with(flecs::ChildOf, scene->GetRoot())
+            // only active scene? maybe need to have separate func to get all additive scenes
             .build()
             .each([&](flecs::entity e, UUIDComponent) {
                 if (e.name().length() > 0)
-                    callback(e.name().c_str(), e.id());
+                    callback(e.name().c_str(), e.id(), e.parent().id());
             });
 }
 } // extern "C"

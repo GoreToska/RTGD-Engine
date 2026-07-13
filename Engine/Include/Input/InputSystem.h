@@ -13,7 +13,6 @@
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine {
-    class IInjectableAxis;
     class IInjectableButton;
     class IPlatformWindow;
 
@@ -49,7 +48,13 @@ namespace RTGDEngine {
 
         void InjectMouseButton(gainput::MouseButton button, bool down) const;
 
-        void InjectMousePosition(float normX, float normY) const;
+        void SetRelativeMouseMode(bool relative);
+
+        void InjectMouseMove(float dx, float dy) const;
+
+        void WarpCursorToCenter() const;
+
+        void SetCursorVisible(bool visible) const;
 
     private:
         void CreateKeyboardDevice();
@@ -60,12 +65,6 @@ namespace RTGDEngine {
 
         void InitializeInputForWindow(IPlatformWindow *handle);
 
-        void CaptureMouse(bool capture);
-
-        void MoveMouseBack();
-
-        void CalculateMouseDelta();
-
         gainput::InputManager m_manager = {};
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
         gainput::DeviceId m_keyboard = gainput::InvalidDeviceId;
@@ -73,15 +72,10 @@ namespace RTGDEngine {
 
         IInjectableButton *m_injectKeyboard = nullptr;
         IInjectableButton *m_injectMouseButton = nullptr;
-        IInjectableAxis *m_injectMouseAxis = nullptr;
 
         IPlatformWindow *m_platformWindow = nullptr;
 
         bool m_mouseCaptured = false;
-        bool m_ignoreNextDelta = false;
-
-        float m_currentMouseX = 0.0f;
-        float m_currentMouseY = 0.0f;
         float m_mouseDeltaX = 0.0f;
         float m_mouseDeltaY = 0.0f;
 

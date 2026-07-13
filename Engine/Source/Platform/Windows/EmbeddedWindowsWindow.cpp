@@ -57,23 +57,32 @@ namespace RTGDEngine {
         }
     }
 
-    void EmbeddedWindowsWindow::SetMouseCapture(bool capture) {
-        if (capture) {
-            SetCapture(m_hwnd);
-            RECT rc;
-            GetClientRect(m_hwnd, &rc);
-            POINT tl{rc.left, rc.top}, br{rc.right, rc.bottom};
-            ClientToScreen(m_hwnd, &tl);
-            ClientToScreen(m_hwnd, &br);
-            RECT clip{tl.x, tl.y, br.x, br.y};
-            ClipCursor(&clip);
-        } else {
-            ReleaseCapture();
-            ClipCursor(nullptr);
+    void EmbeddedWindowsWindow::SetRelativeMouseMode(bool relative) {
+        if (relative) {
+            m_deltaX = 0.0f;
+            m_deltaY = 0.0f;
         }
     }
 
-    void EmbeddedWindowsWindow::CenterCursor() {
+    bool EmbeddedWindowsWindow::GetMouseDelta(float &dx, float &dy) {
+        dx = m_deltaX;
+        dy = m_deltaY;
+        m_deltaX = 0.0f;
+        m_deltaY = 0.0f;
+        return true;
+    }
+
+    void EmbeddedWindowsWindow::InjectMouseMove(float dx, float dy) {
+        m_deltaX += dx;
+        m_deltaY += dy;
+    }
+
+    void EmbeddedWindowsWindow::WarpCursorToCenter() {
+        RECT rc{};
+        GetClientRect(m_hwnd, &rc);
+        POINT center{(rc.right - rc.left) / 2, (rc.bottom - rc.top) / 2};
+        ClientToScreen(m_hwnd, &center);
+        SetCursorPos(center.x, center.y);
     }
 }
 

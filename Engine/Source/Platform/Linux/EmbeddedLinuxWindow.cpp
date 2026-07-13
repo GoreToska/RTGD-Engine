@@ -29,11 +29,40 @@ namespace RTGDEngine {
 
         XGetWindowAttributes(m_display, m_windowHandle, &m_windowAttributes);
         SetSize(m_windowAttributes.width, m_windowAttributes.height);
+
         return true;
     }
 
     bool EmbeddedLinuxWindow::PollEvents() {
-        return true; // we don't need to poll events in embedded window, so just return true
+        XEvent ev;
+        while (XPending(m_display) > 0)
+            XNextEvent(m_display, &ev);
+        return true;
+    }
+
+    bool EmbeddedLinuxWindow::GetMouseDelta(float &dx, float &dy) {
+        dx = m_deltaX;
+        dy = m_deltaY;
+        m_deltaX = 0.0f;
+        m_deltaY = 0.0f;
+        return true;
+    }
+
+    void EmbeddedLinuxWindow::SetRelativeMouseMode(bool relative) {
+        if (relative) {
+            m_deltaX = 0.0f;
+            m_deltaY = 0.0f;
+        }
+    }
+
+    void EmbeddedLinuxWindow::InjectMouseMove(float dx, float dy) {
+        m_deltaX += dx;
+        m_deltaY += dy;
+    }
+
+    void EmbeddedLinuxWindow::WarpCursorToCenter() {
+        XWarpPointer(m_display, None, m_windowHandle, 0, 0, 0, 0, GetWidth() / 2, GetHeight() / 2);
+        XFlush(m_display);
     }
 
     NativeWindowHandle EmbeddedLinuxWindow::GetHandle() const {
@@ -56,21 +85,6 @@ namespace RTGDEngine {
         if (visible) XFixesShowCursor(m_display, m_windowHandle);
         else XFixesHideCursor(m_display, m_windowHandle);
         XFlush(m_display);
-    }
-
-    void EmbeddedLinuxWindow::SetMouseCapture(bool capture) {
-        if (capture) {
-            constexpr unsigned mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
-            XGrabPointer(m_display, m_windowHandle, True, mask,GrabModeAsync, GrabModeAsync, m_windowHandle, None,
-                         CurrentTime);
-        } else {
-            XUngrabPointer(m_display, CurrentTime);
-        }
-        XFlush(m_display);
-    }
-
-    void EmbeddedLinuxWindow::CenterCursor() {
-        // do not needed
     }
 }
 

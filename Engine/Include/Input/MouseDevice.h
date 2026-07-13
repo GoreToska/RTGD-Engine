@@ -9,13 +9,11 @@
 #include "InjectQueue.h"
 
 namespace RTGDEngine {
-    class MouseDevice : public gainput::InputDevice, public IInjectableButton, public IInjectableAxis {
+    class MouseDevice : public gainput::InputDevice, public IInjectableButton {
     public:
         MouseDevice(gainput::InputManager &manager, gainput::DeviceId deviceID, unsigned index, DeviceVariant /**/);
 
         ~MouseDevice() override;
-
-        void InjectAxis(gainput::DeviceButtonId id, float v) override;
 
         void InjectButton(gainput::DeviceButtonId id, bool v) override;
 

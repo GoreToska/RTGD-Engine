@@ -24,15 +24,17 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) override;
 
-        void SetMouseCapture(bool capture) override;
+        void SetRelativeMouseMode(bool relative) override;
 
-        void CenterCursor() override;
+        bool GetMouseDelta(float &dx, float &dy) override;
 
     private:
         Display *m_display = nullptr;
         Window m_window = 0;
         Atom m_deleteAtom = 0;
         bool m_running = true;
+
+        int m_xiOpcode = -1;
     };
 } // RTGDEngine
 #endif

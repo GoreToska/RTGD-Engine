@@ -22,9 +22,9 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) override;
 
-        void SetMouseCapture(bool capture) override;
+        void SetRelativeMouseMode(bool relative) override;
 
-        void CenterCursor() override;
+        bool GetMouseDelta(float &dx, float &dy) override;
 
     private:
         static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -32,6 +32,8 @@ namespace RTGDEngine {
         HWND m_hwnd = nullptr;
         HINSTANCE m_hinstance = nullptr;
         bool m_running = true;
+        float m_deltaX = 0.0f;
+        float m_deltaY = 0.0f;
     };
 } // RTGDEngine
 
