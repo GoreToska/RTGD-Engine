@@ -56,31 +56,6 @@ namespace RTGDEngine {
             }
         }
     }
-
-    void EmbeddedWindowsWindow::SetMouseCapture(bool capture) {
-        if (capture) {
-            SetCapture(m_hwnd);
-            RECT rc;
-            GetClientRect(m_hwnd, &rc);
-            POINT tl{rc.left, rc.top}, br{rc.right, rc.bottom};
-            ClientToScreen(m_hwnd, &tl);
-            ClientToScreen(m_hwnd, &br);
-            RECT clip{tl.x, tl.y, br.x, br.y};
-            ClipCursor(&clip);
-        } else {
-            ReleaseCapture();
-            ClipCursor(nullptr);
-        }
-    }
-
-    void EmbeddedWindowsWindow::CenterCursor() {
-    }
-
-    void EmbeddedWindowsWindow::WarpCursor(int x, int y) {
-        POINT p{x, y};
-        ClientToScreen(m_hwnd, &p);
-        SetCursorPos(p.x, p.y);
-    }
 }
 
 #endif

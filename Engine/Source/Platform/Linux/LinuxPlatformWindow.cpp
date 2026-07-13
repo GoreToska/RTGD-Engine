@@ -6,6 +6,7 @@
 #if defined(__linux__)
 #include <X11/extensions/Xfixes.h>
 #include <X11/XKBlib.h>
+#include <X11/extensions/XInput2.h>
 
 namespace RTGDEngine {
     bool LinuxPlatformWindow::Create(const WindowDesc &desc) {
@@ -30,6 +31,21 @@ namespace RTGDEngine {
         XSelectInput(m_display, m_window,
                      ExposureMask | KeyPressMask | StructureNotifyMask | KeyReleaseMask | ButtonPressMask |
                      ButtonReleaseMask | PointerMotionMask);
+
+        int xiEvent;
+        int xiError;
+
+        if (XQueryExtension(m_display, "XInputExtension", &m_xiOpcode, &xiEvent, &xiError)) {
+            int major = 2;
+            int minor = 0;
+            XIQueryVersion(m_display, &major, &minor);
+            unsigned char mask[XIMaskLen(XI_LASTEVENT)] = {0};
+            XISetMask(mask, XI_RawMotion);
+            XIEventMask evMask{XIAllMasterDevices, sizeof(mask), mask};
+            XISelectEvents(m_display, DefaultRootWindow(m_display), &evMask, 1);
+            XFlush(m_display);
+        }
+
         XMapWindow(m_display, m_window);
 
         Bool supported;
@@ -42,6 +58,24 @@ namespace RTGDEngine {
         while (XPending(m_display)) {
             XEvent e;
             XNextEvent(m_display, &e);
+
+            if (e.type == GenericEvent && e.xcookie.extension == m_xiOpcode) {
+                if (XGetEventData(m_display, &e.xcookie)) {
+                    if (e.xcookie.evtype == XI_RawMotion) {
+                        auto *re = static_cast<XIRawEvent *>(e.xcookie.data);
+                        const double *val = re->raw_values;
+                        for (int i = 0; i < re->valuators.mask_len * 8; ++i) {
+                            if (XIMaskIsSet(re->valuators.mask, i)) {
+                                if (i == 0) m_deltaX += static_cast<float>(*val);
+                                else if (i == 1) m_deltaY += static_cast<float>(*val);
+                                ++val;
+                            }
+                        }
+                    }
+                    XFreeEventData(m_display, &e.xcookie);
+                }
+                continue;
+            }
 
             if (OnNativeEvent) {
                 NativeWindowEvent event{};
@@ -101,21 +135,27 @@ namespace RTGDEngine {
         }
     }
 
-    void LinuxPlatformWindow::SetMouseCapture(bool capture) {
-        if (capture) {
-            constexpr auto mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
-            XGrabPointer(m_display, m_window, capture, mask, GrabModeAsync, GrabModeAsync, m_window, None, CurrentTime);
+    void LinuxPlatformWindow::SetRelativeMouseMode(bool relative) {
+        if (relative) {
+            SetCursorVisible(false);
+            XGrabPointer(m_display, m_window, True,
+                         ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                         GrabModeAsync, GrabModeAsync, m_window, None, CurrentTime);
+            m_deltaX = 0.0f;
+            m_deltaY = 0.0f;
         } else {
             XUngrabPointer(m_display, CurrentTime);
+            SetCursorVisible(true);
         }
-
         XFlush(m_display);
     }
 
-    void LinuxPlatformWindow::CenterCursor() {
-        const int centerX = m_width / 2;
-        const int centerY = m_height / 2;
-        XWarpPointer(m_display, None, m_window, 0, 0, 0, 0, centerX, centerY);
+    bool LinuxPlatformWindow::GetMouseDelta(float &dx, float &dy) {
+        dx = m_deltaX;
+        dy = m_deltaY;
+        m_deltaX = 0.0f;
+        m_deltaY = 0.0f;
+        return true;
     }
 } // RTGDEngine
 #endif

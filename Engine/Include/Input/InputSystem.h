@@ -48,6 +48,8 @@ namespace RTGDEngine {
 
         void InjectMouseButton(gainput::MouseButton button, bool down) const;
 
+        void SetRelativeMouseMode(bool relative);
+
     private:
         void CreateKeyboardDevice();
 
@@ -56,12 +58,6 @@ namespace RTGDEngine {
         void CreateInputMapping();
 
         void InitializeInputForWindow(IPlatformWindow *handle);
-
-        void CaptureMouse(bool capture);
-
-        void MoveMouseBack();
-
-        void CalculateMouseDelta();
 
         gainput::InputManager m_manager = {};
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
@@ -74,10 +70,6 @@ namespace RTGDEngine {
         IPlatformWindow *m_platformWindow = nullptr;
 
         bool m_mouseCaptured = false;
-        bool m_ignoreNextDelta = false;
-
-        float m_currentMouseX = 0.0f;
-        float m_currentMouseY = 0.0f;
         float m_mouseDeltaX = 0.0f;
         float m_mouseDeltaY = 0.0f;
 

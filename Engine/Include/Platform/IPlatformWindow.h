@@ -31,12 +31,7 @@ namespace RTGDEngine {
 
         virtual void SetCursorVisible(bool visible) = 0;
 
-        virtual void SetMouseCapture(bool capture) = 0;
-
-        virtual void CenterCursor() = 0;
-
-        virtual void WarpCursor(int x, int y) {
-        };
+        virtual void SetRelativeMouseMode(bool relative) = 0;
 
         virtual bool GetMouseDelta(float &dx, float &dy) { return false; }
 
@@ -55,5 +50,7 @@ namespace RTGDEngine {
     protected:
         int m_width = 0;
         int m_height = 0;
+        float m_deltaX = 0.0f;
+        float m_deltaY = 0.0f;
     };
 }

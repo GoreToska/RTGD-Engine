@@ -27,21 +27,15 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) override;
 
-        void SetMouseCapture(bool capture) override;
-
-        void CenterCursor() override;
-
-        void WarpCursor(int x, int y) override;
-
         bool GetMouseDelta(float &dx, float &dy) override;
+
+        void SetRelativeMouseMode(bool relative) override;
 
     private:
         Display *m_display = nullptr; // We own this
         Window m_windowHandle = {}; // We DON'T own this
         XWindowAttributes m_windowAttributes = {};
         int m_xiOpcode = -1;
-        float m_deltaX = 0.0f;
-        float m_deltaY = 0.0f;
     };
 }
 

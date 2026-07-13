@@ -22,10 +22,6 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) override;
 
-        void SetMouseCapture(bool capture) override;
-
-        void CenterCursor() override;
-
     private:
         static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 

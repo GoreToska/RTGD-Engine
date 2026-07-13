@@ -62,8 +62,6 @@ namespace RTGDEngine {
                 continue;
 
             if (ev.xcookie.evtype == XI_RawMotion) {
-                LogInfo("RawMotion dx={} dy={}", m_deltaX, m_deltaY);
-
                 auto *re = static_cast<XIRawEvent *>(ev.xcookie.data);
                 const double *val = re->raw_values;
                 for (int i = 0; i < re->valuators.mask_len * 8; ++i) {
@@ -88,6 +86,22 @@ namespace RTGDEngine {
         return true;
     }
 
+    void EmbeddedLinuxWindow::SetRelativeMouseMode(bool relative) {
+        if (relative) {
+            SetCursorVisible(false);
+            XGrabPointer(m_display, m_windowHandle, True,
+                         ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync, GrabModeAsync,
+                         m_windowHandle, None, CurrentTime);
+            m_deltaX = 0.0f;
+            m_deltaY = 0.0f;
+        } else {
+            XUngrabPointer(m_display, CurrentTime);
+            SetCursorVisible(true);
+        }
+
+        XFlush(m_display);
+    }
+
     NativeWindowHandle EmbeddedLinuxWindow::GetHandle() const {
         return {GetWidth(), GetHeight(), m_display, m_windowHandle};
     }
@@ -107,26 +121,6 @@ namespace RTGDEngine {
     void EmbeddedLinuxWindow::SetCursorVisible(bool visible) {
         if (visible) XFixesShowCursor(m_display, m_windowHandle);
         else XFixesHideCursor(m_display, m_windowHandle);
-        XFlush(m_display);
-    }
-
-    void EmbeddedLinuxWindow::SetMouseCapture(bool capture) {
-        if (capture) {
-            constexpr unsigned mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
-            XGrabPointer(m_display, m_windowHandle, True, mask,GrabModeAsync, GrabModeAsync, m_windowHandle, None,
-                         CurrentTime);
-        } else {
-            XUngrabPointer(m_display, CurrentTime);
-        }
-        XFlush(m_display);
-    }
-
-    void EmbeddedLinuxWindow::CenterCursor() {
-        WarpCursor(GetWidth() / 2, GetHeight() / 2);
-    }
-
-    void EmbeddedLinuxWindow::WarpCursor(int x, int y) {
-        XWarpPointer(m_display, None, m_windowHandle, 0, 0, 0, 0, x, y);
         XFlush(m_display);
     }
 }

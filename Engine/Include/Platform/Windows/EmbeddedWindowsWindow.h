@@ -26,12 +26,6 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) override;
 
-        void SetMouseCapture(bool capture) override;
-
-        void CenterCursor() override;
-
-        void WarpCursor(int x, int y) override;
-
     private:
         HWND m_hwnd = nullptr; // We DON'T own this (the editor owns it)
         HINSTANCE m_hinstance = nullptr;
