@@ -119,10 +119,14 @@ target_link_libraries(Engine PUBLIC
 if (WIN32)
     target_link_libraries(Engine PUBLIC
             Diligent-GraphicsEngineD3D12-shared
+            Comctl32
     )
 elseif (UNIX AND NOT APPLE)
     target_link_libraries(Engine PUBLIC
-            Diligent-GraphicsEngineVk-shared X11 Xi Xfixes
+            Diligent-GraphicsEngineVk-shared
+            X11
+            Xi
+            Xfixes
     )
 endif ()
 
