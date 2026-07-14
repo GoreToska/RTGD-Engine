@@ -18,7 +18,7 @@ namespace RTGDEngine
         UpdatePointLights(world);
         UpdateSpotLights(world);
 
-        RTGDRenderSystem::Instance().UpdateLightConstantBuffer(m_lightCB);
+        RTGDRenderSystem::Instance().GetFrameConstants().UpdateLight(m_lightCB);
     }
 
     void LightSystem::UpdateAmbient(const flecs::world& world)

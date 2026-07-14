@@ -93,7 +93,7 @@ namespace RTGDEngine {
         }
 
         m_initialized = true;
-        InitializeConstantBuffers();
+        m_frameConstants.Initialize(*m_device, *m_pImmediateContext);
 
         m_gbuffer = GBufferFactory::Create(*m_device, width, height);
         m_gbufferMaterial = PipelineFactory::CreateGBufferPipeline(
@@ -103,53 +103,6 @@ namespace RTGDEngine {
 
         LogInfo("Render system initialized.");
         return true;
-    }
-
-    struct TriangleVertex {
-        float x, y;
-        float r, g, b;
-    };
-
-    static const TriangleVertex kVerts[] = {
-        {0.0f, 0.5f, 1.0f, 0.0f, 0.0f},
-        {-0.5f, -0.5f, 0.0f, 1.0f, 0.0f},
-        {0.5f, -0.5f, 0.0f, 0.0f, 1.0f},
-    };
-
-
-    void RTGDRenderSystem::InitializeConstantBuffers() {
-        using namespace Diligent;
-
-        BufferDesc cbDesc;
-        cbDesc.Usage = USAGE_DYNAMIC;
-        cbDesc.BindFlags = BIND_UNIFORM_BUFFER;
-        cbDesc.CPUAccessFlags = CPU_ACCESS_WRITE;
-
-        cbDesc.Name = "Camera CB";
-        cbDesc.Size = sizeof(CameraConstantBuffer);
-        m_device->CreateBuffer(cbDesc, nullptr, &m_cameraCB);
-
-        cbDesc.Name = "Object CB";
-        cbDesc.Size = sizeof(CameraConstantBuffer);
-        m_device->CreateBuffer(cbDesc, nullptr, &m_objectCB);
-
-        cbDesc.Name = "Light CB";
-        cbDesc.Size = sizeof(LightConstantBuffer);
-        m_device->CreateBuffer(cbDesc, nullptr, &m_lightCB);
-
-        CameraConstantBuffer defaultCam{};
-        defaultCam.View = Matrix4::Identity();
-        defaultCam.Projection = Matrix4::Identity();
-        UpdateCameraConstantBuffer(defaultCam);
-
-        ObjectConstantBuffer defaultObj{};
-        defaultObj.Model = Matrix4::Identity();
-        UpdateObjectConstantBuffer(defaultObj);
-
-        LightConstantBuffer defaultLight{};
-        UpdateLightConstantBuffer(defaultLight);
-
-        LogInfo("Constant buffers initialized");
     }
 
     void RTGDRenderSystem::ApplyPendingResize(flecs::world &world) {
@@ -178,36 +131,6 @@ namespace RTGDEngine {
         }
     }
 
-    void RTGDRenderSystem::UpdateCameraConstantBuffer(const CameraConstantBuffer &data) {
-        using namespace Diligent;
-
-        void *pMapped = nullptr;
-        m_pImmediateContext->MapBuffer(m_cameraCB, MAP_WRITE, MAP_FLAG_DISCARD, pMapped);
-        if (pMapped) {
-            auto *dst = static_cast<CameraConstantBuffer *>(pMapped);
-            dst->View = data.View.Transpose();
-            dst->Projection = data.Projection.Transpose();
-            dst->CameraPosition = data.CameraPosition;
-            m_pImmediateContext->UnmapBuffer(m_cameraCB, MAP_WRITE);
-        }
-    }
-
-    void RTGDRenderSystem::UpdateObjectConstantBuffer(const ObjectConstantBuffer &data) {
-        using namespace Diligent;
-
-        void *pMapped = nullptr;
-        m_pImmediateContext->MapBuffer(m_objectCB, MAP_WRITE, MAP_FLAG_DISCARD, pMapped);
-        if (pMapped) {
-            auto *dst = static_cast<ObjectConstantBuffer *>(pMapped);
-            dst->Model = data.Model.Transpose();
-
-#ifdef RTGD_EDITOR
-            dst->EntityID = data.EntityID;
-#endif
-
-            m_pImmediateContext->UnmapBuffer(m_objectCB, MAP_WRITE);
-        }
-    }
 
 #ifdef RTGD_EDITOR
     flecs::entity RTGDRenderSystem::PickEntity(uint32_t x, uint32_t y) {
@@ -352,12 +275,13 @@ namespace RTGDEngine {
                     samVar->Set(defTex.Sampler, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
             }
 
-            m_objectCBData.Model = transform.GetWorldMatrix();
+            ObjectConstantBuffer objectCB{};
+            objectCB.Model = transform.GetWorldMatrix();
 #ifdef RTGD_EDITOR
             m_pickEntities.push_back(e);
-            m_objectCBData.EntityID = static_cast<uint32_t>(m_pickEntities.size());
+            objectCB.EntityID = static_cast<uint32_t>(m_pickEntities.size());
 #endif
-            UpdateObjectConstantBuffer(m_objectCBData);
+            m_frameConstants.UpdateObject(objectCB);
 
             m_pImmediateContext->SetPipelineState(gbufMat.PSO);
             m_pImmediateContext->CommitShaderResources(
@@ -460,7 +384,7 @@ namespace RTGDEngine {
                 transform->Position.z, 1.0f
             };
 
-            UpdateCameraConstantBuffer(cb);
+            m_frameConstants.UpdateCamera(cb);
         }
     }
 
@@ -476,16 +400,5 @@ namespace RTGDEngine {
         m_resizePending = true;
         m_pendingWidth = width;
         m_pendingHeight = height;
-    }
-
-    void RTGDRenderSystem::UpdateLightConstantBuffer(const LightConstantBuffer &data) {
-        using namespace Diligent;
-
-        void *pMapped = nullptr;
-        m_pImmediateContext->MapBuffer(m_lightCB, MAP_WRITE, MAP_FLAG_DISCARD, pMapped);
-        if (pMapped) {
-            memcpy(pMapped, &data, sizeof(LightConstantBuffer));
-            m_pImmediateContext->UnmapBuffer(m_lightCB, MAP_WRITE);
-        }
     }
 }

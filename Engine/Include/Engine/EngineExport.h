@@ -26,8 +26,6 @@ typedef void (RTGD_CALLBACK*EntityCallback)(const char *name, uint64_t id, uint6
 extern "C" {
 ENGINE_API bool Engine_Initialize(void *nativeWindow, int width, int height);
 
-ENGINE_API void Engine_Update(float deltaTime);
-
 ENGINE_API void Engine_InjectKey(int key, bool down);
 
 ENGINE_API void Engine_InjectMouseButton(int button, bool down);

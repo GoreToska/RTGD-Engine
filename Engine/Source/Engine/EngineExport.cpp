@@ -34,12 +34,7 @@ bool Engine_Initialize(void *nativeWindow, int width, int height) {
     platform = CreateEmbeddedPlatformWindow(windowHandle);
 #endif
 
-    return Engine::Instance().Initialize(std::move(platform));
-}
-
-void Engine_Update(float deltaTime) {
-    if (Engine::Instance().PollEvents())
-        Engine::Instance().Update(deltaTime);
+    return Engine::Instance().Start(std::move(platform));
 }
 
 void Engine_InjectKey(int key, bool down) {
@@ -67,7 +62,7 @@ void Engine_Resize(int w, int h) {
 }
 
 void Engine_Shutdown() {
-    Engine::Instance().Shutdown();
+    Engine::Instance().Stop();
 }
 
 void Engine_GetEntities(EntityCallback callback) {
@@ -90,8 +85,7 @@ uint64_t Engine_PickEntity(int x, int y) {
     if (x < 0 || y < 0)
         return 0;
 
-    const flecs::entity e = RTGDRenderSystem::Instance().PickEntity(x, y);
-    return e.id();
+    return Engine::Instance().RequestPick(x, y);
 #else
     return 0;
 #endif

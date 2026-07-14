@@ -9,19 +9,15 @@
 
 #include "Tools/Logger.h"
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     static constexpr UINT_PTR kSubclassId = 1;
 
     EmbeddedWindowsWindow::EmbeddedWindowsWindow(HWND hwnd)
-        : m_hwnd(hwnd)
-    {
+        : m_hwnd(hwnd) {
     }
 
-    bool EmbeddedWindowsWindow::Create(const WindowDesc& desc)
-    {
-        if (!m_hwnd || !IsWindow(m_hwnd))
-        {
+    bool EmbeddedWindowsWindow::Create(const WindowDesc &desc) {
+        if (!m_hwnd || !IsWindow(m_hwnd)) {
             LogError("EmbeddedWindowsWindow: invalid HWND passed in constructor.");
             return false;
         }
@@ -40,25 +36,20 @@ namespace RTGDEngine
         return true;
     }
 
-    bool EmbeddedWindowsWindow::PollEvents()
-    {
+    bool EmbeddedWindowsWindow::PollEvents() {
         return true; // nothing to poll here.
     }
 
-    NativeWindowHandle EmbeddedWindowsWindow::GetHandle() const
-    {
+    NativeWindowHandle EmbeddedWindowsWindow::GetHandle() const {
         return {GetWidth(), GetHeight(), m_hwnd, m_hinstance};
     }
 
-    EInputSource EmbeddedWindowsWindow::GetInputSource() const
-    {
+    EInputSource EmbeddedWindowsWindow::GetInputSource() const {
         return EInputSource::Injected;
     }
 
-    void EmbeddedWindowsWindow::Destroy()
-    {
-        if (m_subclassed && m_hwnd)
-        {
+    void EmbeddedWindowsWindow::Destroy() {
+        if (m_subclassed && m_hwnd) {
             RemoveWindowSubclass(m_hwnd, &SubclassProc, kSubclassId);
             m_subclassed = false;
         }
@@ -68,33 +59,26 @@ namespace RTGDEngine
         m_hinstance = nullptr;
     }
 
-    void EmbeddedWindowsWindow::SetCursorVisible(bool visible)
-    {
-        if (visible)
-        {
-            while (ShowCursor(TRUE) < 0)
-            {
+    void EmbeddedWindowsWindow::SetCursorVisible(bool visible) {
+        if (visible) {
+            while (ShowCursor(TRUE) < 0) {
             }
-        }
-        else
-        {
-            while (ShowCursor(FALSE) >= 0)
-            {
+        } else {
+            while (ShowCursor(FALSE) >= 0) {
             }
         }
     }
 
-    void EmbeddedWindowsWindow::SetRelativeMouseMode(bool relative)
-    {
-        if (relative)
-        {
+    void EmbeddedWindowsWindow::SetRelativeMouseMode(bool relative) {
+        if (relative) {
+            std::lock_guard<std::mutex> lock(m_windowMutex);
             m_deltaX = 0.0f;
             m_deltaY = 0.0f;
         }
     }
 
-    bool EmbeddedWindowsWindow::GetMouseDelta(float& dx, float& dy)
-    {
+    bool EmbeddedWindowsWindow::GetMouseDelta(float &dx, float &dy) {
+        std::lock_guard<std::mutex> lock(m_windowMutex);
         dx = m_deltaX;
         dy = m_deltaY;
         m_deltaX = 0.0f;
@@ -102,14 +86,13 @@ namespace RTGDEngine
         return true;
     }
 
-    void EmbeddedWindowsWindow::InjectMouseMove(float dx, float dy)
-    {
+    void EmbeddedWindowsWindow::InjectMouseMove(float dx, float dy) {
+        std::lock_guard<std::mutex> lock(m_windowMutex);
         m_deltaX += dx;
         m_deltaY += dy;
     }
 
-    void EmbeddedWindowsWindow::WarpCursorToCenter()
-    {
+    void EmbeddedWindowsWindow::WarpCursorToCenter() {
         RECT rc{};
         GetClientRect(m_hwnd, &rc);
         POINT center{(rc.right - rc.left) / 2, (rc.bottom - rc.top) / 2};
@@ -118,10 +101,8 @@ namespace RTGDEngine
     }
 
     LRESULT EmbeddedWindowsWindow::SubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
-                                                UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
-    {
-        switch (uMsg)
-        {
+                                                UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+        switch (uMsg) {
             case WM_MOUSEMOVE:
             case WM_LBUTTONDOWN:
             case WM_LBUTTONUP:
@@ -129,8 +110,7 @@ namespace RTGDEngine
             case WM_RBUTTONUP:
             case WM_MBUTTONDOWN:
             case WM_MBUTTONUP:
-            case WM_LBUTTONDBLCLK:
-            {
+            case WM_LBUTTONDBLCLK: {
                 HWND target = GetAncestor(hWnd, GA_ROOT);
                 POINT pt{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
                 MapWindowPoints(hWnd, target, &pt, 1);

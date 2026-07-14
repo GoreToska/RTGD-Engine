@@ -6,6 +6,7 @@
 #if defined(__linux__)
 #include "Platform/IPlatformWindow.h"
 #include <X11/Xlib.h>
+#include <mutex>
 
 namespace RTGDEngine {
     class EmbeddedLinuxWindow : public IPlatformWindow {
@@ -21,7 +22,6 @@ namespace RTGDEngine {
         [[nodiscard]] NativeWindowHandle GetHandle() const override;
 
         [[nodiscard]] EInputSource GetInputSource() const override;
-
 
         void Destroy() override;
 
@@ -39,6 +39,7 @@ namespace RTGDEngine {
         Display *m_display = nullptr; // We own this
         Window m_windowHandle = {}; // We DON'T own this
         XWindowAttributes m_windowAttributes = {};
+        std::mutex m_windowMutex = {};
         float m_deltaX = 0.0f;
         float m_deltaY = 0.0f;
     };
