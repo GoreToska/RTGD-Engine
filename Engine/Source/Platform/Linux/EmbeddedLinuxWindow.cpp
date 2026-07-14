@@ -41,6 +41,7 @@ namespace RTGDEngine {
     }
 
     bool EmbeddedLinuxWindow::GetMouseDelta(float &dx, float &dy) {
+        std::lock_guard<std::mutex> lock(m_windowMutex);
         dx = m_deltaX;
         dy = m_deltaY;
         m_deltaX = 0.0f;
@@ -50,12 +51,14 @@ namespace RTGDEngine {
 
     void EmbeddedLinuxWindow::SetRelativeMouseMode(bool relative) {
         if (relative) {
+            std::lock_guard<std::mutex> lock(m_windowMutex);
             m_deltaX = 0.0f;
             m_deltaY = 0.0f;
         }
     }
 
     void EmbeddedLinuxWindow::InjectMouseMove(float dx, float dy) {
+        std::lock_guard<std::mutex> lock(m_windowMutex);
         m_deltaX += dx;
         m_deltaY += dy;
     }

@@ -1,6 +1,7 @@
 #include "Engine/Engine.h"
 
 #include <filesystem>
+#include <chrono>
 
 #include "AssetLoader/AssetManager.h"
 #include "AssetLoader/PathResolve.h"
@@ -66,6 +67,45 @@ namespace RTGDEngine {
 
         return true;
     }
+
+    bool Engine::Start(std::unique_ptr<IPlatformWindow> window) {
+        std::promise<bool> initPromise;
+        auto initFuture = initPromise.get_future();
+        m_isRunning = true;
+        m_renderThread = std::thread(
+            [this, w = std::move(window), promise = std::move(initPromise)]() mutable {
+                RenderThreadMain(std::move(w), std::move(promise));
+            });
+
+        return initFuture.get();
+    }
+
+    void Engine::Stop() {
+        m_isRunning = false;
+
+        {
+            std::lock_guard<std::mutex> lock(m_pickMutex);
+            m_pickRequest.Result = 0;
+            m_pickRequest.Done = true;
+        }
+
+        m_pickCV.notify_all();
+
+        if (m_renderThread.joinable()) {
+            m_renderThread.join();
+        }
+    }
+
+#ifdef RTGD_EDITOR
+    uint64_t Engine::RequestPick(int x, int y) {
+        std::unique_lock<std::mutex> lock(m_pickMutex);
+        if (!m_isRunning) return 0;
+
+        m_pickRequest = {x, y, true, 0, false};
+        m_pickCV.wait(lock, [this] { return m_pickRequest.Done; });
+        return m_pickRequest.Result;
+    }
+#endif
 
     void Engine::Shutdown() {
         EventBus::Instance().Process();
@@ -159,12 +199,83 @@ namespace RTGDEngine {
 #endif
     }
 
-    void Engine::Resize(int w, int h) const {
+    void Engine::Resize(int w, int h) {
+        std::lock_guard lk(m_resizeMutex);
+        m_resizePending = true;
+        m_pendingW = w;
+        m_pendingH = h;
+    }
+
+    void Engine::RenderThreadMain(std::unique_ptr<IPlatformWindow> window, std::promise<bool> initPromise) {
+        using clock = std::chrono::steady_clock;
+
+        const bool ok = Initialize(std::move(window));
+        initPromise.set_value(ok);
+
+        if (!ok) {
+            m_isRunning = false;
+            return;
+        }
+
+        auto prev = clock::now();
+        while (m_isRunning.load(std::memory_order_relaxed)) {
+            ApplyPendingResize();
+
+            const auto now = clock::now();
+            const float dt = std::chrono::duration<float>(now - prev).count();
+            prev = now;
+
+            if (PollEvents())
+                Update(dt);
+
+#ifdef RTGD_EDITOR
+            ServicePick();
+#endif
+        }
+
+        Shutdown();
+    }
+
+    void Engine::ApplyPendingResize() {
+        int w;
+        int h;
+        {
+            std::lock_guard<std::mutex> lock(m_resizeMutex);
+            if (!m_resizePending) return;
+            m_resizePending = false;
+            w = m_pendingW;
+            h = m_pendingH;
+        }
+
         RTGDRenderSystem::Instance().Resize(w, h);
         InputSystem::Instance().Resize(w, h);
         m_platformWindow->SetSize(w, h);
         EventBus::Instance().Emit(Events::OnWindowResized, {w, h}, {});
     }
+
+#ifdef RTGD_EDITOR
+    void Engine::ServicePick() {
+        int x;
+        int y;
+
+        {
+            std::lock_guard<std::mutex> lock(m_pickMutex);
+            if (!m_pickRequest.Pending) return;
+            x = m_pickRequest.X;
+            y = m_pickRequest.Y;
+            m_pickRequest.Pending = false;
+        }
+
+        const flecs::entity e = RTGDRenderSystem::Instance().PickEntity(x, y);
+        {
+            std::lock_guard<std::mutex> lock(m_pickMutex);
+            m_pickRequest.Result = e.id();
+            m_pickRequest.Done = true;
+        }
+
+        m_pickCV.notify_all();
+    }
+#endif
 
     void Engine::OnClose() {
         EventBus::Instance().Emit(Events::OnWindowClosed, {}, {});

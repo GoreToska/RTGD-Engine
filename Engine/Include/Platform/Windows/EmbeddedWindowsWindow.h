@@ -7,6 +7,7 @@
 #include "Platform/IPlatformWindow.h"
 #include <Windows.h>
 #include <commctrl.h>
+#include <mutex>
 
 namespace RTGDEngine
 {
@@ -43,6 +44,7 @@ namespace RTGDEngine
 
         HWND m_hwnd = nullptr; // We DON'T own this (the editor owns it)
         HINSTANCE m_hinstance = nullptr;
+        std::mutex m_windowMutex = {};
         float m_deltaX = 0.0f;
         float m_deltaY = 0.0f;
         bool m_subclassed = false;

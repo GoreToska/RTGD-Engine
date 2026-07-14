@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -17,8 +18,6 @@ public class EngineViewportHost : NativeControlHost
     private bool _viewportFocused;
     private bool _looking;
     private Point _lastPos;
-    private DispatcherTimer? _timer;
-    private readonly Stopwatch _stopwatch = new();
 
     public event Action? EngineInitialized;
     public event Action? EngineShutdown;
@@ -85,8 +84,18 @@ public class EngineViewportHost : NativeControlHost
         {
             var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
             var p = e.GetPosition(this);
-            var id = EngineNative.PickEntity((int)(p.X * scaling), (int)(p.Y * scaling));
-            Console.WriteLine("Picked entity: " + id);
+            int px = (int)(p.X * scaling);
+            int py = (int)(p.Y * scaling);
+
+            Task.Run(() =>
+            {
+                var id = EngineNative.PickEntity(px, py);
+                Console.WriteLine("Picked entity: " + id);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    /*Something here, like highlight in inspector by id*/
+                });
+            });
         }
     }
 
@@ -174,7 +183,6 @@ public class EngineViewportHost : NativeControlHost
 
     protected override void DestroyNativeControlCore(IPlatformHandle control)
     {
-        StopRenderLoop();
         ShutdownEngine();
         base.DestroyNativeControlCore(control);
         _controlHandle = null;
@@ -218,40 +226,7 @@ public class EngineViewportHost : NativeControlHost
         }
 
         _initialized = true;
-        StartRenderLoop();
         EngineInitialized?.Invoke();
-    }
-
-    private void StartRenderLoop()
-    {
-        StopRenderLoop();
-        _stopwatch.Restart();
-        _timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(16),
-        };
-        _timer.Tick += OnRenderTick;
-        _timer.Start();
-    }
-
-    private void OnRenderTick(object? sender, EventArgs e)
-    {
-        if (!_initialized)
-            return;
-
-        var dt = (float)_stopwatch.Elapsed.TotalSeconds;
-        _stopwatch.Restart();
-        EngineNative.Update(dt);
-    }
-
-    private void StopRenderLoop()
-    {
-        if (_timer is null)
-            return;
-
-        _timer.Tick -= OnRenderTick;
-        _timer.Stop();
-        _timer = null;
     }
 
     private void ShutdownEngine()

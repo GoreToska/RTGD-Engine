@@ -16,10 +16,7 @@ internal static class EngineNative
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.I1)]
     private static extern bool Engine_Initialize(IntPtr nativeWindow, int width, int height);
-
-    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void Engine_Update(float deltaTime);
-
+    
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void Engine_Resize(int width, int height);
 
@@ -50,9 +47,6 @@ internal static class EngineNative
 
     public static bool Initialize(IntPtr nativeWindow, int width, int height) =>
         Engine_Initialize(nativeWindow, width, height);
-
-    public static void Update(float deltaTime) =>
-        Engine_Update(deltaTime);
 
     public static void Resize(int width, int height) =>
         Engine_Resize(width, height);
