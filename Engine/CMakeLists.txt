@@ -90,6 +90,12 @@ add_library(Engine SHARED
         Include/Render/ResourcePool.h
 )
 
+option(RTGD_EDITOR "Build engine with editor tools" ON)
+
+if (RTGD_EDITOR)
+    target_compile_definitions(Engine PUBLIC RTGD_EDITOR)
+endif ()
+
 target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
 
 target_include_directories(Engine PUBLIC
@@ -113,10 +119,14 @@ target_link_libraries(Engine PUBLIC
 if (WIN32)
     target_link_libraries(Engine PUBLIC
             Diligent-GraphicsEngineD3D12-shared
+            Comctl32
     )
 elseif (UNIX AND NOT APPLE)
     target_link_libraries(Engine PUBLIC
-            Diligent-GraphicsEngineVk-shared X11 Xi Xfixes
+            Diligent-GraphicsEngineVk-shared
+            X11
+            Xi
+            Xfixes
     )
 endif ()
 

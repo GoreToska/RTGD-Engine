@@ -8,6 +8,13 @@ cbuffer CameraConstants : register(b0)
 cbuffer ObjectConstants : register(b1)
 {
     float4x4 g_Model;
+
+#if RTGD_EDITOR
+    uint g_EntityID;
+    uint _objPad0;
+    uint _objPad1;
+    uint _objPad2;
+#endif
 };
 
 struct VSInput
@@ -26,6 +33,9 @@ struct PSInput
     float3 WorldTangent  : TEXCOORD2;
     float3 WorldBitangent: TEXCOORD3;
     float2 UV            : TEXCOORD4;
+#if RTGD_EDITOR
+    nointerpolation uint EntityID : TEXCOORD5;
+#endif
 };
 
 void main(in VSInput IN, out PSInput OUT)
@@ -48,4 +58,8 @@ void main(in VSInput IN, out PSInput OUT)
     OUT.WorldNormal    = N;
     OUT.WorldTangent   = T;
     OUT.WorldBitangent = B;
+
+#if RTGD_EDITOR
+    OUT.EntityID = g_EntityID;
+#endif
 }

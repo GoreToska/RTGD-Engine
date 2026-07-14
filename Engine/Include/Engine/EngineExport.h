@@ -43,4 +43,6 @@ ENGINE_API void Engine_Resize(int w, int h);
 ENGINE_API void Engine_Shutdown();
 
 ENGINE_API void Engine_GetEntities(EntityCallback callback);
+
+ENGINE_API uint64_t Engine_PickEntity(int x, int y);
 }

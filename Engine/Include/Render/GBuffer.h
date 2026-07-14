@@ -7,10 +7,8 @@
 #include "Texture.h"
 #include "Engine/EngineExport.h"
 
-namespace RTGDEngine
-{
-    struct ENGINE_API GBuffer
-    {
+namespace RTGDEngine {
+    struct ENGINE_API GBuffer {
         Diligent::RefCntAutoPtr<Diligent::ITexture> DiffuseTexture;
         Diligent::RefCntAutoPtr<Diligent::ITexture> NormalTexture;
         Diligent::RefCntAutoPtr<Diligent::ITexture> PositionTexture;
@@ -35,6 +33,19 @@ namespace RTGDEngine
         uint32_t Width = 0;
         uint32_t Height = 0;
 
-        bool IsValid() const { return DiffuseRTV && NormalRTV && PositionRTV; }
+        [[nodiscard]] bool IsValid() const {
+#if defined(RTGD_EDITOR)
+            return DiffuseRTV && NormalRTV && PositionRTV && IDRTV;
+#else
+            return DiffuseRTV && NormalRTV && PositionRTV;
+#endif
+        }
+
+#ifdef RTGD_EDITOR
+        Diligent::RefCntAutoPtr<Diligent::ITexture> IDTexture;
+        Diligent::RefCntAutoPtr<Diligent::ITextureView> IDRTV;
+        Diligent::RefCntAutoPtr<Diligent::ITextureView> IDSRV;
+        Diligent::RefCntAutoPtr<Diligent::ITexture> IDReadbackTexture;
+#endif
     };
 } // RTGDEngine

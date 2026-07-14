@@ -5,43 +5,41 @@
 #pragma once
 #include "Tools/Alias.h"
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     static constexpr uint32_t MAX_DIRECTIONAL_LIGHTS = 1;
     static constexpr uint32_t MAX_POINT_LIGHTS = 64;
     static constexpr uint32_t MAX_SPOT_LIGHTS = 16;
 
-    struct alignas(16) CameraConstantBuffer
-    {
+    struct alignas(16) CameraConstantBuffer {
         Matrix4 View;
         Matrix4 Projection;
         Float4 CameraPosition;
     };
 
-    struct alignas(16) ObjectConstantBuffer
-    {
+    struct alignas(16) ObjectConstantBuffer {
         Matrix4 Model;
+#ifdef RTGD_EDITOR
+        uint32_t EntityID;
+        uint32_t _pad[3];
+#endif
     };
 
 
-    struct alignas(16) DirectionalLightData
-    {
+    struct alignas(16) DirectionalLightData {
         Float3 Direction = {0.0f, -1.0f, 0.0f};
         float Intensity = 1.0f;
         Float3 Color = {1.0f, 1.0f, 1.0f};
         float _pad = 0.0f;
     };
 
-    struct alignas(16) PointLightData
-    {
+    struct alignas(16) PointLightData {
         Float3 Position = {0.0f, 0.0f, 0.0f};
         float Radius = 10.0f;
         Float3 Color = {1.0f, 1.0f, 1.0f};
         float Intensity = 1.0f;
     };
 
-    struct alignas(16) SpotLightData
-    {
+    struct alignas(16) SpotLightData {
         Float3 Position = {0.0f, 0.0f, 0.0f};
         float InnerAngle = 0.0f; // rad
         Float3 Direction = {0.0f, -1.0f, 0.0f};
@@ -52,8 +50,7 @@ namespace RTGDEngine
         float _pad[3] = {};
     };
 
-    struct alignas(16) LightConstantBuffer
-    {
+    struct alignas(16) LightConstantBuffer {
         Float3 AmbientColor = {0.2f, 0.2f, 0.2f};
         float AmbientIntensity = 0.1f;
 

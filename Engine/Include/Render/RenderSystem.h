@@ -23,31 +23,27 @@
 #include "Platform/WindowHandle.h"
 #include "Tools/RTGDMacros.h"
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     struct LightConstantBuffer;
     struct CameraConstantBuffer;
 }
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     struct ObjectConstantBuffer;
 }
 
-namespace RTGDEngine
-{
-    class ENGINE_API RTGDRenderSystem
-    {
+namespace RTGDEngine {
+    class ENGINE_API RTGDRenderSystem {
         DECLARE_SINGLETON(RTGDRenderSystem);
 
     public:
-        bool Initialize(const NativeWindowHandle& handle, int width, int height);
+        bool Initialize(const NativeWindowHandle &handle, int width, int height);
 
         void RenderLighting();
 
-        void SetActiveCameraCB(flecs::world& world);
+        void SetActiveCameraCB(flecs::world &world);
 
-        void RenderGeometry(flecs::world& world);
+        void RenderGeometry(flecs::world &world);
 
         void Present();
 
@@ -55,22 +51,26 @@ namespace RTGDEngine
 
         void Resize(int width, int height);
 
-        void ApplyPendingResize(flecs::world& world);
+        void ApplyPendingResize(flecs::world &world);
 
-        [[nodiscard]] Diligent::IRenderDevice& GetDevice() const { return *m_device; }
-        [[nodiscard]] Diligent::IDeviceContext& GetContext() const { return *m_pImmediateContext; }
-        [[nodiscard]] Diligent::ISwapChain& GetSwapChain() const { return *m_swapChain; }
-        [[nodiscard]] Diligent::IEngineFactory& GetFactory() const { return *m_pFactory; }
-        [[nodiscard]] Diligent::IBuffer& GetCameraCB() const { return *m_cameraCB; }
-        [[nodiscard]] Diligent::IBuffer& GetObjectCB() const { return *m_objectCB; }
-        [[nodiscard]] Diligent::IBuffer& GetLightCB() const { return *m_lightCB; }
-        [[nodiscard]] const GBuffer& GetGBuffer() const { return m_gbuffer; }
+        [[nodiscard]] Diligent::IRenderDevice &GetDevice() const { return *m_device; }
+        [[nodiscard]] Diligent::IDeviceContext &GetContext() const { return *m_pImmediateContext; }
+        [[nodiscard]] Diligent::ISwapChain &GetSwapChain() const { return *m_swapChain; }
+        [[nodiscard]] Diligent::IEngineFactory &GetFactory() const { return *m_pFactory; }
+        [[nodiscard]] Diligent::IBuffer &GetCameraCB() const { return *m_cameraCB; }
+        [[nodiscard]] Diligent::IBuffer &GetObjectCB() const { return *m_objectCB; }
+        [[nodiscard]] Diligent::IBuffer &GetLightCB() const { return *m_lightCB; }
+        [[nodiscard]] const GBuffer &GetGBuffer() const { return m_gbuffer; }
 
-        void UpdateLightConstantBuffer(const LightConstantBuffer& data);
+        void UpdateLightConstantBuffer(const LightConstantBuffer &data);
 
-        void UpdateCameraConstantBuffer(const CameraConstantBuffer& data);
+        void UpdateCameraConstantBuffer(const CameraConstantBuffer &data);
 
-        void UpdateObjectConstantBuffer(const ObjectConstantBuffer& data);
+        void UpdateObjectConstantBuffer(const ObjectConstantBuffer &data);
+
+#ifdef RTGD_EDITOR
+        flecs::entity PickEntity(uint32_t x, uint32_t y);
+#endif
 
     private:
         bool m_initialized = false;
@@ -86,7 +86,7 @@ namespace RTGDEngine
         Diligent::RefCntAutoPtr<Diligent::IDeviceContext> m_pImmediateContext;
         Diligent::RefCntAutoPtr<Diligent::ISwapChain> m_swapChain;
 
-        Diligent::IEngineFactory* m_pFactory = nullptr;
+        Diligent::IEngineFactory *m_pFactory = nullptr;
 
         Diligent::RefCntAutoPtr<Diligent::IBuffer> m_cameraCB;
         Diligent::RefCntAutoPtr<Diligent::IBuffer> m_objectCB;
@@ -96,6 +96,13 @@ namespace RTGDEngine
 
         CameraConstantBuffer m_cameraCBData{};
         ObjectConstantBuffer m_objectCBData{};
+
+#ifdef RTGD_EDITOR
+        std::vector<flecs::entity> m_pickEntities = {};
+
+        Diligent::RefCntAutoPtr<Diligent::IFence> m_pickFence = {};
+        Diligent::Uint64 m_pickFenceValue = 0;
+#endif
 
         MaterialHandle m_gbufferMaterial = INVALID_MATERIAL_HANDLE;
         MaterialHandle m_lightingMaterial = INVALID_MATERIAL_HANDLE;

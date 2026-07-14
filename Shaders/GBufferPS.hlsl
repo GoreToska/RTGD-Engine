@@ -12,6 +12,9 @@ struct PSInput
     float3 WorldTangent  : TEXCOORD2;
     float3 WorldBitangent: TEXCOORD3;
     float2 UV            : TEXCOORD4;
+#if RTGD_EDITOR
+    nointerpolation uint EntityID : TEXCOORD5;
+#endif
 };
 
 struct PSOutput
@@ -20,6 +23,10 @@ struct PSOutput
     float4 Normal   : SV_TARGET1;
     float4 Position : SV_TARGET2;
     float4 PBR      : SV_TARGET3; // R=metallic, G=roughness, B=AO
+
+#if RTGD_EDITOR
+    uint EntityID   : SV_TARGET4;
+#endif
 };
 
 PSOutput main(in PSInput IN)
@@ -50,6 +57,10 @@ PSOutput main(in PSInput IN)
     float2 mr = g_MetallicRoughness.Sample(g_Sampler, uv).rg;
     float  ao = g_AO.Sample(g_Sampler, uv).r;
     OUT.PBR   = float4(mr.r, mr.g, ao, 1.0);
+
+#if RTGD_EDITOR
+    OUT.EntityID = IN.EntityID;
+#endif
 
     return OUT;
 }
