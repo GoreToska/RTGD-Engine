@@ -10,37 +10,39 @@
 #include "Engine/EngineExport.h"
 
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     struct GBuffer;
 
-    class ENGINE_API PipelineFactory
-    {
+    class ENGINE_API PipelineFactory {
     public:
         static MaterialHandle CreateTrianglePipeline(
-            Diligent::IRenderDevice& device,
-            Diligent::ISwapChain& swapChain,
-            const std::string& absolutePath);
+            Diligent::IRenderDevice &device,
+            Diligent::ISwapChain &swapChain,
+            const std::string &absolutePath);
 
         static MaterialHandle CreateMeshPipeline(
-            Diligent::IRenderDevice& device,
-            Diligent::ISwapChain& swapChain,
-            const std::string& absolutePath);
+            Diligent::IRenderDevice &device,
+            Diligent::ISwapChain &swapChain,
+            const std::string &absolutePath);
 
         static MaterialHandle CreateGBufferPipeline(
-            Diligent::IRenderDevice& device,
-            const GBuffer& gbuffer,
-            const std::string& absolutePath);
+            Diligent::IRenderDevice &device,
+            const GBuffer &gbuffer,
+            const std::string &absolutePath);
 
         static MaterialHandle CreateLightingPipeline(
-            Diligent::IRenderDevice& device,
-            Diligent::ISwapChain& swapChain,
-            const std::string& absolutePath);
+            Diligent::IRenderDevice &device,
+            Diligent::ISwapChain &swapChain,
+            const std::string &absolutePath);
 
-        static void BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb);
+        static MaterialHandle CreateDebugViewPipeline(
+            Diligent::IRenderDevice &device,
+            Diligent::ISwapChain &swapChain,
+            const std::string &absolutePath);
 
-        static std::vector<Diligent::ShaderResourceVariableDesc> GetStandardVariableDescs()
-        {
+        static void BindStandardConstantBuffers(Diligent::IShaderResourceBinding &srb);
+
+        static std::vector<Diligent::ShaderResourceVariableDesc> GetStandardVariableDescs() {
             return {
                 {
                     Diligent::SHADER_TYPE_VERTEX, "CameraConstants",

@@ -4,7 +4,7 @@
 
 #include "Render/Graph/RenderGraph.h"
 
-#include "Render/Graph/IRenderPass.h"
+#include "../../../Include/Render/Graph/Pass/IRenderPass.h"
 
 namespace RTGDEngine {
     void RenderGraph::AddPass(std::unique_ptr<IRenderPass> pass) {
@@ -20,6 +20,8 @@ namespace RTGDEngine {
 
     void RenderGraph::Execute(RenderContext &context) const {
         for (const auto &pass: m_passes) {
+            if (!pass->IsEnabled()) continue;
+
             pass->Execute(context);
         }
     }

@@ -4,7 +4,7 @@
 
 #pragma once
 #include "Render/RenderHandle.h"
-#include "Render/Graph/IRenderPass.h"
+#include "IRenderPass.h"
 
 namespace RTGDEngine {
     class GBufferPass : public IRenderPass {

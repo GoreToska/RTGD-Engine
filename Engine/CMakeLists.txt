@@ -91,7 +91,7 @@ add_library(Engine SHARED
         Source/Render/FrameConstants.cpp
         Include/Render/FrameConstants.h
         Include/Render/Graph/RenderContext.h
-        Include/Render/Graph/IRenderPass.h
+        Include/Render/Graph/Pass/IRenderPass.h
         Source/Render/Graph/RenderGraph.cpp
         Include/Render/Graph/RenderGraph.h
         Source/Render/Graph/Pass/GBufferPass.cpp
@@ -100,6 +100,8 @@ add_library(Engine SHARED
         Include/Render/Graph/Pass/LightPass.h
         Source/Render/Graph/Pass/CameraPass.cpp
         Include/Render/Graph/Pass/CameraPass.h
+        Source/Render/Graph/Pass/DebugViewPass.cpp
+        Include/Render/Graph/Pass/DebugViewPass.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

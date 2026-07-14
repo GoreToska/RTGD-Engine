@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "Render/Graph/IRenderPass.h"
+#include "IRenderPass.h"
 
 namespace RTGDEngine {
     class CameraPass : public IRenderPass {

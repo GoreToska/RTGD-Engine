@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include "IRenderPass.h"
+#include "Pass/IRenderPass.h"
 
 namespace Diligent {
     struct ISwapChain;
