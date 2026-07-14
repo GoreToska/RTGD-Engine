@@ -105,17 +105,6 @@ namespace RTGDEngine {
         return true;
     }
 
-    struct TriangleVertex {
-        float x, y;
-        float r, g, b;
-    };
-
-    static const TriangleVertex kVerts[] = {
-        {0.0f, 0.5f, 1.0f, 0.0f, 0.0f},
-        {-0.5f, -0.5f, 0.0f, 1.0f, 0.0f},
-        {0.5f, -0.5f, 0.0f, 0.0f, 1.0f},
-    };
-
     void RTGDRenderSystem::ApplyPendingResize(flecs::world &world) {
         std::lock_guard<std::mutex> lock(m_resizeMutex);
         if (!m_resizePending)
@@ -286,12 +275,13 @@ namespace RTGDEngine {
                     samVar->Set(defTex.Sampler, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
             }
 
-            m_objectCBData.Model = transform.GetWorldMatrix();
+            ObjectConstantBuffer objectCB{};
+            objectCB.Model = transform.GetWorldMatrix();
 #ifdef RTGD_EDITOR
             m_pickEntities.push_back(e);
-            m_objectCBData.EntityID = static_cast<uint32_t>(m_pickEntities.size());
+            objectCB.EntityID = static_cast<uint32_t>(m_pickEntities.size());
 #endif
-            m_frameConstants.UpdateObject(m_objectCBData);
+            m_frameConstants.UpdateObject(objectCB);
 
             m_pImmediateContext->SetPipelineState(gbufMat.PSO);
             m_pImmediateContext->CommitShaderResources(

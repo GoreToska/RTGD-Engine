@@ -85,9 +85,6 @@ namespace RTGDEngine {
         FrameConstants m_frameConstants = {};
         GBuffer m_gbuffer = {};
 
-        CameraConstantBuffer m_cameraCBData{};
-        ObjectConstantBuffer m_objectCBData{};
-
 #ifdef RTGD_EDITOR
         std::vector<flecs::entity> m_pickEntities = {};
 
