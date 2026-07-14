@@ -8,6 +8,7 @@
 #include <RenderDevice.h>
 
 #include "FrameConstants.h"
+#include "Graph/RenderGraph.h"
 
 #ifdef _WIN32
 #include <EngineFactoryD3D12.h>
@@ -41,11 +42,7 @@ namespace RTGDEngine {
     public:
         bool Initialize(const NativeWindowHandle &handle, int width, int height);
 
-        void RenderLighting();
-
-        void SetActiveCameraCB(flecs::world &world);
-
-        void RenderGeometry(flecs::world &world);
+        void ExecuteFrame(flecs::world &world);
 
         void Present();
 
@@ -84,6 +81,7 @@ namespace RTGDEngine {
 
         FrameConstants m_frameConstants = {};
         GBuffer m_gbuffer = {};
+        RenderGraph m_graph = {};
 
 #ifdef RTGD_EDITOR
         std::vector<flecs::entity> m_pickEntities = {};
@@ -91,8 +89,5 @@ namespace RTGDEngine {
         Diligent::RefCntAutoPtr<Diligent::IFence> m_pickFence = {};
         Diligent::Uint64 m_pickFenceValue = 0;
 #endif
-
-        MaterialHandle m_gbufferMaterial = INVALID_MATERIAL_HANDLE;
-        MaterialHandle m_lightingMaterial = INVALID_MATERIAL_HANDLE;
     };
 }
