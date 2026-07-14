@@ -249,6 +249,8 @@ namespace RTGDEngine {
         m_pImmediateContext->EnqueueSignal(m_pickFence, m_pickFenceValue);
         m_pImmediateContext->Flush();
 
+        m_pickFence->Wait(m_pickFenceValue);
+
         MappedTextureSubresource mapped;
         m_pImmediateContext->MapTextureSubresource(
             m_gbuffer.IDReadbackTexture, 0, 0,

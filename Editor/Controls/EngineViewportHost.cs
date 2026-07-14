@@ -34,15 +34,15 @@ public class EngineViewportHost : NativeControlHost
 
         var top = TopLevel.GetTopLevel(this);
         top?.AddHandler(KeyDownEvent, OnTopLevelKeyDown,
-            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+            RoutingStrategies.Tunnel, handledEventsToo: true);
         top?.AddHandler(KeyUpEvent, OnTopLevelKeyUp,
-            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+            RoutingStrategies.Tunnel, handledEventsToo: true);
 
         top?.AddHandler(PointerPressedEvent, OnTopLevelPointerDown,
-            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+            RoutingStrategies.Tunnel, handledEventsToo: true);
 
         top?.AddHandler(PointerReleasedEvent, OnTopLevelPointerUp,
-            RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+            RoutingStrategies.Tunnel, handledEventsToo: true);
 
         top?.AddHandler(PointerMovedEvent, OnTopLevelPointerMove,
             RoutingStrategies.Tunnel, handledEventsToo: true);
