@@ -7,6 +7,8 @@
 #include <EngineFactory.h>
 #include <RenderDevice.h>
 
+#include "FrameConstants.h"
+
 #ifdef _WIN32
 #include <EngineFactoryD3D12.h>
 #endif
@@ -57,16 +59,8 @@ namespace RTGDEngine {
         [[nodiscard]] Diligent::IDeviceContext &GetContext() const { return *m_pImmediateContext; }
         [[nodiscard]] Diligent::ISwapChain &GetSwapChain() const { return *m_swapChain; }
         [[nodiscard]] Diligent::IEngineFactory &GetFactory() const { return *m_pFactory; }
-        [[nodiscard]] Diligent::IBuffer &GetCameraCB() const { return *m_cameraCB; }
-        [[nodiscard]] Diligent::IBuffer &GetObjectCB() const { return *m_objectCB; }
-        [[nodiscard]] Diligent::IBuffer &GetLightCB() const { return *m_lightCB; }
+        [[nodiscard]] FrameConstants &GetFrameConstants() { return m_frameConstants; }
         [[nodiscard]] const GBuffer &GetGBuffer() const { return m_gbuffer; }
-
-        void UpdateLightConstantBuffer(const LightConstantBuffer &data);
-
-        void UpdateCameraConstantBuffer(const CameraConstantBuffer &data);
-
-        void UpdateObjectConstantBuffer(const ObjectConstantBuffer &data);
 
 #ifdef RTGD_EDITOR
         flecs::entity PickEntity(uint32_t x, uint32_t y);
@@ -88,11 +82,8 @@ namespace RTGDEngine {
 
         Diligent::IEngineFactory *m_pFactory = nullptr;
 
-        Diligent::RefCntAutoPtr<Diligent::IBuffer> m_cameraCB;
-        Diligent::RefCntAutoPtr<Diligent::IBuffer> m_objectCB;
-        Diligent::RefCntAutoPtr<Diligent::IBuffer> m_lightCB;
-
-        GBuffer m_gbuffer;
+        FrameConstants m_frameConstants = {};
+        GBuffer m_gbuffer = {};
 
         CameraConstantBuffer m_cameraCBData{};
         ObjectConstantBuffer m_objectCBData{};
@@ -106,7 +97,5 @@ namespace RTGDEngine {
 
         MaterialHandle m_gbufferMaterial = INVALID_MATERIAL_HANDLE;
         MaterialHandle m_lightingMaterial = INVALID_MATERIAL_HANDLE;
-
-        void InitializeConstantBuffers();
     };
 }

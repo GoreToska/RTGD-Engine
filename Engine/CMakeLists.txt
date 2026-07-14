@@ -88,6 +88,8 @@ add_library(Engine SHARED
         Include/Event/Events.h
         Include/AssetLoader/AssetType.h
         Include/Render/ResourcePool.h
+        Source/Render/FrameConstants.cpp
+        Include/Render/FrameConstants.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

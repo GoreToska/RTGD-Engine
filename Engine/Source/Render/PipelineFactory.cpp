@@ -322,8 +322,8 @@ namespace RTGDEngine {
                 var->Set(obj);
         };
 
-        bindVar(SHADER_TYPE_PIXEL, "LightConstants", &RTGDRenderSystem::Instance().GetLightCB());
-        bindVar(SHADER_TYPE_PIXEL, "CameraConstants", &RTGDRenderSystem::Instance().GetCameraCB());
+        bindVar(SHADER_TYPE_PIXEL, "LightConstants", &RTGDRenderSystem::Instance().GetFrameConstants().Light());
+        bindVar(SHADER_TYPE_PIXEL, "CameraConstants", &RTGDRenderSystem::Instance().GetFrameConstants().Camera());
 
         return RenderResourceManager::Instance().RegisterMaterial(
             "lighting", std::move(data));
@@ -341,9 +341,9 @@ namespace RTGDEngine {
 
         const Binding bindings[] =
         {
-            {"CameraConstants", &rs.GetCameraCB()},
-            {"ObjectConstants", &rs.GetObjectCB()},
-            {"LightConstants", &rs.GetLightCB()},
+            {"CameraConstants", &rs.GetFrameConstants().Camera()},
+            {"ObjectConstants", &rs.GetFrameConstants().Object()},
+            {"LightConstants", &rs.GetFrameConstants().Light()},
         };
 
         for (const auto &[name, buffer]: bindings) {
