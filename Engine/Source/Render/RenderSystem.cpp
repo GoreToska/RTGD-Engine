@@ -12,6 +12,7 @@
 #include "Render/GBufferFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
+#include "Render/Graph/RGResources.h"
 #include "Render/Graph/Pass/CameraPass.h"
 #include "Render/Graph/Pass/DebugViewPass.h"
 #include "Render/Graph/Pass/GBufferPass.h"
@@ -94,7 +95,10 @@ namespace RTGDEngine {
         m_graph.AddPass(std::make_unique<GBufferPass>());
         m_graph.AddPass(std::make_unique<LightPass>());
         auto debug = std::make_unique<DebugViewPass>();
+        debug->SetChannel(EDebugChannel::Normal);
+        debug->SetEnabled(false);
         m_graph.AddPass(std::move(debug));
+
         m_graph.Initialize(*m_device, *m_swapChain, m_gbuffer);
 
         LogInfo("Render system initialized.");
@@ -102,12 +106,22 @@ namespace RTGDEngine {
     }
 
     void RTGDRenderSystem::ExecuteFrame(flecs::world &world) {
+        RGResources resources(*m_swapChain);
+        resources.ImportTexture("GBuffer.Diffuse", m_gbuffer.DiffuseTexture);
+        resources.ImportTexture("GBuffer.Normal", m_gbuffer.NormalTexture);
+        resources.ImportTexture("GBuffer.Position", m_gbuffer.PositionTexture);
+        resources.ImportTexture("GBuffer.PBR", m_gbuffer.PBRTexture);
+        resources.ImportTexture("GBuffer.Depth", m_gbuffer.DepthTexture);
+        resources.ImportBackbuffer();
+        resources.ImportSwapchainDepth();
+
         RenderContext renderCtx = {
-            *m_device, *m_pImmediateContext, *m_swapChain, m_frameConstants, m_gbuffer, world
+            *m_device, *m_pImmediateContext, m_frameConstants, world, &resources
         };
 
 #ifdef RTGD_EDITOR
         renderCtx.PickEntities = &m_pickEntities;
+        resources.ImportTexture("GBuffer.ID", m_gbuffer.IDTexture);
 #endif
         m_graph.Execute(renderCtx);
     }

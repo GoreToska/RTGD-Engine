@@ -4,7 +4,7 @@
 
 #include "Render/Graph/RenderGraph.h"
 
-#include "../../../Include/Render/Graph/Pass/IRenderPass.h"
+#include "Render/Graph/Pass/IRenderPass.h"
 
 namespace RTGDEngine {
     void RenderGraph::AddPass(std::unique_ptr<IRenderPass> pass) {

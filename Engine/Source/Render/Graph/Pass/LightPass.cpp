@@ -8,6 +8,7 @@
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
+#include "Render/Graph/RGResources.h"
 
 namespace RTGDEngine {
     const char *LightPass::Name() const {
@@ -29,10 +30,11 @@ namespace RTGDEngine {
                 var->Set(srv, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
         };
 
-        bindSRV("g_Diffuse", context.Gbuffer.DiffuseSRV);
-        bindSRV("g_Normal", context.Gbuffer.NormalSRV);
-        bindSRV("g_Position", context.Gbuffer.PositionSRV);
-        bindSRV("g_PBR", context.Gbuffer.PBRSRV);
+        auto &g = *context.Graph;
+        bindSRV("g_Diffuse", g.SRV(g.Find("GBuffer.Diffuse")));
+        bindSRV("g_Normal", g.SRV(g.Find("GBuffer.Normal")));
+        bindSRV("g_Position", g.SRV(g.Find("GBuffer.Position")));
+        bindSRV("g_PBR", g.SRV(g.Find("GBuffer.PBR")));
 
         auto defTex = RenderResourceManager::Instance().GetDefaultTextureHandle();
         if (defTex != INVALID_TEXTURE_HANDLE) {
@@ -42,8 +44,7 @@ namespace RTGDEngine {
                 samVar->Set(tex.Sampler);
         }
 
-        auto *pRTV = context.SwapChain.GetCurrentBackBufferRTV();
-        auto *pDSV = context.SwapChain.GetDepthBufferDSV();
+        auto *pRTV = g.RTV(g.Find("Backbuffer"));
 
         context.Context.SetRenderTargets(
             1, &pRTV, nullptr,

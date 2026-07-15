@@ -102,6 +102,8 @@ add_library(Engine SHARED
         Include/Render/Graph/Pass/CameraPass.h
         Source/Render/Graph/Pass/DebugViewPass.cpp
         Include/Render/Graph/Pass/DebugViewPass.h
+        Source/Render/Graph/RGResources.cpp
+        Include/Render/Graph/RGResources.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

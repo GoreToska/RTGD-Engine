@@ -12,6 +12,7 @@
 #include "Components/TransformComponent.h"
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
+#include "Render/Graph/RGResources.h"
 
 namespace RTGDEngine {
     const char *GBufferPass::Name() const {
@@ -25,41 +26,51 @@ namespace RTGDEngine {
     void GBufferPass::Execute(RenderContext &context) {
         using namespace Diligent;
 
+        auto &g = *context.Graph;
+        ITextureView *diffuseRTV = g.RTV(g.Find("GBuffer.Diffuse"));
+        ITextureView *normalRTV = g.RTV(g.Find("GBuffer.Normal"));
+        ITextureView *positionRTV = g.RTV(g.Find("GBuffer.Position"));
+        ITextureView *pbrRTV = g.RTV(g.Find("GBuffer.PBR"));
+        ITextureView *depthDSV = g.DSV(g.Find("GBuffer.Depth"));
+#ifdef RTGD_EDITOR
+        ITextureView *idRTV = g.RTV(g.Find("GBuffer.ID"));
+#endif
+
         auto &rm = RenderResourceManager::Instance();
         TextureHandle def = rm.GetDefaultTextureHandle();
         TextureHandle defNormal = rm.GetDefaultNormalTextureHandle();
 
         ITextureView *rtvs[] = {
-            context.Gbuffer.DiffuseRTV,
-            context.Gbuffer.NormalRTV,
-            context.Gbuffer.PositionRTV,
-            context.Gbuffer.PBRRTV,
+            diffuseRTV,
+            normalRTV,
+            positionRTV,
+            pbrRTV,
 #ifdef RTGD_EDITOR
-            context.Gbuffer.IDRTV,
+            idRTV,
 #endif
         };
         context.Context.SetRenderTargets(
-            std::size(rtvs), rtvs, context.Gbuffer.DepthDSV,
+            std::size(rtvs), rtvs, depthDSV,
             RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
         const float clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-        context.Context.ClearRenderTarget(context.Gbuffer.DiffuseRTV, clearColor,
+        context.Context.ClearRenderTarget(diffuseRTV, clearColor,
                                           RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-        context.Context.ClearRenderTarget(context.Gbuffer.NormalRTV, clearColor,
+        context.Context.ClearRenderTarget(normalRTV, clearColor,
                                           RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-        context.Context.ClearRenderTarget(context.Gbuffer.PositionRTV, clearColor,
+        context.Context.ClearRenderTarget(positionRTV, clearColor,
                                           RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-        context.Context.ClearRenderTarget(context.Gbuffer.PBRRTV, clearColor,
+        context.Context.ClearRenderTarget(pbrRTV, clearColor,
                                           RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
 #ifdef RTGD_EDITOR
-        context.Context.ClearRenderTarget(context.Gbuffer.IDRTV, clearColor,
+        context.Context.ClearRenderTarget(idRTV, clearColor,
                                           RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
         context.PickEntities->clear();
 #endif
 
         context.Context.ClearDepthStencil(
-            context.Gbuffer.DepthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
+            depthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
             RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
         context.World.each([&](flecs::entity e,

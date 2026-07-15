@@ -8,6 +8,7 @@
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
+#include "Render/Graph/RGResources.h"
 
 namespace RTGDEngine {
     DebugViewPass::DebugViewPass() {
@@ -25,22 +26,23 @@ namespace RTGDEngine {
         }
 
         ITextureView *src = nullptr;
+        auto &g = *context.Graph;
 
         switch (m_channel) {
             case EDebugChannel::Diffuse:
-                src = context.Gbuffer.DiffuseSRV;
+                src = g.SRV(g.Find("GBuffer.Diffuse"));
                 break;
             case EDebugChannel::Normal:
-                src = context.Gbuffer.NormalSRV;
+                src = g.SRV(g.Find("GBuffer.Normal"));
                 break;
             case EDebugChannel::Position:
-                src = context.Gbuffer.PositionSRV;
+                src = g.SRV(g.Find("GBuffer.Position"));
                 break;
             case EDebugChannel::PBR:
-                src = context.Gbuffer.PBRSRV;
+                src = g.SRV(g.Find("GBuffer.PBR"));
                 break;
             case EDebugChannel::Depth:
-                src = context.Gbuffer.DepthSRV;
+                src = g.SRV(g.Find("GBuffer.Depth"));
                 break;
         }
 
@@ -57,7 +59,7 @@ namespace RTGDEngine {
                     samVar->Set(tex.Sampler);
         }
 
-        auto *pRTV = context.SwapChain.GetCurrentBackBufferRTV();
+        auto *pRTV = g.RTV(g.Find("Backbuffer"));
         context.Context.SetRenderTargets(
             1, &pRTV, nullptr, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
