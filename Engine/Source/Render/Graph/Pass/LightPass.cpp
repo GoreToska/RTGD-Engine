@@ -15,6 +15,12 @@ namespace RTGDEngine {
         return "Light";
     }
 
+    void LightPass::Setup(RGBuilder &builder) {
+        IRenderPass::Setup(builder);
+
+
+    }
+
     void LightPass::Execute(RenderContext &context) {
         using namespace Diligent;
 

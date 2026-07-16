@@ -19,6 +19,20 @@ namespace RTGDEngine {
         return "GBuffer";
     }
 
+    void GBufferPass::Setup(RGBuilder &builder) {
+        IRenderPass::Setup(builder);
+
+        m_diffuse = builder.WriteColor("GBuffer.Diffuse");
+        m_normal = builder.WriteColor("GBuffer.Normal");
+        m_position = builder.WriteColor("GBuffer.Position");
+        m_pbr = builder.WriteColor("GBuffer.PBR");
+        m_depth = builder.WriteDepth("GBuffer.Depth");
+
+#ifdef RTGD_EDITOR
+        m_id = builder.WriteColor("GBuffer.ID");
+#endif
+    }
+
     void GBufferPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) {
         m_material = PipelineFactory::CreateGBufferPipeline(device, gbuffer, GetAbsolutePath("Shaders"));
     }
@@ -27,13 +41,13 @@ namespace RTGDEngine {
         using namespace Diligent;
 
         auto &g = *context.Graph;
-        ITextureView *diffuseRTV = g.RTV(g.Find("GBuffer.Diffuse"));
-        ITextureView *normalRTV = g.RTV(g.Find("GBuffer.Normal"));
-        ITextureView *positionRTV = g.RTV(g.Find("GBuffer.Position"));
-        ITextureView *pbrRTV = g.RTV(g.Find("GBuffer.PBR"));
-        ITextureView *depthDSV = g.DSV(g.Find("GBuffer.Depth"));
+        ITextureView *diffuseRTV = g.RTV(m_diffuse);
+        ITextureView *normalRTV = g.RTV(m_normal);
+        ITextureView *positionRTV = g.RTV(m_position);
+        ITextureView *pbrRTV = g.RTV(m_pbr);
+        ITextureView *depthDSV = g.DSV(m_depth);
 #ifdef RTGD_EDITOR
-        ITextureView *idRTV = g.RTV(g.Find("GBuffer.ID"));
+        ITextureView *idRTV = g.RTV(m_depth);
 #endif
 
         auto &rm = RenderResourceManager::Instance();

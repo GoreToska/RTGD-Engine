@@ -4,6 +4,7 @@
 
 #include "Render/Graph/RenderGraph.h"
 
+#include "Render/Graph/RenderContext.h"
 #include "Render/Graph/Pass/IRenderPass.h"
 
 namespace RTGDEngine {
@@ -19,6 +20,14 @@ namespace RTGDEngine {
     }
 
     void RenderGraph::Execute(RenderContext &context) const {
+        for (const auto &pass: m_passes) {
+            if (!pass->IsEnabled()) continue;
+
+            pass->IO().clear();
+            RGBuilder builder = RGBuilder(*context.Graph, pass->IO());
+            pass->Setup(builder);
+        }
+
         for (const auto &pass: m_passes) {
             if (!pass->IsEnabled()) continue;
 

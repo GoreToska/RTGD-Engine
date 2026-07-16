@@ -11,11 +11,19 @@ namespace RTGDEngine {
     public:
         const char *Name() const override;
 
+        void Setup(RGBuilder &builder) override;
+
         void Execute(RenderContext &context) override;
 
         void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) override;
 
     private:
         MaterialHandle m_material = INVALID_MATERIAL_HANDLE;
+
+        RGHandle m_diffuse;
+        RGHandle m_normal;
+        RGHandle m_position;
+        RGHandle m_pbr;
+        RGHandle m_depth;
     };
 } // RTGDEngine
