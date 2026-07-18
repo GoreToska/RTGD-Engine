@@ -1,3 +1,5 @@
+set(EDITOR_OUT "${CMAKE_SOURCE_DIR}/Editor/bin/$<CONFIG>/net10.0")
+
 add_library(Engine SHARED
         Source/Engine/Engine.cpp
         Source/Engine/IEngineInterface.cpp
@@ -90,6 +92,21 @@ add_library(Engine SHARED
         Include/Render/ResourcePool.h
         Source/Render/FrameConstants.cpp
         Include/Render/FrameConstants.h
+        Include/Render/Graph/RenderContext.h
+        Include/Render/Graph/Pass/IRenderPass.h
+        Source/Render/Graph/RenderGraph.cpp
+        Include/Render/Graph/RenderGraph.h
+        Source/Render/Graph/Pass/GBufferPass.cpp
+        Include/Render/Graph/Pass/GBufferPass.h
+        Source/Render/Graph/Pass/LightPass.cpp
+        Include/Render/Graph/Pass/LightPass.h
+        Source/Render/Graph/Pass/CameraPass.cpp
+        Include/Render/Graph/Pass/CameraPass.h
+        Source/Render/Graph/Pass/DebugViewPass.cpp
+        Include/Render/Graph/Pass/DebugViewPass.h
+        Source/Render/Graph/RGResources.cpp
+        Include/Render/Graph/RGResources.h
+        Include/Render/Graph/RGBuilder.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -107,7 +124,6 @@ target_include_directories(Engine PUBLIC
 )
 
 target_link_libraries(Engine PUBLIC
-        Diligent-GraphicsEngineVk-shared
         Diligent-Common
         Diligent-GraphicsTools
         flecs_static
@@ -135,56 +151,63 @@ endif ()
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
 add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:gainput>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:gainput>"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${EDITOR_OUT}"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:assimp>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:assimp>"
+        $<TARGET_FILE:Engine> "${EDITOR_OUT}/$<TARGET_FILE_NAME:Engine>"
+
+        COMMENT "Copying engine binary to the editor output directory"
+        VERBATIM
 )
 
 if (WIN32)
     add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Engine>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.dll")
+            $<TARGET_RUNTIME_DLLS:Engine> "${EDITOR_OUT}"
+            COMMAND_EXPAND_LISTS
+            COMMENT "Copying runtime dependencies to the editor output directory"
+            VERBATIM
+    )
+endif ()
+
+
+if (WIN32 AND TARGET Diligent-GraphicsEngineD3D12-shared)
     add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_BINARY_DIR}/bin/GraphicsEngineD3D12_64d.dll"
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/GraphicsEngineD3D12_64d.dll")
-elseif (UNIX AND NOT APPLE)
+            $<TARGET_FILE:Diligent-GraphicsEngineD3D12-shared>
+            "${EDITOR_OUT}/$<TARGET_FILE_NAME:Diligent-GraphicsEngineD3D12-shared>"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Diligent-GraphicsEngineD3D12-shared>
+            "$<TARGET_FILE_DIR:Engine>"
+
+            COMMENT "Copying Diligent D3D12 engine DLL"
+            VERBATIM
+    )
+elseif (UNIX AND NOT APPLE AND TARGET Diligent-GraphicsEngineVk-shared)
     add_custom_command(TARGET Engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Engine>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.so")
+            $<TARGET_FILE:Diligent-GraphicsEngineVk-shared>
+            "${EDITOR_OUT}/$<TARGET_FILE_NAME:Diligent-GraphicsEngineVk-shared>"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Diligent-GraphicsEngineVk-shared>
+            "$<TARGET_FILE_DIR:Engine>"
+
+            COMMENT "Copying Diligent Vulkan engine library"
+            VERBATIM
+    )
 endif ()
 
 add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Shaders
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Shaders
-        COMMENT "Copying shaders to output directory"
-)
-
-add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Assets
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Assets
-        COMMENT "Copying Assets to output directory"
-)
-
-
-add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Shaders
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Shaders"
-        COMMENT "Copying shaders to Editor directory"
-)
-
-add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Assets
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Assets"
-        COMMENT "Copying assets to Editor directory"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Shaders" "$<TARGET_FILE_DIR:Engine>/Shaders"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Assets"  "$<TARGET_FILE_DIR:Engine>/Assets"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Shaders" "${EDITOR_OUT}/Shaders"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Assets"  "${EDITOR_OUT}/Assets"
+        COMMENT "Syncing shaders and assets"
+        VERBATIM
 )

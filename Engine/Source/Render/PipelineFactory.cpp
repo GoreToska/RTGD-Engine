@@ -329,6 +329,77 @@ namespace RTGDEngine {
             "lighting", std::move(data));
     }
 
+    MaterialHandle PipelineFactory::CreateDebugViewPipeline(Diligent::IRenderDevice &device,
+                                                            Diligent::ISwapChain &swapChain,
+                                                            const std::string &absolutePath) {
+        using namespace Diligent;
+
+        RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
+        RTGDRenderSystem::Instance().GetFactory()
+                .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
+
+        ShaderCreateInfo shaderCI;
+        shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
+        shaderCI.pShaderSourceStreamFactory = pShaderFactory;
+        shaderCI.Desc.UseCombinedTextureSamplers = false;
+
+        RefCntAutoPtr<IShader> pVS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_VERTEX;
+        shaderCI.Desc.Name = "Debug view VS";
+        shaderCI.FilePath = "LightingVS.hlsl";
+        device.CreateShader(shaderCI, &pVS);
+        if (!pVS) {
+            LogError("Failed to create Lighting VS");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        RefCntAutoPtr<IShader> pPS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_PIXEL;
+        shaderCI.Desc.Name = "Debug view PS";
+        shaderCI.FilePath = "DebugViewPS.hlsl";
+        device.CreateShader(shaderCI, &pPS);
+        if (!pPS) {
+            LogError("Failed to create debug view PS");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        GraphicsPipelineStateCreateInfo psoCI;
+        psoCI.PSODesc.Name = "Debug PSO";
+        psoCI.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
+        psoCI.pVS = pVS;
+        psoCI.pPS = pPS;
+
+        psoCI.GraphicsPipeline.InputLayout.NumElements = 0;
+
+        psoCI.GraphicsPipeline.NumRenderTargets = 1;
+        psoCI.GraphicsPipeline.RTVFormats[0] = swapChain.GetDesc().ColorBufferFormat;
+
+        psoCI.GraphicsPipeline.PrimitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        psoCI.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_NONE;
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthEnable = False;
+        psoCI.GraphicsPipeline.DSVFormat = TEX_FORMAT_UNKNOWN;
+
+        ShaderResourceVariableDesc vars[] =
+        {
+            {SHADER_TYPE_PIXEL, "g_Source", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
+            {SHADER_TYPE_PIXEL, "g_Sampler", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
+        };
+        psoCI.PSODesc.ResourceLayout.Variables = vars;
+        psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
+
+        MaterialData data;
+        device.CreateGraphicsPipelineState(psoCI, &data.PSO);
+        if (!data.PSO) {
+            LogError("Failed to create Lighting PSO");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        data.PSO->CreateShaderResourceBinding(&data.SRB, true);
+
+        return RenderResourceManager::Instance().RegisterMaterial(
+            "debug_view", std::move(data));
+    }
+
     void PipelineFactory::BindStandardConstantBuffers(Diligent::IShaderResourceBinding &srb) {
         using namespace Diligent;
 

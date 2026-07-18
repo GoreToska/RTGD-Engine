@@ -180,10 +180,7 @@ namespace RTGDEngine {
         rm.FlushTextureUploads(device, context);
         rm.ProcessPendingDestroys();
 
-
-        RTGDRenderSystem::Instance().SetActiveCameraCB(SceneManager::Instance().GetWorld());
-        RTGDRenderSystem::Instance().RenderGeometry(SceneManager::Instance().GetWorld());
-        RTGDRenderSystem::Instance().RenderLighting();
+        RTGDRenderSystem::Instance().ExecuteFrame(SceneManager::Instance().GetWorld());
         RTGDRenderSystem::Instance().Present();
 
         /*if (m_gameModule)
