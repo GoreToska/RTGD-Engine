@@ -9,6 +9,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# VS 18+ MSVC emits C5232 in SPIRV-Tools
+if(MSVC)
+    add_compile_options(/wd5232 /Wv:17)
+endif()
+
 set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(ThirdParty/flecs)
