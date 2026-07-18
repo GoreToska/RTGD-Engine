@@ -47,7 +47,7 @@ namespace RTGDEngine {
         ITextureView *pbrRTV = g.RTV(m_pbr);
         ITextureView *depthDSV = g.DSV(m_depth);
 #ifdef RTGD_EDITOR
-        ITextureView *idRTV = g.RTV(m_depth);
+        ITextureView *idRTV = g.RTV(m_id);
 #endif
 
         auto &rm = RenderResourceManager::Instance();
