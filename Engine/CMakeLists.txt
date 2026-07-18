@@ -124,7 +124,6 @@ target_include_directories(Engine PUBLIC
 )
 
 target_link_libraries(Engine PUBLIC
-        Diligent-GraphicsEngineVk-shared
         Diligent-Common
         Diligent-GraphicsTools
         flecs_static
@@ -157,13 +156,48 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:Engine> "${EDITOR_OUT}/$<TARGET_FILE_NAME:Engine>"
 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:Engine> "${EDITOR_OUT}"
-
-        COMMAND_EXPAND_LISTS
-        COMMENT "Copying engine binaries to the editor output directory"
+        COMMENT "Copying engine binary to the editor output directory"
         VERBATIM
 )
+
+if (WIN32)
+    add_custom_command(TARGET Engine POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:Engine> "${EDITOR_OUT}"
+            COMMAND_EXPAND_LISTS
+            COMMENT "Copying runtime dependencies to the editor output directory"
+            VERBATIM
+    )
+endif ()
+
+
+if (WIN32 AND TARGET Diligent-GraphicsEngineD3D12-shared)
+    add_custom_command(TARGET Engine POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Diligent-GraphicsEngineD3D12-shared>
+            "${EDITOR_OUT}/$<TARGET_FILE_NAME:Diligent-GraphicsEngineD3D12-shared>"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Diligent-GraphicsEngineD3D12-shared>
+            "$<TARGET_FILE_DIR:Engine>"
+
+            COMMENT "Copying Diligent D3D12 engine DLL"
+            VERBATIM
+    )
+elseif (UNIX AND NOT APPLE AND TARGET Diligent-GraphicsEngineVk-shared)
+    add_custom_command(TARGET Engine POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Diligent-GraphicsEngineVk-shared>
+            "${EDITOR_OUT}/$<TARGET_FILE_NAME:Diligent-GraphicsEngineVk-shared>"
+
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:Diligent-GraphicsEngineVk-shared>
+            "$<TARGET_FILE_DIR:Engine>"
+
+            COMMENT "Copying Diligent Vulkan engine library"
+            VERBATIM
+    )
+endif ()
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
