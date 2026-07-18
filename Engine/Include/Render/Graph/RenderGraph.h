@@ -7,15 +7,12 @@
 #include <vector>
 
 #include "Pass/IRenderPass.h"
-
-namespace Diligent {
-    struct ISwapChain;
-    struct IRenderDevice;
-}
+#include "Render/GBuffer.h"
+#include <SwapChain.h>
+#include <RenderDevice.h>
 
 namespace RTGDEngine {
     struct RenderContext;
-    struct GBuffer;
 
     class RenderGraph {
     public:

@@ -43,5 +43,5 @@ namespace RTGDEngine {
 
         RGResources &m_resources;
         std::vector<RGAccessDecl> &m_io;
-    }
+    };
 }
