@@ -61,8 +61,6 @@ add_custom_command(TARGET RTGD-Engine POST_BUILD
         VERBATIM
 )
 
-add_dependencies(RTGD-Engine SyncAssets)
-
 add_custom_command(TARGET RTGD-Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_RUNTIME_DLLS:RTGD-Engine> "$<TARGET_FILE_DIR:RTGD-Engine>"
