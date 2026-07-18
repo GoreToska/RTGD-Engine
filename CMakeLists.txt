@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(RTGD-Engine VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -7,14 +7,23 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(ThirdParty/flecs)
+
+set(DILIGENT_BUILD_SAMPLES      OFF CACHE BOOL "" FORCE)
+set(DILIGENT_BUILD_DOCS         OFF CACHE BOOL "" FORCE)
+set(DILIGENT_BUILD_UNITY_PLUGIN OFF CACHE BOOL "" FORCE)
+set(DILIGENT_BUILD_TESTS        OFF CACHE BOOL "" FORCE)
+set(DILIGENT_NO_VULKAN          OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/DiligentEngine)
+
 add_subdirectory(ThirdParty/spdlog)
+
+set(GAINPUT_TESTS   OFF CACHE BOOL "" FORCE)
+set(GAINPUT_SAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/gainput)
 add_subdirectory(ThirdParty/enkiTS)
 
@@ -43,27 +52,20 @@ target_link_libraries(RTGD-Engine PRIVATE
         Engine
 )
 
-add_custom_target(SyncAssets ALL
+add_custom_command(TARGET RTGD-Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        ${CMAKE_SOURCE_DIR}/Assets  ${CMAKE_BINARY_DIR}/bin/Assets
+        "${CMAKE_SOURCE_DIR}/Assets"  "$<TARGET_FILE_DIR:RTGD-Engine>/Assets"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        ${CMAKE_SOURCE_DIR}/Shaders ${CMAKE_BINARY_DIR}/bin/Shaders
-        COMMENT "Syncing assets/shaders to output"
+        "${CMAKE_SOURCE_DIR}/Shaders" "$<TARGET_FILE_DIR:RTGD-Engine>/Shaders"
+        COMMENT "Syncing assets and shaders"
+        VERBATIM
 )
+
 add_dependencies(RTGD-Engine SyncAssets)
 
-if(WIN32)
-    add_custom_command(TARGET RTGD-Engine POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Diligent-GraphicsEngineD3D12-shared>
-            $<TARGET_FILE_DIR:RTGD-Engine>
-    )
-elseif(UNIX AND NOT APPLE)
-    if(TARGET Diligent-GraphicsEngineVk-shared)
-        add_custom_command(TARGET RTGD-Engine POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:Diligent-GraphicsEngineVk-shared>
-                $<TARGET_FILE_DIR:RTGD-Engine>
-        )
-    endif()
-endif()
+add_custom_command(TARGET RTGD-Engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_RUNTIME_DLLS:RTGD-Engine> "$<TARGET_FILE_DIR:RTGD-Engine>"
+        COMMAND_EXPAND_LISTS
+        VERBATIM
+)

@@ -1,3 +1,5 @@
+set(EDITOR_OUT "${CMAKE_SOURCE_DIR}/Editor/bin/$<CONFIG>/net10.0")
+
 add_library(Engine SHARED
         Source/Engine/Engine.cpp
         Source/Engine/IEngineInterface.cpp
@@ -150,56 +152,28 @@ endif ()
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
 add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:gainput>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:gainput>"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${EDITOR_OUT}"
 
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:assimp>
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/$<TARGET_FILE_NAME:assimp>"
-)
+        $<TARGET_FILE:Engine> "${EDITOR_OUT}/$<TARGET_FILE_NAME:Engine>"
 
-if (WIN32)
-    add_custom_command(TARGET Engine POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Engine>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.dll")
-    add_custom_command(TARGET Engine POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_BINARY_DIR}/bin/GraphicsEngineD3D12_64d.dll"
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/GraphicsEngineD3D12_64d.dll")
-elseif (UNIX AND NOT APPLE)
-    add_custom_command(TARGET Engine POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Engine>
-            "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Engine.so")
-endif ()
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_RUNTIME_DLLS:Engine> "${EDITOR_OUT}"
 
-add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Shaders
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Shaders
-        COMMENT "Copying shaders to output directory"
+        COMMAND_EXPAND_LISTS
+        COMMENT "Copying engine binaries to the editor output directory"
+        VERBATIM
 )
 
 add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Assets
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Assets
-        COMMENT "Copying Assets to output directory"
-)
-
-
-add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Shaders
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Shaders"
-        COMMENT "Copying shaders to Editor directory"
-)
-
-add_custom_command(TARGET Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Assets
-        "${CMAKE_SOURCE_DIR}/Editor/bin/Debug/net10.0/Assets"
-        COMMENT "Copying assets to Editor directory"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Shaders" "$<TARGET_FILE_DIR:Engine>/Shaders"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Assets"  "$<TARGET_FILE_DIR:Engine>/Assets"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Shaders" "${EDITOR_OUT}/Shaders"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Assets"  "${EDITOR_OUT}/Assets"
+        COMMENT "Syncing shaders and assets"
+        VERBATIM
 )
