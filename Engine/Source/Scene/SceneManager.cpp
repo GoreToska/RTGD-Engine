@@ -14,30 +14,37 @@
 #include "Tools/Logger.h"
 #include "Tools/MetaTypes.h"
 
-namespace RTGDEngine {
-    void SceneManager::Initialize() {
+namespace RTGDEngine
+{
+    void SceneManager::Initialize()
+    {
         RegisterMetaTypes(m_world);
 
         m_world.observer<>().with<SceneEntity>().event(flecs::OnAdd)
-                .each([](flecs::entity entity) {
+                .each([](flecs::entity entity)
+                {
                     EventBus::Instance().Emit(Events::OnEntityCreated, {entity.id()}, {});
                 });
 
         m_world.observer<>().with<SceneEntity>().event(flecs::OnRemove)
-                .each([](flecs::entity entity) {
+                .each([](flecs::entity entity)
+                {
                     EventBus::Instance().Emit(Events::OnEntityDestroyed, {entity.id()}, {});
                 });
 
         m_world.observer<>().with<SceneEntity>().with<flecs::Identifier>(flecs::Name).event(flecs::OnSet)
-                .each([](flecs::entity entity) {
+                .each([](flecs::entity entity)
+                {
                     EventBus::Instance().Emit(Events::OnEntityRenamed, {entity.id()}, {});
                 });
 
         CreateScene("Untitled");
     }
 
-    std::shared_ptr<Scene> SceneManager::CreateScene(const std::string &name) {
-        if (HasScene(name)) {
+    std::shared_ptr<Scene> SceneManager::CreateScene(const std::string& name)
+    {
+        if (HasScene(name))
+        {
             LogWarn("SceneManager: scene '{}' already exists", name);
             return m_scenes[name];
         }
@@ -54,10 +61,13 @@ namespace RTGDEngine {
         return scene;
     }
 
-    void SceneManager::UnloadScene(const std::string &name) {
+    void SceneManager::UnloadScene(const std::string& name)
+    {
         auto it = m_scenes.find(name);
-        if (it == m_scenes.end()) return;
-        if (it->second == m_activeScene) {
+        if (it == m_scenes.end())
+            return;
+        if (it->second == m_activeScene)
+        {
             LogWarn("SceneManager: cannot unload active scene '{}'", name);
             return;
         }
@@ -69,13 +79,16 @@ namespace RTGDEngine {
         LogInfo("SceneManager: unloaded scene '{}'", name);
     }
 
-    std::shared_ptr<Scene> SceneManager::GetActiveScene() const {
+    std::shared_ptr<Scene> SceneManager::GetActiveScene() const
+    {
         return m_activeScene;
     }
 
-    void SceneManager::SetActiveScene(const std::string &name) {
+    void SceneManager::SetActiveScene(const std::string& name)
+    {
         auto it = m_scenes.find(name);
-        if (it == m_scenes.end()) {
+        if (it == m_scenes.end())
+        {
             LogError("SceneManager: scene '{}' not found", name);
             return;
         }
@@ -86,60 +99,95 @@ namespace RTGDEngine {
         LogInfo("SceneManager: active scene → '{}'", name);
     }
 
-    bool SceneManager::HasScene(const std::string &name) const {
+    bool SceneManager::HasScene(const std::string& name) const
+    {
         return m_scenes.contains(name);
     }
 
-    std::shared_ptr<Scene> SceneManager::LoadSceneFromFile(const std::string &absolutePath) {
+    std::shared_ptr<Scene> SceneManager::LoadSceneFromFile(const std::string& absolutePath)
+    {
         const std::string name = std::filesystem::path(absolutePath).stem().string();
         auto scene = CreateScene(name);
         scene->LoadFromFile(absolutePath);
         return scene;
     }
 
-    void SceneManager::RequestActiveScene(const std::string &name) {
+    void SceneManager::RequestActiveScene(const std::string& name)
+    {
         m_pendingActive = name;
     }
 
-    void SceneManager::RequestUnloadScene(const std::string &name) {
+    void SceneManager::RequestUnloadScene(const std::string& name)
+    {
         m_pendingUnloads.push_back(name);
     }
 
-    void SceneManager::ApplyPendingSceneChanges() {
-        std::vector<PendingSceneLoad> ready;
-        {
+    void SceneManager::ApplyPendingSceneChanges()
+    {
+        std::vector<PendingSceneLoad> ready; {
             std::lock_guard lock(m_loadMutex);
             ready.swap(m_completedLoads);
         }
 
-        for (auto &load: ready) {
+        for (auto& load: ready)
+        {
             auto scene = CreateScene(load.name);
             scene->ApplyEntities(load.entities);
             EventBus::Instance().Emit(Events::OnSceneLoaded, {scene->GetRoot()}, {});
         }
 
-        if (!m_pendingActive.empty() && HasScene(m_pendingActive)) {
+        if (!m_pendingActive.empty() && HasScene(m_pendingActive))
+        {
             SetActiveScene(m_pendingActive);
             m_pendingActive.clear();
         }
-        for (auto &n: m_pendingUnloads) UnloadScene(n);
+        for (auto& n: m_pendingUnloads)
+            UnloadScene(n);
         m_pendingUnloads.clear();
     }
 
-    void SceneManager::ReparentEntity(flecs::entity entity, flecs::entity parent) {
-        uint64_t oldParent = entity.parent().id();
-        entity.child_of(parent);
-        EventBus::Instance().Emit(Events::OnEntityReparented, {entity.id(), oldParent, parent.id()}, {});
+    void SceneManager::EnqueueCreateEntity(std::string name)
+    {
+
     }
 
-    flecs::world &SceneManager::GetWorld() {
+    void SceneManager::EnqueueDestroyEntity(uint64_t id)
+    {
+    }
+
+    void SceneManager::EnqueueRenameEntity(uint64_t id, std::string name)
+    {
+    }
+
+    void SceneManager::EnqueueReparentEntity(uint64_t id, uint64_t parentId)
+    {
+    }
+
+    flecs::entity SceneManager::CreateEntity(const std::string& name)
+    {
+
+    }
+
+    void SceneManager::DestroyEntity(flecs::entity e)
+    {
+    }
+
+    void SceneManager::RenameEntity(flecs::entity e, const std::string& name)
+    {
+    }
+
+    flecs::world& SceneManager::GetWorld()
+    {
         return m_world;
     }
 
-    void SceneManager::RequestLoadScene(const std::string &absolutePath) {
-        JobSystem::Instance().Submit([this, absolutePath]() {
+    void SceneManager::RequestLoadScene(const std::string& absolutePath)
+    {
+        JobSystem::Instance().Submit([this, absolutePath]()
+        {
             std::ifstream f(absolutePath);
-            if (!f) {
+            if (!f)
+            {
                 LogError("Scene not found '{}'", absolutePath);
                 return;
             }
@@ -149,9 +197,12 @@ namespace RTGDEngine {
 
             PendingSceneLoad load = {};
             load.name = std::filesystem::path(absolutePath).stem().string();
-            try {
+            try
+            {
                 load.entities = Scene::ParseScene(ss.str());
-            } catch (const std::exception &e) {
+            }
+            catch (const std::exception& e)
+            {
                 LogError("Failed to parse scene '{}': {} ", absolutePath, e.what());
                 return;
             }

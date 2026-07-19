@@ -15,51 +15,71 @@
 #include "Event/EventBus.h"
 #include "Tools/RTGDMacros.h"
 
-namespace RTGDEngine {
+namespace RTGDEngine
+{
     class Scene;
 }
 
-namespace RTGDEngine {
-    class ENGINE_API SceneManager {
+namespace RTGDEngine
+{
+    class ENGINE_API SceneManager
+    {
         DECLARE_SINGLETON(SceneManager);
 
     public:
-        struct PendingSceneLoad {
+        struct PendingSceneLoad
+        {
             std::string name;
             std::vector<Scene::EntityData> entities{};
         };
 
         void Initialize();
 
-        std::shared_ptr<Scene> CreateScene(const std::string &name);
+        std::shared_ptr<Scene> CreateScene(const std::string& name);
 
-        void UnloadScene(const std::string &name);
+        void UnloadScene(const std::string& name);
 
         [[nodiscard]] std::shared_ptr<Scene> GetActiveScene() const;
 
-        void SetActiveScene(const std::string &name);
+        void SetActiveScene(const std::string& name);
 
-        [[nodiscard]] bool HasScene(const std::string &name) const;
+        [[nodiscard]] bool HasScene(const std::string& name) const;
 
-        std::shared_ptr<Scene> LoadSceneFromFile(const std::string &absolutePath);
+        std::shared_ptr<Scene> LoadSceneFromFile(const std::string& absolutePath);
 
-        void RequestActiveScene(const std::string &name);
+        void RequestActiveScene(const std::string& name);
 
-        void RequestUnloadScene(const std::string &name);
+        void RequestUnloadScene(const std::string& name);
 
         template<typename Func>
-        void Each(Func &&func) { m_world.each(std::forward<Func>(func)); }
+        void Each(Func&& func) { m_world.each(std::forward<Func>(func)); }
 
-        flecs::world &GetWorld();
+        flecs::world& GetWorld();
 
-        void RequestLoadScene(const std::string &absolutePath);
+        void RequestLoadScene(const std::string& absolutePath);
 
         void ApplyPendingSceneChanges();
 
-        static void ReparentEntity(flecs::entity entity, flecs::entity parent);
+        void EnqueueCreateEntity(std::string name);
+
+        void EnqueueDestroyEntity(uint64_t id);
+
+        void EnqueueRenameEntity(uint64_t id, std::string name);
+
+        void EnqueueReparentEntity(uint64_t id, uint64_t parentId);
+
+        void ApplyPendingEntityCommands();
+
+        flecs::entity GetEntity(uint64_t id) const;
 
     private:
-        std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};
+        flecs::entity CreateEntity(const std::string& name);
+
+        void DestroyEntity(flecs::entity e);
+
+        void RenameEntity(flecs::entity e, const std::string& name);
+
+        std::unordered_map<std::string, std::shared_ptr<Scene>> m_scenes{};
         std::shared_ptr<Scene> m_activeScene = nullptr;
         std::string m_pendingActive = {};
         std::vector<std::string> m_pendingUnloads = {};
