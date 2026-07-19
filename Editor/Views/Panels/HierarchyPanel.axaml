@@ -2,16 +2,28 @@
     x:Class="Editor.Views.Panels.HierarchyPanel"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="using:Editor.Converters"
+    xmlns:models="using:Editor.Models"
     xmlns:vm="using:Editor.ViewModels.Panels"
     x:DataType="vm:HierarchyViewModel">
+
+    <UserControl.Resources>
+        <conv:EntityRenamingConverter x:Key="EntityRenamingConverter" />
+    </UserControl.Resources>
 
     <Border Background="{DynamicResource BgPanel}">
         <DockPanel Margin="15 10">
             <TextBlock Margin="0 5" DockPanel.Dock="Top">HIERARCHY</TextBlock>
 
-            <TreeView  ItemsSource="{Binding Entities}"
-                    SelectionMode="Multiple"
-                     Background="{DynamicResource BgPanel}">
+            <TreeView x:Name="HierarchyTree"
+                      Focusable="True"
+                      ItemsSource="{Binding Entities}"
+                      SelectionMode="Multiple"
+                      Background="{DynamicResource BgPanel}">
+                <TreeView.KeyBindings>
+                    <KeyBinding Gesture="F2" Command="{Binding RenameEntityCommand}" />
+                    <KeyBinding Gesture="Delete" Command="{Binding DeleteEntityCommand}" />
+                </TreeView.KeyBindings>
 
                 <TreeView.Styles>
                     <Style Selector="TreeViewItem">
@@ -22,17 +34,71 @@
                     <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
                         <Setter Property="Background" Value="{DynamicResource BorderDefault}" />
                     </Style>
+
+                    <Style Selector="TreeView TextBox.rename-field">
+                        <Setter Property="Background" Value="{DynamicResource BgPanel}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource AccentSecondary}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="MaxHeight" Value="25"/>
+                    </Style>
+                    <Style Selector="TreeView TextBox.rename-field /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="{DynamicResource BgPanel}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource AccentSecondary}" />
+                    </Style>
+                    <Style Selector="TreeView TextBox.rename-field:pointerover /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="{DynamicResource BgPanel}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource AccentSecondary}" />
+                    </Style>
+                    <Style Selector="TreeView TextBox.rename-field:focus-within /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="{DynamicResource BgPanel}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource AccentSecondary}" />
+                    </Style>
                 </TreeView.Styles>
 
                 <TreeView.ItemTemplate>
-                    <TreeDataTemplate ItemsSource="{Binding Children}">
+                    <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="models:Entity">
                         <Border VerticalAlignment="Center" Padding="10 0">
-                            <TextBlock Text="{Binding Name}"/>
+                            <Panel>
+                                <TextBlock Text="{Binding Name}">
+                                    <TextBlock.IsVisible>
+                                        <MultiBinding Converter="{StaticResource EntityRenamingConverter}">
+                                            <Binding Path="Id" />
+                                            <Binding Path="((vm:HierarchyViewModel)DataContext).RenamingEntityId"
+                                                     RelativeSource="{RelativeSource AncestorType=TreeView}" />
+                                        </MultiBinding>
+                                    </TextBlock.IsVisible>
+                                </TextBlock>
+
+                                <TextBox MinWidth="80"
+                                         Classes="rename-field"
+                                         KeyDown="OnRenameKeyDown"
+                                         LostFocus="OnRenameLostFocus">
+                                    <TextBox.Text>
+                                        <Binding Path="((vm:HierarchyViewModel)DataContext).RenameDraft"
+                                                 Mode="TwoWay"
+                                                 RelativeSource="{RelativeSource AncestorType=TreeView}" />
+                                    </TextBox.Text>
+                                    <TextBox.IsVisible>
+                                        <MultiBinding Converter="{StaticResource EntityRenamingConverter}"
+                                                      ConverterParameter="edit">
+                                            <Binding Path="Id" />
+                                            <Binding Path="((vm:HierarchyViewModel)DataContext).RenamingEntityId"
+                                                     RelativeSource="{RelativeSource AncestorType=TreeView}" />
+                                        </MultiBinding>
+                                    </TextBox.IsVisible>
+                                </TextBox>
+                            </Panel>
                         </Border>
                     </TreeDataTemplate>
                 </TreeView.ItemTemplate>
-            </TreeView>
 
+                <TreeView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Rename" Command="{Binding RenameEntityCommand}" />
+                        <MenuItem Header="Delete" Command="{Binding DeleteEntityCommand}" />
+                    </ContextMenu>
+                </TreeView.ContextMenu>
+            </TreeView>
         </DockPanel>
     </Border>
 </UserControl>

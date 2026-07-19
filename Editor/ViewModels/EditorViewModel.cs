@@ -21,6 +21,10 @@ public partial class EditorViewModel : ViewModelBase
         Viewport.EngineInitialized += SyncHierarchy;
         Viewport.EngineShutdown += Hierarchy.Clear;
 
+        Hierarchy.OnRenameRequested = OnEntityRenamed;
+        Hierarchy.OnDeleteRequested = OnEntitiesDeleted;
+
+        // Sample until engine is ready; SyncHierarchy replaces it on EngineInitialized.
         Hierarchy.SetEntities(EntityTree.CreateSample());
     }
 
@@ -28,9 +32,10 @@ public partial class EditorViewModel : ViewModelBase
 
     private void SyncHierarchy()
     {
+        // Sample until engine is ready; SyncHierarchy replaces it on EngineInitialized.
 #if DEBUG
-                Hierarchy.SetEntities(EntityTree.CreateSample());
-                return;
+        Hierarchy.SetEntities(EntityTree.CreateSample());
+        return;
 #endif
         if (!Viewport.IsEngineReady)
             return;
@@ -44,5 +49,17 @@ public partial class EditorViewModel : ViewModelBase
         EngineNative.GetEntities((name, id, parentId) =>
             nodes.Add(new EntityNode(name, id, parentId)));
         return EntityTree.Build(nodes);
+    }
+
+    private void OnEntityRenamed(long id, string name)
+    {
+        // TODO: EngineNative.RenameEntity(id, name); SyncHierarchy();
+        EntityTree.Rename(Hierarchy.Entities, id, name);
+    }
+
+    private void OnEntitiesDeleted(IReadOnlyList<long> ids)
+    {
+        // TODO: EngineNative.DeleteEntities(ids); SyncHierarchy();
+        EntityTree.RemoveMany(Hierarchy.Entities, ids);
     }
 }
