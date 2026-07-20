@@ -10,24 +10,24 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # VS 18+ MSVC emits C5232 in SPIRV-Tools
-if(MSVC)
+if (MSVC)
     add_compile_options(/wd5232 /Wv:17)
-endif()
+endif ()
 
 set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(ThirdParty/flecs)
 
-set(DILIGENT_BUILD_SAMPLES      OFF CACHE BOOL "" FORCE)
-set(DILIGENT_BUILD_DOCS         OFF CACHE BOOL "" FORCE)
+set(DILIGENT_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(DILIGENT_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(DILIGENT_BUILD_UNITY_PLUGIN OFF CACHE BOOL "" FORCE)
-set(DILIGENT_BUILD_TESTS        OFF CACHE BOOL "" FORCE)
-set(DILIGENT_NO_VULKAN          OFF CACHE BOOL "" FORCE)
+set(DILIGENT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/DiligentEngine)
 
 add_subdirectory(ThirdParty/spdlog)
 
-set(GAINPUT_TESTS   OFF CACHE BOOL "" FORCE)
+set(GAINPUT_TESTS OFF CACHE BOOL "" FORCE)
 set(GAINPUT_SAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/gainput)
 add_subdirectory(ThirdParty/enkiTS)
@@ -59,16 +59,18 @@ target_link_libraries(RTGD-Engine PRIVATE
 
 add_custom_command(TARGET RTGD-Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        "${CMAKE_SOURCE_DIR}/Assets"  "$<TARGET_FILE_DIR:RTGD-Engine>/Assets"
+        "${CMAKE_SOURCE_DIR}/Assets" "$<TARGET_FILE_DIR:RTGD-Engine>/Assets"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_SOURCE_DIR}/Shaders" "$<TARGET_FILE_DIR:RTGD-Engine>/Shaders"
         COMMENT "Syncing assets and shaders"
         VERBATIM
 )
 
-add_custom_command(TARGET RTGD-Engine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:RTGD-Engine> "$<TARGET_FILE_DIR:RTGD-Engine>"
-        COMMAND_EXPAND_LISTS
-        VERBATIM
-)
+if (WIN32)
+    add_custom_command(TARGET RTGD-Engine POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:RTGD-Engine> "$<TARGET_FILE_DIR:RTGD-Engine>"
+            COMMAND_EXPAND_LISTS
+            VERBATIM
+    )
+endif ()

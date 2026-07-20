@@ -56,7 +56,8 @@ namespace RTGDEngine {
 
     void SceneManager::UnloadScene(const std::string &name) {
         auto it = m_scenes.find(name);
-        if (it == m_scenes.end()) return;
+        if (it == m_scenes.end())
+            return;
         if (it->second == m_activeScene) {
             LogWarn("SceneManager: cannot unload active scene '{}'", name);
             return;
@@ -122,14 +123,96 @@ namespace RTGDEngine {
             SetActiveScene(m_pendingActive);
             m_pendingActive.clear();
         }
-        for (auto &n: m_pendingUnloads) UnloadScene(n);
+        for (auto &n: m_pendingUnloads)
+            UnloadScene(n);
         m_pendingUnloads.clear();
     }
 
-    void SceneManager::ReparentEntity(flecs::entity entity, flecs::entity parent) {
-        uint64_t oldParent = entity.parent().id();
-        entity.child_of(parent);
-        EventBus::Instance().Emit(Events::OnEntityReparented, {entity.id(), oldParent, parent.id()}, {});
+    void SceneManager::EnqueueCreateEntity(std::string name, uint64_t parent) {
+        std::lock_guard lock(m_commandsMutex);
+        m_commands.emplace_back([this, n = std::move(name), parent](flecs::world &w) {
+            CreateEntity(n, GetEntity(parent));
+        });
+    }
+
+    void SceneManager::EnqueueDestroyEntity(uint64_t id) {
+        std::lock_guard lock(m_commandsMutex);
+        m_commands.emplace_back([this, id](flecs::world &w) {
+            DestroyEntity(w.entity(id));
+        });
+    }
+
+    void SceneManager::EnqueueRenameEntity(uint64_t id, std::string name) {
+        std::lock_guard lock(m_commandsMutex);
+        m_commands.emplace_back([this, id, n = std::move(name)](flecs::world &w) {
+            RenameEntity(GetEntity(id), n);
+        });
+    }
+
+    void SceneManager::EnqueueReparentEntity(uint64_t id, uint64_t parentId) {
+        std::lock_guard lock(m_commandsMutex);
+        m_commands.emplace_back([this, id, parentId](flecs::world &w) {
+            ReparentEntity(GetEntity(id), GetEntity(parentId));
+        });
+    }
+
+    void SceneManager::ApplyPendingEntityCommands() {
+        std::vector<std::function<void(flecs::world &)> > commands{};
+        {
+            std::lock_guard lock(m_commandsMutex);
+            commands.swap(m_commands);
+        }
+
+        for (auto &command: commands) {
+            command(m_world);
+        }
+    }
+
+    flecs::entity SceneManager::GetEntity(uint64_t id) const {
+        return m_world.entity(id);
+    }
+
+    flecs::entity SceneManager::CreateEntity(const std::string &name, flecs::entity parent) {
+        if (parent == flecs::entity::null())
+            parent = m_activeScene->GetRoot();
+
+        auto entity = m_world.entity(name.c_str()).child_of(parent)
+                .add<UUIDComponent>()
+                .add<SceneEntity>();
+
+        LogInfo("Entity created '{}'", name);
+        return entity;
+    }
+
+    void SceneManager::DestroyEntity(flecs::entity e) {
+        if (!e.is_alive())
+            return;
+
+        LogInfo("Entity destroyed '{}'", e.name().c_str());
+        e.destruct();
+    }
+
+    void SceneManager::RenameEntity(flecs::entity e, const std::string &name) {
+        if (!e.is_alive())
+            return;
+
+        e.set_name(name.c_str());
+        LogInfo("Rename entity '{}'", name.c_str());
+    }
+
+    void SceneManager::ReparentEntity(flecs::entity e, flecs::entity parent) {
+        if (!e.is_alive())
+            return;
+
+        flecs::entity oldParent = e.parent();
+        flecs::entity newParent = parent != flecs::entity::null()
+                                      ? parent
+                                      : (m_activeScene ? m_activeScene->GetRoot() : flecs::entity::null());
+        if (newParent == 0)
+            return;
+
+        e.child_of(newParent);
+        EventBus::Instance().Emit(Events::OnEntityReparented, {e.id(), oldParent.id(), newParent.id()}, {});
     }
 
     flecs::world &SceneManager::GetWorld() {

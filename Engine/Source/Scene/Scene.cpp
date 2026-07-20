@@ -18,22 +18,6 @@ namespace RTGDEngine {
         LogInfo("Scene created: '{}'", m_name);
     }
 
-    flecs::entity Scene::CreateEntity(const std::string &name) {
-        auto entity = m_world->entity(name.c_str()).child_of(m_root)
-                .add<UUIDComponent>()
-                .add<SceneEntity>();
-
-        LogInfo("Scene '{}': entity created '{}'", m_name, name);
-        return entity;
-    }
-
-    void Scene::DestroyEntity(const flecs::entity entity) {
-        if (!entity.is_valid())
-            return;
-        LogInfo("Scene '{}': entity destroyed '{}'", m_name, entity.name().c_str());
-        entity.destruct();
-    }
-
     flecs::entity Scene::Find(const std::string &name) {
         return m_root.lookup(name.c_str());
     }

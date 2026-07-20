@@ -23,10 +23,6 @@ namespace RTGDEngine {
 
         ~Scene() = default;
 
-        flecs::entity CreateEntity(const std::string &name);
-
-        void DestroyEntity(flecs::entity entity);
-
         flecs::entity Find(const std::string &name);
 
         [[nodiscard]] flecs::entity GetRoot() const;
