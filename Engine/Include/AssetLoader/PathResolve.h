@@ -9,12 +9,13 @@
 #include <Windows.h>
 #endif
 
-namespace RTGDEngine
-{
-    inline const std::filesystem::path& ExecutableDir()
-    {
-        static const std::filesystem::path dir = []
-        {
+#ifdef __linux__
+#include <dlfcn.h>
+#endif
+
+namespace RTGDEngine {
+    inline const std::filesystem::path &ExecutableDir() {
+        static const std::filesystem::path dir = [] {
 #if defined(_WIN32)
             HMODULE hmod = nullptr;
             GetModuleHandleExW(
@@ -37,13 +38,11 @@ namespace RTGDEngine
         return dir;
     }
 
-    inline std::string GetAbsolutePath(const std::string& relativePath)
-    {
+    inline std::string GetAbsolutePath(const std::string &relativePath) {
         return (ExecutableDir() / relativePath).generic_string();
     }
 
-    inline std::string GetRelativePath(const std::string& absolutePath)
-    {
+    inline std::string GetRelativePath(const std::string &absolutePath) {
         return std::filesystem::relative(absolutePath, ExecutableDir()).generic_string();
     }
 }
