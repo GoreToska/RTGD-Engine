@@ -28,7 +28,7 @@ namespace RTGDEngine {
             if (len == 0 || len == MAX_PATH)
                 return std::filesystem::current_path();
             return std::filesystem::path(buf).parent_path();
-#else.
+#else
             Dl_info info{};
             if (dladdr(reinterpret_cast<void *>(&ExecutableDir), &info) && info.dli_fname)
                 return std::filesystem::canonical(info.dli_fname).parent_path();

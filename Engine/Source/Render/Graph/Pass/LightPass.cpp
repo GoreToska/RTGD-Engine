@@ -64,17 +64,17 @@ namespace RTGDEngine
 
         context.Context.SetRenderTargets(
             1, &pRTV, nullptr,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
         const float clearColor[] = {0.1f, 0.1f, 0.1f, 1.0f};
         context.Context.ClearRenderTarget(
             pRTV, clearColor,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
         context.Context.SetPipelineState(matData.PSO);
         context.Context.CommitShaderResources(
             matData.SRB,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
         DrawAttribs draw;
         draw.NumVertices = 3;

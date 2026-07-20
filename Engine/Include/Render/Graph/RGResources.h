@@ -32,6 +32,10 @@ namespace RTGDEngine {
 
         [[nodiscard]] RGHandle Find(const char *name) const;
 
+        [[nodiscard]] Diligent::ITexture *Texture(RGHandle handle) const;
+
+        [[nodiscard]] const char *Name(RGHandle handle) const;
+
     private:
         enum class Kind {
             Texture,

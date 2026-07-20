@@ -73,6 +73,26 @@ namespace RTGDEngine {
         return {};
     }
 
+    Diligent::ITexture *RGResources::Texture(RGHandle handle) const {
+        const Entry *e = Get(handle);
+        if (!e) return nullptr;
+        switch (e->kind) {
+            case Kind::Texture:
+                return e->Texture;
+            case Kind::Backbuffer:
+                return m_swapChain->GetCurrentBackBufferRTV()->GetTexture();
+            case Kind::SwapchainDepth:
+                return m_swapChain->GetDepthBufferDSV()->GetTexture();
+        }
+
+        return nullptr;
+    }
+
+    const char *RGResources::Name(RGHandle handle) const {
+        const Entry *e = Get(handle);
+        return e ? e->Name : "Invalid!";
+    }
+
     const RGResources::Entry *RGResources::Get(RGHandle handle) const {
         if (!handle.IsValid() || handle.ID >= m_entries.size()) return nullptr;
         return &m_entries[handle.ID];

@@ -65,27 +65,27 @@ namespace RTGDEngine {
         };
         context.Context.SetRenderTargets(
             std::size(rtvs), rtvs, depthDSV,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
         const float clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
         context.Context.ClearRenderTarget(diffuseRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.Context.ClearRenderTarget(normalRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.Context.ClearRenderTarget(positionRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.Context.ClearRenderTarget(pbrRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
 #ifdef RTGD_EDITOR
         context.Context.ClearRenderTarget(idRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.PickEntities->clear();
 #endif
 
         context.Context.ClearDepthStencil(
             depthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
         context.World.each([&](flecs::entity e,
                                const MeshComponent &meshComp,
