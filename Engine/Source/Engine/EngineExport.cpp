@@ -4,8 +4,11 @@
 
 #include "Engine/EngineExport.h"
 
+#include <cstdint>
+
 #include "Components/UUIDComponent.h"
 #include "Engine/Engine.h"
+#include "Event/Events.h"
 #include "Input/InputSystem.h"
 #include "Render/RenderSystem.h"
 #include "Scene/Scene.h"
@@ -15,9 +18,19 @@
 #include "Platform/Linux/EmbeddedLinuxWindow.h"
 #include "Platform/PlatformFactory.h"
 
+
+namespace RTGDEngine::Events {
+    struct EntityCreatedEvent;
+}
+
 using namespace RTGDEngine;
 
 extern "C" {
+static EntityCreatedCallback g_onCreated = nullptr;
+static EntityDestroyedCallback g_onDestroyed = nullptr;
+static EntityRenamedCallback g_onRenamed = nullptr;
+static EntityReparentedCallback g_onReparented = nullptr;
+
 bool Engine_Initialize(void *nativeWindow, int width, int height) {
     Logger::Instance().Initialize();
 
@@ -33,6 +46,32 @@ bool Engine_Initialize(void *nativeWindow, int width, int height) {
     windowHandle.height = height;
     platform = CreateEmbeddedPlatformWindow(windowHandle);
 #endif
+
+    // TODO: just for test, move somewhere this later
+    EventBus::Instance().Subscribe(Events::OnEntityCreated, [](const Events::EntityCreatedEvent &e) {
+        if (!g_onCreated)
+            return;
+        auto ent = SceneManager::Instance().GetWorld().entity(e.entity);
+        g_onCreated(ent.name().c_str(), e.entity, ent.parent().id());
+    });
+
+    EventBus::Instance().Subscribe(Events::OnEntityDestroyed, [](const Events::EntityDestroyedEvent &e) {
+        if (g_onDestroyed)
+            g_onDestroyed(e.entity);
+    });
+
+    EventBus::Instance().Subscribe(Events::OnEntityRenamed, [](const Events::EntityRenamedEvent &e) {
+        if (!g_onRenamed)
+            return;
+        auto ent = SceneManager::Instance().GetWorld().entity(e.entity);
+        g_onRenamed(ent.name().c_str(), e.entity);
+    });
+
+    EventBus::Instance().Subscribe(Events::OnEntityReparented, [](const Events::EntityReparentedEvent &e) {
+        if (g_onReparented)
+            g_onReparented(e.entity, e.oldParent, e.newParent);
+    });
+    // --------------
 
     return Engine::Instance().Start(std::move(platform));
 }
@@ -89,5 +128,39 @@ uint64_t Engine_PickEntity(int x, int y) {
 #else
     return 0;
 #endif
+}
+
+void Engine_RenameEntity(uint64_t id, const char *name) {
+    SceneManager::Instance().EnqueueRenameEntity(SceneManager::Instance().GetEntity(id), name);
+}
+
+void Engine_CreateEntity(const char *name) {
+    SceneManager::Instance().EnqueueCreateEntity(name);
+}
+
+void Engine_DeleteEntity(uint64_t id) {
+    SceneManager::Instance().EnqueueDestroyEntity(SceneManager::Instance().GetWorld().entity(id));
+}
+
+void Engine_ReparentEntity(uint64_t id, uint64_t parentID) {
+    SceneManager::Instance().EnqueueReparentEntity(
+        SceneManager::Instance().GetEntity(id),
+        SceneManager::Instance().GetEntity(parentID));
+}
+
+void Engine_SetEntityCreatedCallback(EntityCreatedCallback cb) {
+    g_onCreated = cb;
+}
+
+void Engine_SetEntityDestroyedCallback(EntityDestroyedCallback cb) {
+    g_onDestroyed = cb;
+}
+
+void Engine_SetEntityRenamedCallback(EntityRenamedCallback cb) {
+    g_onRenamed = cb;
+}
+
+void Engine_SetEntityReparentedCallback(EntityReparentedCallback cb) {
+    g_onReparented = cb;
 }
 } // extern "C"

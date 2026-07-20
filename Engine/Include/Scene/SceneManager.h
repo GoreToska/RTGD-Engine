@@ -6,11 +6,11 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-
-#include "Engine/EngineExport.h"
 #include <flecs.h>
 #include <vector>
+#include <functional>
 
+#include "Engine/EngineExport.h"
 #include "Scene.h"
 #include "Event/EventBus.h"
 #include "Tools/RTGDMacros.h"
@@ -56,7 +56,26 @@ namespace RTGDEngine {
 
         void ApplyPendingSceneChanges();
 
-        static void ReparentEntity(flecs::entity entity, flecs::entity parent);
+        void EnqueueCreateEntity(std::string name, uint64_t parentID = {});
+
+        void EnqueueDestroyEntity(uint64_t id);
+
+        void EnqueueRenameEntity(uint64_t id, std::string name);
+
+        void EnqueueReparentEntity(uint64_t id, uint64_t parentId);
+
+        void ApplyPendingEntityCommands();
+
+        flecs::entity GetEntity(uint64_t id) const;
+
+        // Parent ID here can be a scene ID too - if scene ID is passed, entity will be created as part of this scene (for additional scenes support)
+        flecs::entity CreateEntity(const std::string &name, flecs::entity parent = {});
+
+        void DestroyEntity(flecs::entity e);
+
+        void RenameEntity(flecs::entity e, const std::string &name);
+
+        void ReparentEntity(flecs::entity e, flecs::entity parent = {});
 
     private:
         std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};
@@ -65,6 +84,9 @@ namespace RTGDEngine {
         std::vector<std::string> m_pendingUnloads = {};
 
         flecs::world m_world = flecs::world();
+
+        std::mutex m_commandsMutex{};
+        std::vector<std::function<void(flecs::world &)> > m_commands{};
 
         std::mutex m_loadMutex = {};
         std::vector<PendingSceneLoad> m_completedLoads = {};

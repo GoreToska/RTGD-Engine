@@ -110,6 +110,8 @@ add_library(Engine SHARED
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
+set_target_properties(Engine PROPERTIES DEBUG_POSTFIX "")
+set_target_properties(Engine PROPERTIES PREFIX "")
 
 if (RTGD_EDITOR)
     target_compile_definitions(Engine PUBLIC RTGD_EDITOR)

@@ -213,6 +213,14 @@ public class EngineViewportHost : NativeControlHost
 
         try
         {
+            EngineNative.RegisterEntityCallbacks();
+
+            EngineNative.EntityCreated += (name, id, parent) =>
+                Dispatcher.UIThread.Post(() => Console.WriteLine("EngineViewportHost: Entity created: " + name));
+
+            EngineNative.EntityDeleted += (id) =>
+                Dispatcher.UIThread.Post(() => Console.WriteLine("EngineViewportHost: Entity destroyed id: " + id));
+
             if (!EngineNative.Initialize(_controlHandle.Handle, w, h))
             {
                 Console.WriteLine("EngineViewportHost: Engine_Initialize returned false.");

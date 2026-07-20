@@ -156,6 +156,7 @@ namespace RTGDEngine {
     void Engine::Update(const float deltaTime) {
         JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
         SceneManager::Instance().ApplyPendingSceneChanges();
+        SceneManager::Instance().ApplyPendingEntityCommands();
         EventBus::Instance().Process();
 
         UpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
