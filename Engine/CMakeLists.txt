@@ -107,6 +107,8 @@ add_library(Engine SHARED
         Source/Render/Graph/RGResources.cpp
         Include/Render/Graph/RGResources.h
         Include/Render/Graph/RGBuilder.h
+        Include/Render/Graph/RGTexturePool.cpp
+        Include/Render/Graph/RGTexturePool.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
