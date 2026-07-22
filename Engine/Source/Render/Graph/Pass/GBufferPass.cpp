@@ -22,19 +22,23 @@ namespace RTGDEngine {
     void GBufferPass::Setup(RGBuilder &builder) {
         IRenderPass::Setup(builder);
 
-        m_diffuse = builder.WriteColor("GBuffer.Diffuse");
-        m_normal = builder.WriteColor("GBuffer.Normal");
-        m_position = builder.WriteColor("GBuffer.Position");
-        m_pbr = builder.WriteColor("GBuffer.PBR");
-        m_depth = builder.WriteDepth("GBuffer.Depth");
+        using namespace Diligent;
+
+        m_diffuse = builder.CreateColor({"GBuffer.Diffuse", 0, 0, TEX_FORMAT_RGBA8_UNORM_SRGB});
+        m_normal = builder.CreateColor({"GBuffer.Normal", 0, 0, TEX_FORMAT_RGBA16_FLOAT});
+        m_position = builder.CreateColor({"GBuffer.Position", 0, 0, TEX_FORMAT_RGBA32_FLOAT});
+        m_pbr = builder.CreateColor({"GBuffer.PBR", 0, 0, TEX_FORMAT_RGBA8_UNORM});
+        m_depth = builder.CreateDepth({
+            "GBuffer.Depth", 0, 0, TEX_FORMAT_D32_FLOAT, BIND_DEPTH_STENCIL | BIND_SHADER_RESOURCE
+        });
 
 #ifdef RTGD_EDITOR
-        m_id = builder.WriteColor("GBuffer.ID");
+        m_id = builder.CreateColor({"GBuffer.ID", 0, 0, TEX_FORMAT_R32_UINT});
 #endif
     }
 
-    void GBufferPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) {
-        m_material = PipelineFactory::CreateGBufferPipeline(device, gbuffer, GetAbsolutePath("Shaders"));
+    void GBufferPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) {
+        m_material = PipelineFactory::CreateGBufferPipeline(device, GetAbsolutePath("Shaders"));
     }
 
     void GBufferPass::Execute(RenderContext &context) {
@@ -65,27 +69,27 @@ namespace RTGDEngine {
         };
         context.Context.SetRenderTargets(
             std::size(rtvs), rtvs, depthDSV,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
         const float clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
         context.Context.ClearRenderTarget(diffuseRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.Context.ClearRenderTarget(normalRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.Context.ClearRenderTarget(positionRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.Context.ClearRenderTarget(pbrRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
 #ifdef RTGD_EDITOR
         context.Context.ClearRenderTarget(idRTV, clearColor,
-                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                                          RESOURCE_STATE_TRANSITION_MODE_VERIFY);
         context.PickEntities->clear();
 #endif
 
         context.Context.ClearDepthStencil(
             depthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
         context.World.each([&](flecs::entity e,
                                const MeshComponent &meshComp,

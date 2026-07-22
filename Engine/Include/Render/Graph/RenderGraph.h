@@ -7,9 +7,12 @@
 #include <vector>
 
 #include "Pass/IRenderPass.h"
-#include "Render/GBuffer.h"
 #include <SwapChain.h>
 #include <RenderDevice.h>
+
+#include "RGTexturePool.h"
+
+// TODO: add topo sort & culling
 
 namespace RTGDEngine {
     struct RenderContext;
@@ -18,11 +21,19 @@ namespace RTGDEngine {
     public:
         void AddPass(std::unique_ptr<IRenderPass> pass);
 
-        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gBuffer) const;
+        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) const;
 
-        void Execute(RenderContext &context) const;
+
+        void Execute(RenderContext &context);
+
+        void InvalidateTransientResources();
+
+        Diligent::ITexture *FindTexture(const std::string &name);
 
     private:
         std::vector<std::unique_ptr<IRenderPass> > m_passes = {};
+        RGTexturePool m_texturePool = {};
+
+        void SetupPasses(RenderContext &context);
     };
 } // RTGDEngine

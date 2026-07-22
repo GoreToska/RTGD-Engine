@@ -47,9 +47,6 @@ add_library(Engine SHARED
         Include/Components/LightComponent.h
         Source/Systems/LightSystem.cpp
         Include/Systems/LightSystem.h
-        Include/Render/GBuffer.h
-        Source/Render/GBufferFactory.cpp
-        Include/Render/GBufferFactory.h
         Source/Scene/Scene.cpp
         Include/Scene/Scene.h
         Source/Scene/SceneManager.cpp
@@ -107,6 +104,10 @@ add_library(Engine SHARED
         Source/Render/Graph/RGResources.cpp
         Include/Render/Graph/RGResources.h
         Include/Render/Graph/RGBuilder.h
+        Source/Render/Graph/RGTexturePool.cpp
+        Include/Render/Graph/RGTexturePool.h
+        Source/Render/Graph/Pass/CompositePass.cpp
+        Include/Render/Graph/Pass/CompositePass.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -205,11 +206,11 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_SOURCE_DIR}/Shaders" "$<TARGET_FILE_DIR:Engine>/Shaders"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        "${CMAKE_SOURCE_DIR}/Assets"  "$<TARGET_FILE_DIR:Engine>/Assets"
+        "${CMAKE_SOURCE_DIR}/Assets" "$<TARGET_FILE_DIR:Engine>/Assets"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_SOURCE_DIR}/Shaders" "${EDITOR_OUT}/Shaders"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        "${CMAKE_SOURCE_DIR}/Assets"  "${EDITOR_OUT}/Assets"
+        "${CMAKE_SOURCE_DIR}/Assets" "${EDITOR_OUT}/Assets"
         COMMENT "Syncing shaders and assets"
         VERBATIM
 )

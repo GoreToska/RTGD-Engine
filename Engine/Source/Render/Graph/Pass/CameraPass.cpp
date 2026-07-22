@@ -35,7 +35,7 @@ namespace RTGDEngine {
         }
     }
 
-    void CameraPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) {
+    void CameraPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) {
     }
 
     const char *CameraPass::Name() const {
