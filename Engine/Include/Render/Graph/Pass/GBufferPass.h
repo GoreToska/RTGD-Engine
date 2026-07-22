@@ -13,7 +13,7 @@ namespace RTGDEngine {
 
         void Setup(RGBuilder &builder) override;
 
-        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) override;
+        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) override;
 
         void Execute(RenderContext &context) override;
 

@@ -11,8 +11,6 @@
 
 
 namespace RTGDEngine {
-    struct GBuffer;
-
     class ENGINE_API PipelineFactory {
     public:
         static MaterialHandle CreateTrianglePipeline(
@@ -27,7 +25,6 @@ namespace RTGDEngine {
 
         static MaterialHandle CreateGBufferPipeline(
             Diligent::IRenderDevice &device,
-            const GBuffer &gbuffer,
             const std::string &absolutePath);
 
         static MaterialHandle CreateLightingPipeline(
@@ -36,6 +33,11 @@ namespace RTGDEngine {
             const std::string &absolutePath);
 
         static MaterialHandle CreateDebugViewPipeline(
+            Diligent::IRenderDevice &device,
+            Diligent::ISwapChain &swapChain,
+            const std::string &absolutePath);
+
+        static MaterialHandle CreateCompositePipeline(
             Diligent::IRenderDevice &device,
             Diligent::ISwapChain &swapChain,
             const std::string &absolutePath);
