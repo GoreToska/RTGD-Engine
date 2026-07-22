@@ -21,6 +21,18 @@
         "UUIDComponent": { "ID": 0 }                                                                                                                                                                                                
       } }                                                                                                                                                                                                                           
     },
+    {
+          "Name": "Floor",
+          "Data": { "components": {
+            "MeshComponent": {
+              "Material": { "Path": "Assets/Materials/Floor.mat" },
+              "Mesh": { "Path": "Assets/Floor/scene.gltf" }
+            },
+            "RenderComponent": { "CastShadows": true, "IsVisible": true },
+            "TransformComponent": { "Position": {"x":0,"y":-2,"z":0}, "Rotation": {"w":1,"x":1,"y":0,"z":0}, "Scale": {"x":3,"y":3,"z":1} },
+            "UUIDComponent": { "ID": 0 }
+          } }
+        },
     {                                                                                                                                                                                                                               
       "Name": "Helmet",                                                                                                                                                                                                             
       "Data": { "components": {                                                                                                                                                                                                     
