@@ -11,8 +11,6 @@
 
 
 namespace RTGDEngine {
-    struct GBuffer;
-
     class ENGINE_API PipelineFactory {
     public:
         static MaterialHandle CreateTrianglePipeline(

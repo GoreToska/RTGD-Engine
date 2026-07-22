@@ -9,7 +9,6 @@
 #include <SwapChain.h>
 
 #include "Components/CameraComponent.h"
-#include "Render/GBufferFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
 #include "Render/Graph/RGResources.h"
@@ -90,8 +89,6 @@ namespace RTGDEngine {
         m_initialized = true;
         m_frameConstants.Initialize(*m_device, *m_pImmediateContext);
 
-        m_gbuffer = GBufferFactory::Create(*m_device, width, height);
-
         m_graph.AddPass(std::make_unique<CameraPass>());
         m_graph.AddPass(std::make_unique<GBufferPass>());
         m_graph.AddPass(std::make_unique<LightPass>());
@@ -101,7 +98,7 @@ namespace RTGDEngine {
         m_graph.AddPass(std::move(debug));
         m_graph.AddPass(std::make_unique<CompositePass>());
 
-        m_graph.Initialize(*m_device, *m_swapChain, m_gbuffer);
+        m_graph.Initialize(*m_device, *m_swapChain);
 
         LogInfo("Render system initialized.");
         return true;
@@ -139,7 +136,6 @@ namespace RTGDEngine {
 
         m_pImmediateContext->Flush();
         m_swapChain->Resize(width, height);
-        GBufferFactory::Resize(m_gbuffer, *m_device, width, height);
         m_graph.InvalidateTransientResources();
 
         auto cameraEntity = CameraSystem::GetActiveCamera(world);

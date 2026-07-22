@@ -10,7 +10,7 @@ namespace RTGDEngine {
     public:
         void Execute(RenderContext &context) override;
 
-        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) override;
+        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) override;
 
         const char *Name() const override;
     };

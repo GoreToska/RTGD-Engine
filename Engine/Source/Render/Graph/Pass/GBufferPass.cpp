@@ -37,7 +37,7 @@ namespace RTGDEngine {
 #endif
     }
 
-    void GBufferPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) {
+    void GBufferPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) {
         m_material = PipelineFactory::CreateGBufferPipeline(device, GetAbsolutePath("Shaders"));
     }
 

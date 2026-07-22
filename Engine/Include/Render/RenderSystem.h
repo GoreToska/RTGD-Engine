@@ -20,7 +20,6 @@
 
 
 #include "ConstBuffers.h"
-#include "GBuffer.h"
 #include "RenderHandle.h"
 #include "Engine/EngineExport.h"
 #include "Platform/WindowHandle.h"
@@ -57,7 +56,6 @@ namespace RTGDEngine {
         [[nodiscard]] Diligent::ISwapChain &GetSwapChain() const { return *m_swapChain; }
         [[nodiscard]] Diligent::IEngineFactory &GetFactory() const { return *m_pFactory; }
         [[nodiscard]] FrameConstants &GetFrameConstants() { return m_frameConstants; }
-        [[nodiscard]] const GBuffer &GetGBuffer() const { return m_gbuffer; }
 
 #ifdef RTGD_EDITOR
         flecs::entity PickEntity(uint32_t x, uint32_t y);
@@ -80,7 +78,6 @@ namespace RTGDEngine {
         Diligent::IEngineFactory *m_pFactory = nullptr;
 
         FrameConstants m_frameConstants = {};
-        GBuffer m_gbuffer = {};
         RenderGraph m_graph = {};
 
 #ifdef RTGD_EDITOR

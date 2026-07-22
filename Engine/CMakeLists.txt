@@ -47,9 +47,6 @@ add_library(Engine SHARED
         Include/Components/LightComponent.h
         Source/Systems/LightSystem.cpp
         Include/Systems/LightSystem.h
-        Include/Render/GBuffer.h
-        Source/Render/GBufferFactory.cpp
-        Include/Render/GBufferFactory.h
         Source/Scene/Scene.cpp
         Include/Scene/Scene.h
         Source/Scene/SceneManager.cpp

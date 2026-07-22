@@ -80,7 +80,7 @@ namespace RTGDEngine {
         context.Context.Draw(draw);
     }
 
-    void LightPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) {
+    void LightPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) {
         m_material = PipelineFactory::CreateLightingPipeline(device, swapChain, GetAbsolutePath("Shaders"));
         m_colorFormat = swapChain.GetDesc().ColorBufferFormat;
     }

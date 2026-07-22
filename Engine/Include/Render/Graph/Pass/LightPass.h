@@ -15,7 +15,7 @@ namespace RTGDEngine {
 
         void Execute(RenderContext &context) override;
 
-        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) override;
+        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) override;
 
     private:
         MaterialHandle m_material = INVALID_MATERIAL_HANDLE;

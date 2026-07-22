@@ -13,10 +13,9 @@ namespace RTGDEngine {
         m_passes.push_back(std::move(pass));
     }
 
-    void RenderGraph::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain,
-                                 GBuffer &gBuffer) const {
+    void RenderGraph::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) const {
         for (const auto &pass: m_passes) {
-            pass->Initialize(device, swapChain, gBuffer);
+            pass->Initialize(device, swapChain);
         }
     }
 

@@ -35,7 +35,7 @@ namespace RTGDEngine {
         context.Context.Draw(draw);
     }
 
-    void CompositePass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) {
+    void CompositePass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) {
         m_material = PipelineFactory::CreateCompositePipeline(device, swapChain, GetAbsolutePath("Shaders"));
     }
 
