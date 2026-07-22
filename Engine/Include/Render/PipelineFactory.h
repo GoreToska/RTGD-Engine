@@ -27,7 +27,6 @@ namespace RTGDEngine {
 
         static MaterialHandle CreateGBufferPipeline(
             Diligent::IRenderDevice &device,
-            const GBuffer &gbuffer,
             const std::string &absolutePath);
 
         static MaterialHandle CreateLightingPipeline(

@@ -9,23 +9,6 @@
 
 namespace RTGDEngine {
     struct ENGINE_API GBuffer {
-        Diligent::RefCntAutoPtr<Diligent::ITexture> DiffuseTexture;
-        Diligent::RefCntAutoPtr<Diligent::ITexture> NormalTexture;
-        Diligent::RefCntAutoPtr<Diligent::ITexture> PositionTexture;
-
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> DiffuseRTV;
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> NormalRTV;
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> PositionRTV;
-
-        // Metallic (R), Roughness(G), AO (B)
-        Diligent::RefCntAutoPtr<Diligent::ITexture> PBRTexture;
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> PBRRTV;
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> PBRSRV;
-
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> DiffuseSRV;
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> NormalSRV;
-        Diligent::RefCntAutoPtr<Diligent::ITextureView> PositionSRV;
-
         Diligent::RefCntAutoPtr<Diligent::ITexture> DepthTexture;
         Diligent::RefCntAutoPtr<Diligent::ITextureView> DepthDSV;
         Diligent::RefCntAutoPtr<Diligent::ITextureView> DepthSRV;
@@ -35,9 +18,9 @@ namespace RTGDEngine {
 
         [[nodiscard]] bool IsValid() const {
 #if defined(RTGD_EDITOR)
-            return DiffuseRTV && NormalRTV && PositionRTV && IDRTV;
+            return DepthDSV && IDRTV;
 #else
-            return DiffuseRTV && NormalRTV && PositionRTV;
+            return DepthDSV;
 #endif
         }
 

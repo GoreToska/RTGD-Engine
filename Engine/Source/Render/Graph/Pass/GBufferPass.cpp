@@ -22,10 +22,10 @@ namespace RTGDEngine {
     void GBufferPass::Setup(RGBuilder &builder) {
         IRenderPass::Setup(builder);
 
-        m_diffuse = builder.WriteColor("GBuffer.Diffuse");
-        m_normal = builder.WriteColor("GBuffer.Normal");
-        m_position = builder.WriteColor("GBuffer.Position");
-        m_pbr = builder.WriteColor("GBuffer.PBR");
+        m_diffuse = builder.CreateColor({"GBuffer.Diffuse", 0, 0, Diligent::TEX_FORMAT_RGBA8_UNORM_SRGB});
+        m_normal = builder.CreateColor({"GBuffer.Normal", 0, 0, Diligent::TEX_FORMAT_RGBA16_FLOAT});
+        m_position = builder.CreateColor({"GBuffer.Position", 0, 0, Diligent::TEX_FORMAT_RGBA32_FLOAT});
+        m_pbr = builder.CreateColor({"GBuffer.PBR", 0, 0, Diligent::TEX_FORMAT_RGBA8_UNORM});
         m_depth = builder.WriteDepth("GBuffer.Depth");
 
 #ifdef RTGD_EDITOR
@@ -34,7 +34,7 @@ namespace RTGDEngine {
     }
 
     void GBufferPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain, GBuffer &gbuffer) {
-        m_material = PipelineFactory::CreateGBufferPipeline(device, gbuffer, GetAbsolutePath("Shaders"));
+        m_material = PipelineFactory::CreateGBufferPipeline(device, GetAbsolutePath("Shaders"));
     }
 
     void GBufferPass::Execute(RenderContext &context) {

@@ -151,7 +151,7 @@ namespace RTGDEngine {
         return RenderResourceManager::Instance().RegisterMaterial("mesh_default", std::move(data));
     }
 
-    MaterialHandle PipelineFactory::CreateGBufferPipeline(Diligent::IRenderDevice &device, const GBuffer &gbuffer,
+    MaterialHandle PipelineFactory::CreateGBufferPipeline(Diligent::IRenderDevice &device,
                                                           const std::string &absolutePath) {
         using namespace Diligent;
 

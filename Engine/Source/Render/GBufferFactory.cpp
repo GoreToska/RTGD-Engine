@@ -38,22 +38,6 @@ namespace RTGDEngine {
         gbuffer.Width = width;
         gbuffer.Height = height;
 
-        gbuffer.DiffuseTexture = CreateRenderTarget(
-            device, "GBuffer Diffuse", width, height,
-            TEX_FORMAT_RGBA8_UNORM_SRGB);
-
-        gbuffer.NormalTexture = CreateRenderTarget(
-            device, "GBuffer Normal", width, height,
-            TEX_FORMAT_RGBA16_FLOAT);
-
-        gbuffer.PositionTexture = CreateRenderTarget(
-            device, "GBuffer Position", width, height,
-            TEX_FORMAT_RGBA32_FLOAT);
-
-        gbuffer.PBRTexture = CreateRenderTarget(
-            device, "GBuffer PBR", width, height,
-            TEX_FORMAT_RGBA8_UNORM);
-
         TextureDesc depthDesc;
         depthDesc.Name = "GBuffer Depth";
         depthDesc.Type = RESOURCE_DIM_TEX_2D;
@@ -65,17 +49,9 @@ namespace RTGDEngine {
         depthDesc.Usage = USAGE_DEFAULT;
         device.CreateTexture(depthDesc, nullptr, &gbuffer.DepthTexture);
 
-        gbuffer.DiffuseRTV = gbuffer.DiffuseTexture->GetDefaultView(TEXTURE_VIEW_RENDER_TARGET);
-        gbuffer.NormalRTV = gbuffer.NormalTexture->GetDefaultView(TEXTURE_VIEW_RENDER_TARGET);
-        gbuffer.PositionRTV = gbuffer.PositionTexture->GetDefaultView(TEXTURE_VIEW_RENDER_TARGET);
         gbuffer.DepthDSV = gbuffer.DepthTexture->GetDefaultView(TEXTURE_VIEW_DEPTH_STENCIL);
-        gbuffer.PBRRTV = gbuffer.PBRTexture->GetDefaultView(TEXTURE_VIEW_RENDER_TARGET);
 
-        gbuffer.DiffuseSRV = gbuffer.DiffuseTexture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
-        gbuffer.NormalSRV = gbuffer.NormalTexture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
-        gbuffer.PositionSRV = gbuffer.PositionTexture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
         gbuffer.DepthSRV = gbuffer.DepthTexture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
-        gbuffer.PBRSRV = gbuffer.PBRTexture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
 
 #ifdef RTGD_EDITOR
         gbuffer.IDTexture = CreateRenderTarget(
