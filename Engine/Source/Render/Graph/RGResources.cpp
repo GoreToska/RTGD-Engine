@@ -38,6 +38,7 @@ namespace RTGDEngine {
             case Kind::Backbuffer:
                 return m_swapChain->GetCurrentBackBufferRTV();
             case Kind::Texture:
+            case Kind::Transient:
                 return e->Texture ? e->Texture->GetDefaultView(Diligent::TEXTURE_VIEW_RENDER_TARGET) : nullptr;
             default:
                 return nullptr;
@@ -46,7 +47,7 @@ namespace RTGDEngine {
 
     Diligent::ITextureView *RGResources::SRV(RGHandle h) const {
         const Entry *e = Get(h);
-        if (!e || e->kind != Kind::Texture || !e->Texture) return nullptr;
+        if (!e || (e->kind != Kind::Texture && e->kind != Kind::Transient) || !e->Texture) return nullptr;
         return e->Texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE);
     }
 
@@ -78,6 +79,7 @@ namespace RTGDEngine {
         if (!e) return nullptr;
         switch (e->kind) {
             case Kind::Texture:
+            case Kind::Transient:
                 return e->Texture;
             case Kind::Backbuffer:
                 return m_swapChain->GetCurrentBackBufferRTV()->GetTexture();
@@ -91,6 +93,20 @@ namespace RTGDEngine {
     const char *RGResources::Name(RGHandle handle) const {
         const Entry *e = Get(handle);
         return e ? e->Name : "Invalid!";
+    }
+
+    RGHandle RGResources::CreateColor(const RGTextureDesc &desc) {
+        RGHandle h{static_cast<uint32_t>(m_entries.size())};
+        m_entries.push_back({desc.Name, Kind::Transient, nullptr, desc});
+        return h;
+    }
+
+    void RGResources::ResolveTransientResources(RGTexturePool &pool, Diligent::IRenderDevice &device) {
+        const auto &scDesc = m_swapChain->GetDesc();
+        for (Entry &e: m_entries) {
+            if (e.kind == Kind::Transient && !e.Texture)
+                e.Texture = pool.Acquire(device, e.Desc, scDesc.Width, scDesc.Height);
+        }
     }
 
     const RGResources::Entry *RGResources::Get(RGHandle handle) const {

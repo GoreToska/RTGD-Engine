@@ -40,6 +40,11 @@ namespace RTGDEngine {
             Diligent::ISwapChain &swapChain,
             const std::string &absolutePath);
 
+        static MaterialHandle CreateCompositePipeline(
+            Diligent::IRenderDevice &device,
+            Diligent::ISwapChain &swapChain,
+            const std::string &absolutePath);
+
         static void BindStandardConstantBuffers(Diligent::IShaderResourceBinding &srb);
 
         static std::vector<Diligent::ShaderResourceVariableDesc> GetStandardVariableDescs() {

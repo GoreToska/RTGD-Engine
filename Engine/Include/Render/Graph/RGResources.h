@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <vector>
 #include "SwapChain.h"
-
+#include "RGTexturePool.h"
 
 namespace RTGDEngine {
     struct RGHandle {
@@ -36,17 +36,23 @@ namespace RTGDEngine {
 
         [[nodiscard]] const char *Name(RGHandle handle) const;
 
+        RGHandle CreateColor(const RGTextureDesc &desc);
+
+        void ResolveTransientResources(RGTexturePool& pool, Diligent::IRenderDevice& device);
+
     private:
         enum class Kind {
             Texture,
             Backbuffer,
             SwapchainDepth,
+            Transient,
         };
 
         struct Entry {
             const char *Name;
             Kind kind;
             Diligent::ITexture *Texture = nullptr; // only for kind == Texture
+            RGTextureDesc Desc = {}; // for transient resources
         };
 
         [[nodiscard]] const Entry *Get(RGHandle handle) const;

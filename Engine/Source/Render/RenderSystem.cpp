@@ -14,6 +14,7 @@
 #include "Render/Graph/RenderContext.h"
 #include "Render/Graph/RGResources.h"
 #include "Render/Graph/Pass/CameraPass.h"
+#include "Render/Graph/Pass/CompositePass.h"
 #include "Render/Graph/Pass/DebugViewPass.h"
 #include "Render/Graph/Pass/GBufferPass.h"
 #include "Render/Graph/Pass/LightPass.h"
@@ -98,6 +99,7 @@ namespace RTGDEngine {
         debug->SetChannel(EDebugChannel::Normal);
         debug->SetEnabled(false);
         m_graph.AddPass(std::move(debug));
+        m_graph.AddPass(std::make_unique<CompositePass>());
 
         m_graph.Initialize(*m_device, *m_swapChain, m_gbuffer);
 
@@ -144,6 +146,7 @@ namespace RTGDEngine {
         m_pImmediateContext->Flush();
         m_swapChain->Resize(width, height);
         GBufferFactory::Resize(m_gbuffer, *m_device, width, height);
+        m_graph.InvalidateTransientResources();
 
         auto cameraEntity = CameraSystem::GetActiveCamera(world);
         if (cameraEntity.is_valid()) {

@@ -7,6 +7,7 @@
 
 #include <GraphicsTypes.h>
 #include <unordered_map>
+#include <string>
 
 #include "RefCntAutoPtr.hpp"
 #include "RenderDevice.h"

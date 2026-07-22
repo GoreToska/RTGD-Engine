@@ -20,7 +20,7 @@ namespace RTGDEngine {
         }
     }
 
-    void RenderGraph::Execute(RenderContext &context) const {
+    void RenderGraph::SetupPasses(RenderContext &context) {
         for (const auto &pass: m_passes) {
             if (!pass->IsEnabled()) continue;
 
@@ -28,6 +28,12 @@ namespace RTGDEngine {
             RGBuilder builder = RGBuilder(*context.Graph, pass->IO());
             pass->Setup(builder);
         }
+    }
+
+    void RenderGraph::Execute(RenderContext &context) {
+        SetupPasses(context);
+
+        context.Graph->ResolveTransientResources(m_texturePool, context.Device);
 
         std::vector<uint32_t> produced{};
 
@@ -70,5 +76,9 @@ namespace RTGDEngine {
                 }
             }
         }
+    }
+
+    void RenderGraph::InvalidateTransientResources() {
+        m_texturePool.Invalidate();
     }
 } // RTGDEngine
