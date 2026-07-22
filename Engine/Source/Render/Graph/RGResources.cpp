@@ -59,6 +59,7 @@ namespace RTGDEngine {
             case Kind::SwapchainDepth:
                 return m_swapChain->GetDepthBufferDSV();
             case Kind::Texture:
+            case Kind::Transient:
                 return e->Texture ? e->Texture->GetDefaultView(Diligent::TEXTURE_VIEW_DEPTH_STENCIL) : nullptr;
             default:
                 return nullptr;

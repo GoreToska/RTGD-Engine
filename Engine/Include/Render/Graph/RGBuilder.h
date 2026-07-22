@@ -54,6 +54,10 @@ namespace RTGDEngine {
             return Push(m_resources.CreateColor(desc), RGAccess::RenderTarget);
         }
 
+        RGHandle CreateDepth(const RGTextureDesc &desc) {
+            return Push(m_resources.CreateColor(desc), RGAccess::DepthWrite);
+        }
+
     private:
         RGHandle Push(RGHandle handle, RGAccess access) {
             m_io.push_back({handle, access});

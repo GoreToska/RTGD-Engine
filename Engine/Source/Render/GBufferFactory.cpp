@@ -38,21 +38,6 @@ namespace RTGDEngine {
         gbuffer.Width = width;
         gbuffer.Height = height;
 
-        TextureDesc depthDesc;
-        depthDesc.Name = "GBuffer Depth";
-        depthDesc.Type = RESOURCE_DIM_TEX_2D;
-        depthDesc.Width = width;
-        depthDesc.Height = height;
-        depthDesc.MipLevels = 1;
-        depthDesc.Format = TEX_FORMAT_D32_FLOAT;
-        depthDesc.BindFlags = BIND_DEPTH_STENCIL | BIND_SHADER_RESOURCE;
-        depthDesc.Usage = USAGE_DEFAULT;
-        device.CreateTexture(depthDesc, nullptr, &gbuffer.DepthTexture);
-
-        gbuffer.DepthDSV = gbuffer.DepthTexture->GetDefaultView(TEXTURE_VIEW_DEPTH_STENCIL);
-
-        gbuffer.DepthSRV = gbuffer.DepthTexture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
-
 #ifdef RTGD_EDITOR
         gbuffer.IDTexture = CreateRenderTarget(
             device, "GBuffer Entity ID", width, height,

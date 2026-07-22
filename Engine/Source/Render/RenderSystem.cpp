@@ -109,7 +109,6 @@ namespace RTGDEngine {
 
     void RTGDRenderSystem::ExecuteFrame(flecs::world &world) {
         RGResources resources(*m_swapChain);
-        resources.ImportTexture("GBuffer.Depth", m_gbuffer.DepthTexture);
         resources.ImportBackbuffer();
         resources.ImportSwapchainDepth();
 

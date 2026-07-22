@@ -22,11 +22,15 @@ namespace RTGDEngine {
     void GBufferPass::Setup(RGBuilder &builder) {
         IRenderPass::Setup(builder);
 
-        m_diffuse = builder.CreateColor({"GBuffer.Diffuse", 0, 0, Diligent::TEX_FORMAT_RGBA8_UNORM_SRGB});
-        m_normal = builder.CreateColor({"GBuffer.Normal", 0, 0, Diligent::TEX_FORMAT_RGBA16_FLOAT});
-        m_position = builder.CreateColor({"GBuffer.Position", 0, 0, Diligent::TEX_FORMAT_RGBA32_FLOAT});
-        m_pbr = builder.CreateColor({"GBuffer.PBR", 0, 0, Diligent::TEX_FORMAT_RGBA8_UNORM});
-        m_depth = builder.WriteDepth("GBuffer.Depth");
+        using namespace Diligent;
+
+        m_diffuse = builder.CreateColor({"GBuffer.Diffuse", 0, 0, TEX_FORMAT_RGBA8_UNORM_SRGB});
+        m_normal = builder.CreateColor({"GBuffer.Normal", 0, 0, TEX_FORMAT_RGBA16_FLOAT});
+        m_position = builder.CreateColor({"GBuffer.Position", 0, 0, TEX_FORMAT_RGBA32_FLOAT});
+        m_pbr = builder.CreateColor({"GBuffer.PBR", 0, 0, TEX_FORMAT_RGBA8_UNORM});
+        m_depth = builder.CreateDepth({
+            "GBuffer.Depth", 0, 0, TEX_FORMAT_D32_FLOAT, BIND_DEPTH_STENCIL | BIND_SHADER_RESOURCE
+        });
 
 #ifdef RTGD_EDITOR
         m_id = builder.WriteColor("GBuffer.ID");
