@@ -33,7 +33,7 @@ namespace RTGDEngine {
         });
 
 #ifdef RTGD_EDITOR
-        m_id = builder.WriteColor("GBuffer.ID");
+        m_id = builder.CreateColor({"GBuffer.ID", 0, 0, TEX_FORMAT_R32_UINT});
 #endif
     }
 

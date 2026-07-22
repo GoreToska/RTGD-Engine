@@ -118,7 +118,6 @@ namespace RTGDEngine {
 
 #ifdef RTGD_EDITOR
         renderCtx.PickEntities = &m_pickEntities;
-        resources.ImportTexture("GBuffer.ID", m_gbuffer.IDTexture);
 #endif
         m_graph.Execute(renderCtx);
     }
@@ -154,11 +153,26 @@ namespace RTGDEngine {
 #ifdef RTGD_EDITOR
     flecs::entity RTGDRenderSystem::PickEntity(uint32_t x, uint32_t y) {
         using namespace Diligent;
-        if (!m_gbuffer.IDTexture || !m_gbuffer.IDReadbackTexture) {
+        if (!m_idReadbackTexture) {
+            TextureDesc d;
+            d.Name = "GBuffer ID Readback";
+            d.Type = RESOURCE_DIM_TEX_2D;
+            d.Width = 1;
+            d.Height = 1;
+            d.MipLevels = 1;
+            d.Format = TEX_FORMAT_R32_UINT;
+            d.BindFlags = BIND_NONE;
+            d.Usage = USAGE_STAGING;
+            d.CPUAccessFlags = CPU_ACCESS_READ;
+            m_device->CreateTexture(d, nullptr, &m_idReadbackTexture);
+        }
+
+        auto *idTex = m_graph.FindTexture("GBuffer.ID");
+        if (!idTex) {
             return flecs::entity::null();
         }
 
-        if (x >= m_gbuffer.Width || y >= m_gbuffer.Height) {
+        if (x >= m_width || y >= m_height) {
             return flecs::entity::null();
         }
 
@@ -171,10 +185,10 @@ namespace RTGDEngine {
         srcBox.MaxZ = 1;
 
         CopyTextureAttribs copy;
-        copy.pSrcTexture = m_gbuffer.IDTexture;
+        copy.pSrcTexture = idTex;
         copy.pSrcBox = &srcBox;
         copy.SrcTextureTransitionMode = RESOURCE_STATE_TRANSITION_MODE_TRANSITION;
-        copy.pDstTexture = m_gbuffer.IDReadbackTexture;
+        copy.pDstTexture = m_idReadbackTexture;
         copy.DstX = 0;
         copy.DstY = 0;
         copy.DstZ = 0;
@@ -195,12 +209,12 @@ namespace RTGDEngine {
 
         MappedTextureSubresource mapped;
         m_pImmediateContext->MapTextureSubresource(
-            m_gbuffer.IDReadbackTexture, 0, 0,
+            m_idReadbackTexture, 0, 0,
             MAP_READ, MAP_FLAG_DO_NOT_WAIT, nullptr, mapped);
 
         const uint32_t id = mapped.pData ? *static_cast<const uint32_t *>(mapped.pData) : 0;
 
-        m_pImmediateContext->UnmapTextureSubresource(m_gbuffer.IDReadbackTexture, 0, 0);
+        m_pImmediateContext->UnmapTextureSubresource(m_idReadbackTexture, 0, 0);
 
         if (id == 0 || id > m_pickEntities.size())
             return {};

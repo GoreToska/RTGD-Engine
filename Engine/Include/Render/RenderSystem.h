@@ -86,6 +86,7 @@ namespace RTGDEngine {
 #ifdef RTGD_EDITOR
         std::vector<flecs::entity> m_pickEntities = {};
 
+        Diligent::RefCntAutoPtr<Diligent::ITexture> m_idReadbackTexture = {};
         Diligent::RefCntAutoPtr<Diligent::IFence> m_pickFence = {};
         Diligent::Uint64 m_pickFenceValue = 0;
 #endif

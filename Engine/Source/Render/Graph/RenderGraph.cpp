@@ -81,4 +81,8 @@ namespace RTGDEngine {
     void RenderGraph::InvalidateTransientResources() {
         m_texturePool.Invalidate();
     }
+
+    Diligent::ITexture *RenderGraph::FindTexture(const std::string &name) {
+        return m_texturePool.Find(name);
+    }
 } // RTGDEngine

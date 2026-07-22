@@ -31,6 +31,8 @@ namespace RTGDEngine {
         // This can be a problem on resize
         void Invalidate();
 
+        Diligent::ITexture *Find(const std::string &name);
+
     private:
         struct Entry {
             Diligent::RefCntAutoPtr<Diligent::ITexture> Texture;

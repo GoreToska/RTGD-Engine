@@ -27,6 +27,8 @@ namespace RTGDEngine {
 
         void InvalidateTransientResources();
 
+        Diligent::ITexture* FindTexture(const std::string & name);
+
     private:
         std::vector<std::unique_ptr<IRenderPass> > m_passes = {};
         RGTexturePool m_texturePool = {};

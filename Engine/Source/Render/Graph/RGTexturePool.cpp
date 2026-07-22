@@ -48,4 +48,9 @@ namespace RTGDEngine {
     void RGTexturePool::Invalidate() {
         m_entries.clear();
     }
+
+    Diligent::ITexture *RGTexturePool::Find(const std::string &name) {
+        auto it = m_entries.find(name);
+        return it != m_entries.end() ? it->second.Texture.RawPtr() : nullptr;
+    }
 } // RTGDEngine
