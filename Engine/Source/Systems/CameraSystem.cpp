@@ -7,13 +7,10 @@
 #include "Components/CameraComponent.h"
 #include "Components/TransformComponent.h"
 
-namespace RTGDEngine
-{
-    void CameraSystem::Update(const flecs::world& world, float deltaTime)
-    {
-        world.each([&](CameraComponent& cam,
-                       const TransformComponent& transform)
-        {
+namespace RTGDEngine {
+    void CameraSystem::Update(const flecs::world &world, float deltaTime) {
+        world.each([&](CameraComponent &cam,
+                       const TransformComponent &transform) {
             const auto right = transform.GetRight();
             const auto up = transform.GetUp();
             const auto forward = transform.GetForward();
@@ -34,15 +31,12 @@ namespace RTGDEngine
         });
     }
 
-    flecs::entity CameraSystem::GetActiveCamera(const flecs::world& world)
-    {
+    flecs::entity CameraSystem::GetActiveCamera(const flecs::world &world) {
         flecs::entity activeCamera;
         int32_t highestPriority = INT32_MIN;
 
-        world.each([&](const flecs::entity e, const CameraComponent& cam)
-        {
-            if (cam.Priority > highestPriority)
-            {
+        world.each([&](const flecs::entity e, const CameraComponent &cam) {
+            if (cam.Priority > highestPriority) {
                 highestPriority = cam.Priority;
                 activeCamera = e;
             }

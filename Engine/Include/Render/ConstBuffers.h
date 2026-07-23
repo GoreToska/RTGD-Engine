@@ -9,6 +9,7 @@ namespace RTGDEngine {
     static constexpr uint32_t MAX_DIRECTIONAL_LIGHTS = 1;
     static constexpr uint32_t MAX_POINT_LIGHTS = 64;
     static constexpr uint32_t MAX_SPOT_LIGHTS = 16;
+    static constexpr uint32_t MAX_SHADOW_CASCADES = 4;
 
     struct alignas(16) CameraConstantBuffer {
         Matrix4 View;
@@ -62,5 +63,12 @@ namespace RTGDEngine {
         DirectionalLightData DirectionalLights[MAX_DIRECTIONAL_LIGHTS];
         PointLightData PointLights[MAX_POINT_LIGHTS];
         SpotLightData SpotLights[MAX_SPOT_LIGHTS];
+    };
+
+    struct alignas(16) ShadowConstantBuffer {
+        Matrix4 LightViewProjection[MAX_SHADOW_CASCADES];
+        Float4 CascadeSplits;
+        Float4 AtlasRects[MAX_SHADOW_CASCADES]; // xy = UV offset, zw - UV scale
+        Float4 Params; // x - DepthBias, y - NormalBias, z - TexelSize, W - CascadeCount
     };
 }

@@ -9,6 +9,7 @@
 
 #include "FrameConstants.h"
 #include "Graph/RenderGraph.h"
+#include "ShadowMap/ShadowSettings.h"
 
 #ifdef _WIN32
 #include <EngineFactoryD3D12.h>
@@ -56,6 +57,7 @@ namespace RTGDEngine {
         [[nodiscard]] Diligent::ISwapChain &GetSwapChain() const { return *m_swapChain; }
         [[nodiscard]] Diligent::IEngineFactory &GetFactory() const { return *m_pFactory; }
         [[nodiscard]] FrameConstants &GetFrameConstants() { return m_frameConstants; }
+        [[nodiscard]] const ShadowSettings &GetShadowSettings() const { return m_shadowSettings; }
 
 #ifdef RTGD_EDITOR
         flecs::entity PickEntity(uint32_t x, uint32_t y);
@@ -79,6 +81,8 @@ namespace RTGDEngine {
 
         FrameConstants m_frameConstants = {};
         RenderGraph m_graph = {};
+
+        ShadowSettings m_shadowSettings = {};
 
 #ifdef RTGD_EDITOR
         std::vector<flecs::entity> m_pickEntities = {};

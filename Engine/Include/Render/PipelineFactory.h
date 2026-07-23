@@ -23,6 +23,10 @@ namespace RTGDEngine {
             Diligent::ISwapChain &swapChain,
             const std::string &absolutePath);
 
+        static MaterialHandle CreateShadowPipeline(
+            Diligent::IRenderDevice &device,
+            const std::string &absolutePath);
+
         static MaterialHandle CreateGBufferPipeline(
             Diligent::IRenderDevice &device,
             const std::string &absolutePath);

@@ -151,6 +151,79 @@ namespace RTGDEngine {
         return RenderResourceManager::Instance().RegisterMaterial("mesh_default", std::move(data));
     }
 
+    MaterialHandle PipelineFactory::CreateShadowPipeline(Diligent::IRenderDevice &device,
+                                                         const std::string &absolutePath) {
+        using namespace Diligent;
+
+        RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
+        RTGDRenderSystem::Instance().GetFactory()
+                .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
+
+        ShaderCreateInfo shaderCI;
+        shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
+        shaderCI.pShaderSourceStreamFactory = pShaderFactory;
+        shaderCI.Desc.UseCombinedTextureSamplers = false;
+
+#ifdef RTGD_EDITOR
+        ShaderMacro macros[] = {{"RTGD_EDITOR", "1"}};
+        shaderCI.Macros = {macros, 1};
+#endif
+
+        RefCntAutoPtr<IShader> pVS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_VERTEX;
+        shaderCI.Desc.Name = "Shadow VS";
+        shaderCI.FilePath = "ShadowVS.hlsl";
+        device.CreateShader(shaderCI, &pVS);
+        if (!pVS) {
+            LogError("Failed to create Shadow VS");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        GraphicsPipelineStateCreateInfo psoCI;
+        psoCI.PSODesc.Name = "Shadow PSO";
+        psoCI.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
+        psoCI.pVS = pVS;
+        psoCI.pPS = nullptr;
+
+        auto layout = VertexLayout::PNTUV();
+        psoCI.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
+        psoCI.GraphicsPipeline.InputLayout.NumElements = static_cast<uint32_t>(layout.size());
+        psoCI.GraphicsPipeline.NumRenderTargets = 0;
+        psoCI.GraphicsPipeline.DSVFormat = TEX_FORMAT_D32_FLOAT;
+        psoCI.GraphicsPipeline.PrimitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        psoCI.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_FRONT;
+
+        // If there will be issues with flat geometry - use CULL_MODE_BACK, but there will be peter panning
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthEnable = True;
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthWriteEnable = True;
+
+        ShaderResourceVariableDesc vars[] =
+        {
+            {SHADER_TYPE_VERTEX, "ObjectConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
+            {SHADER_TYPE_VERTEX, "ShadowConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
+        };
+
+        psoCI.PSODesc.ResourceLayout.Variables = vars;
+        psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
+
+        MaterialData data;
+        device.CreateGraphicsPipelineState(psoCI, &data.PSO);
+        if (!data.PSO) {
+            LogError("Failed to create Shadow PSO");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        data.PSO->CreateShaderResourceBinding(&data.SRB, true);
+
+        BindStandardConstantBuffers(*data.SRB);
+
+        auto *shadowVar = data.SRB->GetVariableByName(SHADER_TYPE_VERTEX, "ShadowConstants");
+        if (shadowVar)
+            shadowVar->Set(&RTGDRenderSystem::Instance().GetFrameConstants().Shadow());
+
+        return RenderResourceManager::Instance().RegisterMaterial("shadow", std::move(data));
+    }
+
     MaterialHandle PipelineFactory::CreateGBufferPipeline(Diligent::IRenderDevice &device,
                                                           const std::string &absolutePath) {
         using namespace Diligent;

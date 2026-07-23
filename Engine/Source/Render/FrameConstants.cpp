@@ -29,6 +29,10 @@ namespace RTGDEngine {
         cbDesc.Size = sizeof(LightConstantBuffer);
         device.CreateBuffer(cbDesc, nullptr, &m_lightCB);
 
+        cbDesc.Name = "Shadow CB";
+        cbDesc.Size = sizeof(ShadowConstantBuffer);
+        device.CreateBuffer(cbDesc, nullptr, &m_shadowCB);
+
         CameraConstantBuffer defaultCam{};
         defaultCam.View = Matrix4::Identity();
         defaultCam.Projection = Matrix4::Identity();
@@ -40,6 +44,9 @@ namespace RTGDEngine {
 
         LightConstantBuffer defaultLight{};
         UpdateLight(defaultLight);
+
+        ShadowConstantBuffer defaultShadow{};
+        UpdateShadow(defaultShadow);
 
         LogInfo("Constant buffers initialized");
     }
@@ -86,6 +93,21 @@ namespace RTGDEngine {
         }
     }
 
+    void FrameConstants::UpdateShadow(const ShadowConstantBuffer &data) const {
+        using namespace Diligent;
+
+        void *pMapped = nullptr;
+        m_context->MapBuffer(m_shadowCB, MAP_WRITE, MAP_FLAG_DISCARD, pMapped);
+        if (pMapped) {
+            memcpy(pMapped, &data, sizeof(ShadowConstantBuffer));
+            auto *dst = static_cast<ShadowConstantBuffer *>(pMapped);
+            for (auto &mat: dst->LightViewProjection)
+                mat = mat.Transpose();
+
+            m_context->UnmapBuffer(m_shadowCB, MAP_WRITE);
+        }
+    }
+
     Diligent::IBuffer &FrameConstants::Camera() const {
         return *m_cameraCB;
     }
@@ -96,5 +118,9 @@ namespace RTGDEngine {
 
     Diligent::IBuffer &FrameConstants::Object() const {
         return *m_objectCB;
+    }
+
+    Diligent::IBuffer &FrameConstants::Shadow() const {
+        return *m_shadowCB;
     }
 } // RTGD_Engine
