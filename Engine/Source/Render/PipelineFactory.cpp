@@ -351,6 +351,19 @@ namespace RTGDEngine {
             return INVALID_MATERIAL_HANDLE;
         }
 
+
+        SamplerDesc cmpDesc;
+        cmpDesc.MinFilter = FILTER_TYPE_COMPARISON_LINEAR;
+        cmpDesc.MagFilter = FILTER_TYPE_COMPARISON_LINEAR;
+        cmpDesc.MipFilter = FILTER_TYPE_COMPARISON_POINT;
+        cmpDesc.AddressU = TEXTURE_ADDRESS_CLAMP;
+        cmpDesc.AddressV = TEXTURE_ADDRESS_CLAMP;
+        cmpDesc.AddressW = TEXTURE_ADDRESS_CLAMP;
+        cmpDesc.ComparisonFunc = COMPARISON_FUNC_LESS_EQUAL;
+        ImmutableSamplerDesc immSamplers[] = {
+            {SHADER_TYPE_PIXEL, "g_ShadowSampler", cmpDesc},
+        };
+
         GraphicsPipelineStateCreateInfo psoCI;
         psoCI.PSODesc.Name = "Lighting PSO";
         psoCI.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
@@ -371,14 +384,19 @@ namespace RTGDEngine {
         {
             {SHADER_TYPE_PIXEL, "LightConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
             {SHADER_TYPE_PIXEL, "CameraConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
+            {SHADER_TYPE_PIXEL, "ShadowConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
             {SHADER_TYPE_PIXEL, "g_Diffuse", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
             {SHADER_TYPE_PIXEL, "g_Normal", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
             {SHADER_TYPE_PIXEL, "g_Position", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
             {SHADER_TYPE_PIXEL, "g_PBR", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
+            {SHADER_TYPE_PIXEL, "g_ShadowMap", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
             {SHADER_TYPE_PIXEL, "g_Sampler", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
         };
         psoCI.PSODesc.ResourceLayout.Variables = vars;
         psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
+
+        psoCI.PSODesc.ResourceLayout.ImmutableSamplers = immSamplers;
+        psoCI.PSODesc.ResourceLayout.NumImmutableSamplers = std::size(immSamplers);
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
@@ -397,6 +415,7 @@ namespace RTGDEngine {
 
         bindVar(SHADER_TYPE_PIXEL, "LightConstants", &RTGDRenderSystem::Instance().GetFrameConstants().Light());
         bindVar(SHADER_TYPE_PIXEL, "CameraConstants", &RTGDRenderSystem::Instance().GetFrameConstants().Camera());
+        bindVar(SHADER_TYPE_PIXEL, "ShadowConstants", &RTGDRenderSystem::Instance().GetFrameConstants().Shadow());
 
         return RenderResourceManager::Instance().RegisterMaterial(
             "lighting", std::move(data));

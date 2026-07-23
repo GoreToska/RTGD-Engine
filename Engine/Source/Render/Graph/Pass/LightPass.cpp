@@ -27,6 +27,7 @@ namespace RTGDEngine {
         m_normal = builder.Read("GBuffer.Normal");
         m_position = builder.Read("GBuffer.Position");
         m_pbr = builder.Read("GBuffer.PBR");
+        m_shadowMap = builder.ReadDepth("ShadowMap");
     }
 
     void LightPass::Execute(RenderContext &context) {
@@ -49,6 +50,7 @@ namespace RTGDEngine {
         bindSRV("g_Normal", g.SRV(m_normal));
         bindSRV("g_Position", g.SRV(m_position));
         bindSRV("g_PBR", g.SRV(m_pbr));
+        bindSRV("g_ShadowMap", g.SRV(m_shadowMap));
 
         auto defTex = RenderResourceManager::Instance().GetDefaultTextureHandle();
         if (defTex != INVALID_TEXTURE_HANDLE) {

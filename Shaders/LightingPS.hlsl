@@ -1,8 +1,10 @@
-Texture2D    g_Diffuse  : register(t0);
-Texture2D    g_Normal   : register(t1);
-Texture2D    g_Position : register(t2);
-Texture2D    g_PBR      : register(t3);
-SamplerState g_Sampler  : register(s0);
+Texture2D g_Diffuse : register(t0);
+Texture2D g_Normal : register(t1);
+Texture2D g_Position : register(t2);
+Texture2D g_PBR : register(t3);
+Texture2D g_ShadowMap : register(t4);
+SamplerState g_Sampler : register(s0);
+SamplerComparisonState g_ShadowSampler : register(s1);
 
 static const uint MAX_DIRECTIONAL_LIGHTS = 1;
 static const uint MAX_POINT_LIGHTS       = 64;
@@ -42,9 +44,16 @@ cbuffer CameraConstants : register(b1)
 {
     float4x4 g_View;
     float4x4 g_Proj;
-    float4             g_CameraPos;
+    float4 g_CameraPos;
 };
 
+cbuffer ShadowConstants : register(b2)
+{
+    float4x4 g_LightViewProjection[4];
+    float4 g_CascadeSplits;
+    float4 g_AtlasRects[4];
+    float4 g_ShadowParams; // x = DepthBias, y = NormalBias, z = TexelSize, w = CascadeCount
+};
 
 // Normal Distribution Function — GGX/Trowbridge-Reitz
 float DistributionGGX(float3 N, float3 H, float roughness)
@@ -153,6 +162,33 @@ float3 CalcSpotPBR(SpotLightData light, float3 worldPos, float3 albedo,
                    light.Color * light.Intensity, attenuation);
 }
 
+float SampleShadow(float3 worldPos)
+{
+    float4 lightClip = mul(float4(worldPos, 1.0), g_LightViewProjection[0]);
+    lightClip.xyz /= lightClip.w;
+
+    float2 uv = lightClip.xy * float2(0.5, -0.5) + 0.5;
+
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || lightClip.z > 1.0)
+        return 1.0;
+
+    float bias  = g_ShadowParams.x;
+    float depth = lightClip.z - bias;
+    float texel = g_ShadowParams.z;
+
+    float shadow = 0.0;
+    [unroll]
+    for (int x = -1; x <= 1; ++x)
+        [unroll]
+        for (int y = -1; y <= 1; ++y)
+        {
+            float2 off = float2(x, y) * texel;
+            shadow += g_ShadowMap.SampleCmpLevelZero(g_ShadowSampler, uv + off, depth);
+        }
+
+    return shadow / 9.0;
+}
+
 
 struct PSInput
 {
@@ -190,8 +226,10 @@ float4 main(in PSInput IN) : SV_TARGET
 
     // Directional lights
     for (uint d = 0; d < g_DirectionalCount; d++)
-        Lo += CalcDirectionalPBR(g_DirectionalLights[d],
-                                  albedo, metallic, roughness, N, V);
+    {
+        float shadow = SampleShadow(worldPos);
+        Lo += CalcDirectionalPBR(g_DirectionalLights[d],albedo, metallic, roughness, N, V) * shadow;
+    }
 
     // Point lights
     for (uint p = 0; p < g_PointCount; p++)

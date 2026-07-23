@@ -33,8 +33,12 @@ namespace RTGDEngine {
         Matrix4 projection = Matrix4::OrthoOffCenter(-50.0f, 50.0f, -50.0f, 50.0f, 0.1f, 200.0f, false);
         Matrix4 viewProjection = view * projection;
 
+        const auto &s = RTGDRenderSystem::Instance().GetShadowSettings();
         ShadowConstantBuffer cb{};
         cb.LightViewProjection[0] = viewProjection;
+        cb.Params.x = s.DepthBias;
+        cb.Params.y = s.NormalBias;
+        cb.Params.z = 1.0f / static_cast<float>(s.Resolution);
         cb.Params.w = 1.0f; // only 1 cascade for now
 
         context.Frame.UpdateShadow(cb);
