@@ -111,6 +111,9 @@ add_library(Engine SHARED
         Include/Render/ShadowMap/ShadowSettings.h
         Source/Render/Graph/Pass/ShadowPass.cpp
         Include/Render/Graph/Pass/ShadowPass.h
+        Include/Tools/CameraFrustum.h
+        Include/Tools/Bounds.h
+        Source/Tools/CameraFrustum.cpp
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
