@@ -12,16 +12,18 @@ namespace RTGDEngine {
     static constexpr uint32_t MAX_SHADOW_CASCADES = 4;
 
     struct alignas(16) CameraConstantBuffer {
-        Matrix4 View;
-        Matrix4 Projection;
-        Float4 CameraPosition;
+        Matrix4 View = Matrix4::Identity();
+        Matrix4 Projection = Matrix4::Identity();
+        Float4 CameraPosition = {0.0f, 0.0f, 0.0f, 0.0f};
     };
 
     struct alignas(16) ObjectConstantBuffer {
-        Matrix4 Model;
-#ifdef RTGD_EDITOR
-        uint32_t EntityID;
+        Matrix4 Model = Matrix4::Identity();
+        uint32_t CascadeIndex = 0;
         uint32_t _pad[3];
+#ifdef RTGD_EDITOR
+        uint32_t EntityID = 0;
+        uint32_t _editorPad[3];
 #endif
     };
 

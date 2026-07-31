@@ -27,7 +27,7 @@ namespace RTGDEngine {
         m_normal = builder.Read("GBuffer.Normal");
         m_position = builder.Read("GBuffer.Position");
         m_pbr = builder.Read("GBuffer.PBR");
-        m_shadowMap = builder.ReadDepth("ShadowMap");
+        m_shadowMap = builder.ReadDepth("ShadowAtlas");
     }
 
     void LightPass::Execute(RenderContext &context) {

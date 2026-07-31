@@ -34,12 +34,9 @@ namespace RTGDEngine {
         device.CreateBuffer(cbDesc, nullptr, &m_shadowCB);
 
         CameraConstantBuffer defaultCam{};
-        defaultCam.View = Matrix4::Identity();
-        defaultCam.Projection = Matrix4::Identity();
         UpdateCamera(defaultCam);
 
         ObjectConstantBuffer defaultObj{};
-        defaultObj.Model = Matrix4::Identity();
         UpdateObject(defaultObj);
 
         LightConstantBuffer defaultLight{};
@@ -73,6 +70,7 @@ namespace RTGDEngine {
         if (pMapped) {
             auto *dst = static_cast<ObjectConstantBuffer *>(pMapped);
             dst->Model = data.Model.Transpose();
+            dst->CascadeIndex = data.CascadeIndex;
 
 #ifdef RTGD_EDITOR
             dst->EntityID = data.EntityID;
