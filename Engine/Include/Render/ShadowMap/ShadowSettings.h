@@ -12,7 +12,7 @@ namespace RTGDEngine {
         float ShadowDistance = 100.0f;
         float DepthBias = 0.05f; // meters
         float NormalBias = 1.5f; // world texels
-        float CascadeBlend = 0.5f;
+        float CascadeBlend = 0.2f;
         bool DebugCascades = false;
     };
 }
