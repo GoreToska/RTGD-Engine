@@ -7,15 +7,15 @@
 #include "Render/RenderHandle.h"
 
 namespace RTGDEngine {
-    class ShadowPass : public RTGDEngine::IRenderPass {
+    class ShadowPass : public IRenderPass {
     public:
-        void Execute(RTGDEngine::RenderContext &context) override;
+        void Execute(RenderContext &context) override;
 
         void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) override;
 
         const char *Name() const override;
 
-        void Setup(RTGDEngine::RGBuilder &builder) override;
+        void Setup(RGBuilder &builder) override;
 
     private:
         RGHandle m_shadowMap;

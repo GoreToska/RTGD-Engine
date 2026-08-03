@@ -42,20 +42,27 @@ namespace RTGDEngine {
 
             const BoundingSphere bounds = slice.GetBoundingSphere();
             const float radius = std::ceil(bounds.Radius * 16.0f) / 16.0f;
+            const float texelWorldSize = 2.0f * radius / static_cast<float>(resolution);
+            constexpr float casterPadding = 100.0f;
+            const float depthRange = 2.0f * radius + casterPadding;
 
             const Float3 direction = Diligent::normalize(lightDirection);
             const Float3 up = std::abs(direction.y) > 0.99f ? Float3{0, 0, 1} : Float3{0, 1, 0};
+            const Float3 right = Diligent::normalize(Diligent::cross(up, direction));
+            const Float3 realUp = Diligent::cross(direction, right);
 
-            constexpr float casterPadding = 100.0f;
-            const Float3 eye = bounds.Center - direction * (radius + casterPadding);
+            const float snappedX = std::floor(Diligent::dot(bounds.Center, right) / texelWorldSize) * texelWorldSize;
+            const float snappedY = std::floor(Diligent::dot(bounds.Center, realUp) / texelWorldSize) * texelWorldSize;
+            const Float3 center = right * snappedX + realUp * snappedY + direction * Diligent::dot(
+                                      bounds.Center, direction);
 
-            const Matrix4 view = LookAtLH(eye, bounds.Center, up);
+            const Float3 eye = center - direction * (radius + casterPadding);
+            const Matrix4 view = LookAtLH(eye, center, up);
             const Matrix4 projection = Matrix4::OrthoOffCenter(-radius, radius, -radius, radius, 0.0f,
-                                                               2.0f * radius + casterPadding, false);
+                                                               depthRange, false);
 
-            const float depthRange = 2.0f * radius + casterPadding;
 
-            return {view * projection, depthRange, 2.0f * radius / static_cast<float>(resolution)};
+            return {view * projection, depthRange, texelWorldSize};
         }
     }
 
