@@ -6,15 +6,13 @@
 #include "Engine/EngineExport.h"
 #include <flecs.h>
 
-namespace RTGDEngine
-{
+namespace RTGDEngine {
     struct CameraComponent;
 
-    class ENGINE_API CameraSystem
-    {
+    class ENGINE_API CameraSystem {
     public:
-        static void Update(const flecs::world& world, float deltaTime);
+        static void Update(const flecs::world &world, float deltaTime);
 
-        static flecs::entity GetActiveCamera(const flecs::world& world);
+        static flecs::entity GetActiveCamera(const flecs::world &world);
     };
 } // RTGDEngine

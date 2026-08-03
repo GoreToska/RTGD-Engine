@@ -10,7 +10,7 @@ namespace RTGDEngine {
         uint32_t CascadeCount = 4;
         float SplitLambda = 0.5f;
         float ShadowDistance = 100.0f;
-        float DepthBias = 0.005f;
-        float NormalBias = 0.02f;
+        float DepthBias = 0.05f; // meters
+        float NormalBias = 1.5f; // world texels
     };
 }

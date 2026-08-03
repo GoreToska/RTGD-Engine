@@ -54,6 +54,7 @@ cbuffer ShadowConstants : register(b2)
     float4 g_CascadeSplits;
     float4 g_AtlasRects[4];
     float4 g_ShadowParams; // x = DepthBias, y = NormalBias, z = TexelSize, w = CascadeCount
+    float4 g_CascadeParams[4]; // x - 1/DepthRange, y - WorldTexelSize
 };
 
 // Normal Distribution Function — GGX/Trowbridge-Reitz
@@ -177,12 +178,15 @@ float3 CalcSpotPBR(SpotLightData light, float3 worldPos, float3 albedo,
     return count - 1;
 }
 
-float SampleShadow(float3 worldPos, out uint cascade)
+float SampleShadow(float3 worldPos, float3 N, out uint cascade)
 {
     float viewZ = mul(float4(worldPos, 1.0), g_View).z;
     cascade = SelectCascade(viewZ);
 
-    float4 lightClip = mul(float4(worldPos, 1.0), g_LightViewProjection[cascade]);
+    float2 cascadeParams = g_CascadeParams[cascade].xy;
+    float3 biasedPos = worldPos + N * g_ShadowParams.y * cascadeParams.y;
+
+    float4 lightClip = mul(float4(biasedPos, 1.0), g_LightViewProjection[cascade]);
     lightClip.xyz /= lightClip.w;
 
     float2 tileUV = lightClip.xy * float2(0.5, -0.5) + 0.5;
@@ -192,7 +196,7 @@ float SampleShadow(float3 worldPos, out uint cascade)
 
     float4 rect  = g_AtlasRects[cascade];
     float  texel = g_ShadowParams.z;
-    float  depth = lightClip.z - g_ShadowParams.x;
+    float  depth = lightClip.z - g_ShadowParams.x * cascadeParams.x;
 
     float shadow = 0.0;
     [unroll]
@@ -245,7 +249,7 @@ float4 main(in PSInput IN) : SV_TARGET
     for (uint d = 0; d < g_DirectionalCount; d++)
     {
         uint cascade;
-        float shadow = SampleShadow(worldPos, cascade);
+        float shadow = SampleShadow(worldPos, N, cascade);
         Lo += CalcDirectionalPBR(g_DirectionalLights[d], albedo, metallic, roughness, N, V) * shadow;
     }
 

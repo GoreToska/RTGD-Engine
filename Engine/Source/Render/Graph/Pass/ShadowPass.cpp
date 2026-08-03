@@ -22,13 +22,20 @@
 
 namespace RTGDEngine {
     namespace {
+        struct CascadeFit {
+            Matrix4 ViewProjection = Matrix4::Identity();
+            float DepthRange = 1;
+            float TexelWorldSize = 1;
+        };
+
         void CascadeGrid(const uint32_t cascadeCount, uint32_t &cols, uint32_t &rows) {
             cols = cascadeCount > 1 ? 2 : 1;
             rows = cascadeCount > 2 ? 2 : 1;
         }
 
-        Matrix4 BuildCascadeMatrix(const CameraComponent &camera, const TransformComponent &transform,
-                                   const Float3 &lightDirection, float sliceNear, float sliceFar) {
+        CascadeFit BuildCascadeMatrix(const CameraComponent &camera, const TransformComponent &transform,
+                                      const Float3 &lightDirection, float sliceNear, float sliceFar,
+                                      uint32_t resolution) {
             const CameraFrustum slice = CameraFrustum::FromPerspective(
                 transform.Position, transform.GetRight(), transform.GetUp(), transform.GetForward(),
                 camera.FOVDegrees * Diligent::PI_F / 180.0f, camera.AspectRatio, sliceNear, sliceFar);
@@ -46,7 +53,9 @@ namespace RTGDEngine {
             const Matrix4 projection = Matrix4::OrthoOffCenter(-radius, radius, -radius, radius, 0.0f,
                                                                2.0f * radius + casterPadding, false);
 
-            return view * projection;
+            const float depthRange = 2.0f * radius + casterPadding;
+
+            return {view * projection, depthRange, 2.0f * radius / static_cast<float>(resolution)};
         }
     }
 
@@ -91,8 +100,11 @@ namespace RTGDEngine {
             const float uniformSplit = nearZ + (farZ - nearZ) * p;
             const float sliceFar = s.SplitLambda * logSplit + (1.0f - s.SplitLambda) * uniformSplit;
 
-            cb.LightViewProjection[i] = BuildCascadeMatrix(*camera, *cameraTransform,
-                                                           light.Direction, sliceNear, sliceFar);
+            const CascadeFit fit = BuildCascadeMatrix(*camera, *cameraTransform,
+                                                      light.Direction, sliceNear, sliceFar, s.Resolution);
+
+            cb.LightViewProjection[i] = fit.ViewProjection;
+            cb.CascadeParams[i] = {1 / fit.DepthRange, fit.TexelWorldSize, 0.0f, 0.0f};
 
             cb.CascadeSplits[i] = sliceFar;
             cb.AtlasRects[i] = {
