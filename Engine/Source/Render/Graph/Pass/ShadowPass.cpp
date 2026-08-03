@@ -127,7 +127,9 @@ namespace RTGDEngine {
         cb.Params.y = s.NormalBias;
         cb.Params.z = 1.0f / static_cast<float>(s.Resolution);
         cb.Params.w = static_cast<float>(cascadeCount);
-
+        cb.Params2.x = s.CascadeBlend;
+        cb.Params2.y = s.DebugCascades ? 1.0f : 0.0f;
+        
         context.Frame.UpdateShadow(cb);
 
         using namespace Diligent;

@@ -73,5 +73,6 @@ namespace RTGDEngine {
         Float4 AtlasRects[MAX_SHADOW_CASCADES]; // xy = UV offset, zw - UV scale
         Float4 Params; // x - DepthBias, y - NormalBias, z - TexelSize, W - CascadeCount
         Float4 CascadeParams[MAX_SHADOW_CASCADES]; // x - 1/DepthRange, y - WorldTexelSize
+        Float4 Params2; // x - CascadeBlend, y - DebugCascades
     };
 }
