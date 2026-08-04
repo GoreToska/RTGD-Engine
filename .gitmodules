@@ -22,3 +22,6 @@
 [submodule "ThirdParty/json"]
 	path = ThirdParty/json
 	url = https://github.com/nlohmann/json.git
+[submodule "ThirdParty/tinybvh"]
+	path = ThirdParty/tinybvh
+	url = https://github.com/jbikker/tinybvh.git

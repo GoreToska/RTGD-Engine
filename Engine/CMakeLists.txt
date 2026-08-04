@@ -114,6 +114,8 @@ add_library(Engine SHARED
         Include/Tools/CameraFrustum.h
         Include/Tools/Bounds.h
         Source/Tools/CameraFrustum.cpp
+        Source/Tools/SceneBVH.cpp
+        Include/Tools/SceneBVH.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -130,6 +132,7 @@ target_include_directories(Engine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/Include
         ${CMAKE_SOURCE_DIR}/ThirdParty/gainput/lib/include
         ${CMAKE_SOURCE_DIR}/ThirdParty/stb
+        ${CMAKE_SOURCE_DIR}/ThirdParty/tinybvh
 )
 
 target_link_libraries(Engine PUBLIC

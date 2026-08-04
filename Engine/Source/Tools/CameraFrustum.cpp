@@ -78,6 +78,34 @@ namespace RTGDEngine {
         return true;
     }
 
+    CameraFrustum::Containment CameraFrustum::Classify(const AABB &box) const {
+        bool straddles = false;
+
+        for (const auto &plane: m_planes) {
+            const Float3 normal = {plane.x, plane.y, plane.z};
+
+            const Float3 positive = {
+                plane.x >= 0.0f ? box.Max.x : box.Min.x,
+                plane.y >= 0.0f ? box.Max.y : box.Min.y,
+                plane.z >= 0.0f ? box.Max.z : box.Min.z
+            };
+
+            if (Diligent::dot(normal, positive) + plane.w < 0.0f)
+                return Containment::Outside;
+
+            const Float3 negative = {
+                plane.x >= 0.0f ? box.Min.x : box.Max.x,
+                plane.y >= 0.0f ? box.Min.y : box.Max.y,
+                plane.z >= 0.0f ? box.Min.z : box.Max.z
+            };
+
+            if (Diligent::dot(normal, negative) + plane.w < 0.0f)
+                straddles = true;
+        }
+
+        return straddles ? Containment::Intersects : Containment::Inside;
+    }
+
     void CameraFrustum::BuildPlanes() {
         static constexpr uint32_t PLANE_CORNERS[PLANE_COUNT][3] =
         {

@@ -12,6 +12,12 @@
 namespace RTGDEngine {
     class CameraFrustum {
     public:
+        enum class Containment {
+            Outside,
+            Intersects,
+            Inside,
+        };
+
         static constexpr uint32_t CORNER_COUNT = 8;
         static constexpr uint32_t PLANE_COUNT = 6;
 
@@ -30,6 +36,8 @@ namespace RTGDEngine {
         [[nodiscard]] bool Intersects(const BoundingSphere &sphere) const;
 
         [[nodiscard]] bool Intersects(const AABB &box) const;
+
+        [[nodiscard]] Containment Classify(const AABB &box) const;
 
     private:
         void BuildPlanes();
