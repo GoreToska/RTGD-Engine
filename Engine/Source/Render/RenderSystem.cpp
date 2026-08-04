@@ -17,6 +17,7 @@
 #include "Render/Graph/Pass/DebugViewPass.h"
 #include "Render/Graph/Pass/GBufferPass.h"
 #include "Render/Graph/Pass/LightPass.h"
+#include "Render/Graph/Pass/ShadowPass.h"
 #include "Systems/CameraSystem.h"
 #include "Tools/Logger.h"
 
@@ -91,6 +92,7 @@ namespace RTGDEngine {
 
         m_graph.AddPass(std::make_unique<CameraPass>());
         m_graph.AddPass(std::make_unique<GBufferPass>());
+        m_graph.AddPass(std::make_unique<ShadowPass>());
         m_graph.AddPass(std::make_unique<LightPass>());
         auto debug = std::make_unique<DebugViewPass>();
         debug->SetChannel(EDebugChannel::Normal);

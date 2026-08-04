@@ -48,7 +48,7 @@ namespace RTGDEngine {
                     continue;
                 }
 
-                if (io.Access == RGAccess::ShaderResource &&
+                if ((io.Access == RGAccess::ShaderResource || io.Access == RGAccess::DepthRead) &&
                     std::ranges::find(produced, io.Handle.ID) == produced.end()) {
                     LogWarn("Pass '{}' reads '{}', that was not produced in this frame.", pass->Name(),
                             context.Graph->Name(io.Handle));
@@ -70,7 +70,7 @@ namespace RTGDEngine {
             pass->Execute(context);
 
             for (const auto &io: pass->IO()) {
-                if (io.Access != RGAccess::ShaderResource && io.Handle.IsValid()) {
+                if (io.Access != RGAccess::ShaderResource && io.Access != RGAccess::DepthRead && io.Handle.IsValid()) {
                     produced.push_back(io.Handle.ID);
                 }
             }

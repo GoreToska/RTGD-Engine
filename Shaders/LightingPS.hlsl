@@ -1,13 +1,16 @@
-Texture2D    g_Diffuse  : register(t0);
-Texture2D    g_Normal   : register(t1);
-Texture2D    g_Position : register(t2);
-Texture2D    g_PBR      : register(t3);
-SamplerState g_Sampler  : register(s0);
+Texture2D g_Diffuse : register(t0);
+Texture2D g_Normal : register(t1);
+Texture2D g_Position : register(t2);
+Texture2D g_PBR : register(t3);
+Texture2D g_ShadowMap : register(t4);
+SamplerState g_Sampler : register(s0);
+SamplerComparisonState g_ShadowSampler : register(s1);
 
 static const uint MAX_DIRECTIONAL_LIGHTS = 1;
-static const uint MAX_POINT_LIGHTS       = 64;
-static const uint MAX_SPOT_LIGHTS        = 16;
-static const float PI                    = 3.14159265359;
+static const uint MAX_POINT_LIGHTS = 64;
+static const uint MAX_SPOT_LIGHTS = 16;
+static const float PI = 3.14159265359;
+static const uint MAX_SHADOW_CASCADES = 4;
 
 struct DirectionalLightData
 {
@@ -42,9 +45,18 @@ cbuffer CameraConstants : register(b1)
 {
     float4x4 g_View;
     float4x4 g_Proj;
-    float4             g_CameraPos;
+    float4 g_CameraPos;
 };
 
+cbuffer ShadowConstants : register(b2)
+{
+    float4x4 g_LightViewProjection[4];
+    float4 g_CascadeSplits;
+    float4 g_AtlasRects[4];
+    float4 g_ShadowParams; // x = DepthBias, y = NormalBias, z = TexelSize, w = CascadeCount
+    float4 g_CascadeParams[4]; // x - 1/DepthRange, y - WorldTexelSize
+    float4 g_ShadowParams2; // x - CascadeBlend, y - DebugCascades
+};
 
 // Normal Distribution Function — GGX/Trowbridge-Reitz
 float DistributionGGX(float3 N, float3 H, float roughness)
@@ -153,6 +165,73 @@ float3 CalcSpotPBR(SpotLightData light, float3 worldPos, float3 albedo,
                    light.Color * light.Intensity, attenuation);
 }
 
+ uint SelectCascade(float viewZ, out float split)
+ {
+    uint count = (uint)g_ShadowParams.w;
+    split = 0.0;
+
+    [unroll]
+    for (uint i = 0; i < MAX_SHADOW_CASCADES; ++i)
+    {
+        if (i < count && viewZ <= g_CascadeSplits[i])
+        {
+            split = g_CascadeSplits[i];
+            return i;
+        }
+    }
+
+    return count - 1;
+}
+
+float SampleCascade(float3 worldPos, float3 N, uint cascade)
+{
+    float2 cascadeParams = g_CascadeParams[cascade].xy;
+    float3 biasedPos = worldPos + N * g_ShadowParams.y * cascadeParams.y;
+
+    float4 lightClip = mul(float4(biasedPos, 1.0), g_LightViewProjection[cascade]);
+    lightClip.xyz /= lightClip.w;
+
+    float2 tileUV = lightClip.xy * float2(0.5, -0.5) + 0.5;
+
+    if (tileUV.x < 0.0 || tileUV.x > 1.0 || tileUV.y < 0.0 || tileUV.y > 1.0 || lightClip.z > 1.0)
+        return 1.0;
+
+    float4 rect  = g_AtlasRects[cascade];
+    float  texel = g_ShadowParams.z;
+    float  depth = lightClip.z - g_ShadowParams.x * cascadeParams.x;
+
+    float shadow = 0.0;
+    [unroll]
+    for (int x = -1; x <= 1; ++x)
+        [unroll]
+        for (int y = -1; y <= 1; ++y)
+        {
+            float2 uv = clamp(tileUV + float2(x, y) * texel, texel, 1.0 - texel);
+            shadow += g_ShadowMap.SampleCmpLevelZero(g_ShadowSampler, rect.xy + uv * rect.zw, depth);
+        }
+    return shadow / 9.0;
+}
+
+float SampleShadow(float3 worldPos, float3 N, out uint cascade)
+{
+    float viewZ = mul(float4(worldPos, 1.0), g_View).z;
+    float split;
+    cascade = SelectCascade(viewZ, split);
+
+    float shadow = SampleCascade(worldPos, N, cascade);
+
+    uint count = (uint)g_ShadowParams.w;
+    float band = split * g_ShadowParams2.x;
+
+    if(cascade + 1 < count && band > 0.0 && viewZ > split - band)
+    {
+        float t = saturate((viewZ - (split - band)) / band);
+        shadow = lerp(shadow, SampleCascade(worldPos, N, cascade + 1), t);
+    }
+
+    return shadow;
+}
+
 
 struct PSInput
 {
@@ -187,11 +266,14 @@ float4 main(in PSInput IN) : SV_TARGET
     float3 ambient = g_AmbientColor * g_AmbientIntensity * albedo * ao;
 
     float3 Lo = float3(0.0, 0.0, 0.0);
+    uint cascade = 0;
 
     // Directional lights
     for (uint d = 0; d < g_DirectionalCount; d++)
-        Lo += CalcDirectionalPBR(g_DirectionalLights[d],
-                                  albedo, metallic, roughness, N, V);
+    {
+        float shadow = SampleShadow(worldPos, N, cascade);
+        Lo += CalcDirectionalPBR(g_DirectionalLights[d], albedo, metallic, roughness, N, V) * shadow;
+    }
 
     // Point lights
     for (uint p = 0; p < g_PointCount; p++)
@@ -210,6 +292,12 @@ float4 main(in PSInput IN) : SV_TARGET
 
     // Gamma correction
     color = pow(color, float3(1.0/2.2, 1.0/2.2, 1.0/2.2));
+
+    if (g_ShadowParams2.y > 0.5)
+    {
+        float3 tint[4] = {float3(1,0,0), float3(0,1,0), float3(0,0,1), float3(1,1,0)};
+        color *= tint[cascade];
+    }
 
     return float4(color, 1.0);
 }

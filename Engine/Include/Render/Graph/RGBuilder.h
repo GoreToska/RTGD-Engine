@@ -11,6 +11,7 @@ namespace RTGDEngine {
     enum class RGAccess {
         RenderTarget,
         DepthWrite,
+        DepthRead,
         ShaderResource,
     };
 
@@ -20,6 +21,8 @@ namespace RTGDEngine {
                 return Diligent::RESOURCE_STATE_RENDER_TARGET;
             case RGAccess::DepthWrite:
                 return Diligent::RESOURCE_STATE_DEPTH_WRITE;
+            case RGAccess::DepthRead:
+                return Diligent::RESOURCE_STATE_DEPTH_READ;
             case RGAccess::ShaderResource:
                 return Diligent::RESOURCE_STATE_SHADER_RESOURCE;
         }
@@ -40,6 +43,10 @@ namespace RTGDEngine {
 
         RGHandle Read(const char *name) {
             return Push(m_resources.Find(name), RGAccess::ShaderResource);
+        }
+
+        RGHandle ReadDepth(const char *name) {
+            return Push(m_resources.Find(name), RGAccess::DepthRead);
         }
 
         RGHandle WriteColor(const char *name) {

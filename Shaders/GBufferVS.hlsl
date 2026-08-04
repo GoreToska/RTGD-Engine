@@ -8,12 +8,15 @@ cbuffer CameraConstants : register(b0)
 cbuffer ObjectConstants : register(b1)
 {
     float4x4 g_Model;
-
-#if RTGD_EDITOR
-    uint g_EntityID;
+    uint g_CascadeIndex;
     uint _objPad0;
     uint _objPad1;
     uint _objPad2;
+#if RTGD_EDITOR
+    uint g_EntityID;
+    uint _editorPad0;
+    uint _editorPad1;
+    uint _editorPad2;
 #endif
 };
 

@@ -1,0 +1,6 @@
+  {
+    "Textures": {
+      "Diffuse": "Assets/Floor/textures/Material.001_baseColor.png",
+      "Normal": "Assets/Helmet/Material.001_normal.png"
+    }
+  }

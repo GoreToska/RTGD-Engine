@@ -17,16 +17,20 @@ namespace RTGDEngine {
 
         void UpdateLight(const LightConstantBuffer &data) const;
 
+        void UpdateShadow(const ShadowConstantBuffer &data) const;
+
         [[nodiscard]] Diligent::IBuffer &Camera() const;
 
         [[nodiscard]] Diligent::IBuffer &Light() const;
 
         [[nodiscard]] Diligent::IBuffer &Object() const;
 
+        [[nodiscard]] Diligent::IBuffer &Shadow() const;
     private:
         Diligent::IDeviceContext *m_context = nullptr; // we dont own this, render system does
         Diligent::RefCntAutoPtr<Diligent::IBuffer> m_cameraCB;
         Diligent::RefCntAutoPtr<Diligent::IBuffer> m_lightCB;
         Diligent::RefCntAutoPtr<Diligent::IBuffer> m_objectCB;
+        Diligent::RefCntAutoPtr<Diligent::IBuffer> m_shadowCB;
     };
 } // RTGD_Engine

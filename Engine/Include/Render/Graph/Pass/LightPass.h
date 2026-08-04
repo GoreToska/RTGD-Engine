@@ -25,6 +25,7 @@ namespace RTGDEngine {
         RGHandle m_normal;
         RGHandle m_position;
         RGHandle m_pbr;
+        RGHandle m_shadowMap;
         RGHandle m_depth;
         RGHandle m_sceneColor;
     };

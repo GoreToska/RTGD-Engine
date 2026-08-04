@@ -29,17 +29,21 @@ namespace RTGDEngine {
         cbDesc.Size = sizeof(LightConstantBuffer);
         device.CreateBuffer(cbDesc, nullptr, &m_lightCB);
 
+        cbDesc.Name = "Shadow CB";
+        cbDesc.Size = sizeof(ShadowConstantBuffer);
+        device.CreateBuffer(cbDesc, nullptr, &m_shadowCB);
+
         CameraConstantBuffer defaultCam{};
-        defaultCam.View = Matrix4::Identity();
-        defaultCam.Projection = Matrix4::Identity();
         UpdateCamera(defaultCam);
 
         ObjectConstantBuffer defaultObj{};
-        defaultObj.Model = Matrix4::Identity();
         UpdateObject(defaultObj);
 
         LightConstantBuffer defaultLight{};
         UpdateLight(defaultLight);
+
+        ShadowConstantBuffer defaultShadow{};
+        UpdateShadow(defaultShadow);
 
         LogInfo("Constant buffers initialized");
     }
@@ -66,6 +70,7 @@ namespace RTGDEngine {
         if (pMapped) {
             auto *dst = static_cast<ObjectConstantBuffer *>(pMapped);
             dst->Model = data.Model.Transpose();
+            dst->CascadeIndex = data.CascadeIndex;
 
 #ifdef RTGD_EDITOR
             dst->EntityID = data.EntityID;
@@ -86,6 +91,21 @@ namespace RTGDEngine {
         }
     }
 
+    void FrameConstants::UpdateShadow(const ShadowConstantBuffer &data) const {
+        using namespace Diligent;
+
+        void *pMapped = nullptr;
+        m_context->MapBuffer(m_shadowCB, MAP_WRITE, MAP_FLAG_DISCARD, pMapped);
+        if (pMapped) {
+            memcpy(pMapped, &data, sizeof(ShadowConstantBuffer));
+            auto *dst = static_cast<ShadowConstantBuffer *>(pMapped);
+            for (auto &mat: dst->LightViewProjection)
+                mat = mat.Transpose();
+
+            m_context->UnmapBuffer(m_shadowCB, MAP_WRITE);
+        }
+    }
+
     Diligent::IBuffer &FrameConstants::Camera() const {
         return *m_cameraCB;
     }
@@ -96,5 +116,9 @@ namespace RTGDEngine {
 
     Diligent::IBuffer &FrameConstants::Object() const {
         return *m_objectCB;
+    }
+
+    Diligent::IBuffer &FrameConstants::Shadow() const {
+        return *m_shadowCB;
     }
 } // RTGD_Engine

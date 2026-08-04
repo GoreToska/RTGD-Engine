@@ -9,18 +9,21 @@ namespace RTGDEngine {
     static constexpr uint32_t MAX_DIRECTIONAL_LIGHTS = 1;
     static constexpr uint32_t MAX_POINT_LIGHTS = 64;
     static constexpr uint32_t MAX_SPOT_LIGHTS = 16;
+    static constexpr uint32_t MAX_SHADOW_CASCADES = 4;
 
     struct alignas(16) CameraConstantBuffer {
-        Matrix4 View;
-        Matrix4 Projection;
-        Float4 CameraPosition;
+        Matrix4 View = Matrix4::Identity();
+        Matrix4 Projection = Matrix4::Identity();
+        Float4 CameraPosition = {0.0f, 0.0f, 0.0f, 0.0f};
     };
 
     struct alignas(16) ObjectConstantBuffer {
-        Matrix4 Model;
-#ifdef RTGD_EDITOR
-        uint32_t EntityID;
+        Matrix4 Model = Matrix4::Identity();
+        uint32_t CascadeIndex = 0;
         uint32_t _pad[3];
+#ifdef RTGD_EDITOR
+        uint32_t EntityID = 0;
+        uint32_t _editorPad[3];
 #endif
     };
 
@@ -62,5 +65,14 @@ namespace RTGDEngine {
         DirectionalLightData DirectionalLights[MAX_DIRECTIONAL_LIGHTS];
         PointLightData PointLights[MAX_POINT_LIGHTS];
         SpotLightData SpotLights[MAX_SPOT_LIGHTS];
+    };
+
+    struct alignas(16) ShadowConstantBuffer {
+        Matrix4 LightViewProjection[MAX_SHADOW_CASCADES];
+        Float4 CascadeSplits;
+        Float4 AtlasRects[MAX_SHADOW_CASCADES]; // xy = UV offset, zw - UV scale
+        Float4 Params; // x - DepthBias, y - NormalBias, z - TexelSize, W - CascadeCount
+        Float4 CascadeParams[MAX_SHADOW_CASCADES]; // x - 1/DepthRange, y - WorldTexelSize
+        Float4 Params2; // x - CascadeBlend, y - DebugCascades
     };
 }
