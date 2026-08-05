@@ -15,6 +15,7 @@
 #include "Texture.h"
 #include "Vertex.h"
 #include "AssetLoader/AssetType.h"
+#include "Tools/Bounds.h"
 #include "Tools/RTGDMacros.h"
 
 
@@ -35,6 +36,7 @@ namespace RTGDEngine {
         Diligent::RefCntAutoPtr<Diligent::IBuffer> IndexBuffer;
         uint32_t VertexCount = 0;
         uint32_t IndexCount = 0;
+        AABB LocalBounds;
     };
 
     struct MaterialData {
@@ -55,6 +57,7 @@ namespace RTGDEngine {
         MeshHandle Handle;
         std::vector<VertexPNTUV> Vertices;
         std::vector<uint32_t> Indices;
+        AABB LocalBounds;
     };
 
     struct TextureData {
@@ -105,7 +108,8 @@ namespace RTGDEngine {
 
         [[nodiscard]] MaterialHandle GetMaterialByName(const std::string &name) const;
 
-        void QueueMeshUpload(MeshHandle handle, std::vector<VertexPNTUV> vertices, std::vector<uint32_t> indices);
+        void QueueMeshUpload(MeshHandle handle, std::vector<VertexPNTUV> vertices, std::vector<uint32_t> indices,
+                             const AABB &localBounds);
 
         void QueueTextureUpload(TextureHandle handle, std::vector<uint8_t> pixels, uint32_t width,
                                 uint32_t height,
