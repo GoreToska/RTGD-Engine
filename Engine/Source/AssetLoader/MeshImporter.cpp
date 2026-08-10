@@ -36,12 +36,12 @@ namespace RTGDEngine {
         uint32_t vertexCount = 0;
 
         for (uint32_t m = 0; m < scene->mNumMeshes; m++) {
-            indexCount += scene->mMeshes[m]->mNumVertices;
             vertexCount += scene->mMeshes[m]->mNumVertices;
+            indexCount += scene->mMeshes[m]->mNumFaces * 3;
         }
 
-        result.Vertices.resize(vertexCount);
-        result.Indices.resize(indexCount);
+        result.Vertices.reserve(vertexCount);
+        result.Indices.reserve(indexCount);
 
         uint32_t vertexOffset = 0;
         for (uint32_t m = 0; m < scene->mNumMeshes; m++) {
@@ -103,17 +103,6 @@ namespace RTGDEngine {
             }
 
             vertexOffset += mesh->mNumVertices;
-
-            if (m == 0) {
-                LogInfo("=== UV debug for: {}", absolutePath);
-                LogInfo("ConvertToLeftHanded: {}", "YES");
-                LogInfo("JoinIdenticalVertices: {}", "YES");
-                for (uint32_t i = 0; i < std::min(mesh->mNumVertices, 4u); i++) {
-                    auto &v = result.Vertices[result.Vertices.size() - mesh->mNumVertices + i];
-                    LogInfo("  v[{}] pos=({:.2f},{:.2f},{:.2f}) uv=({:.4f},{:.4f})",
-                            i, v.Position.x, v.Position.y, v.Position.z, v.UV.x, v.UV.y);
-                }
-            }
         }
 
         result.Success = true;
