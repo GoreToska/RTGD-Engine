@@ -34,6 +34,20 @@ namespace RTGDEngine {
         return frustum;
     }
 
+    CameraFrustum CameraFrustum::FromViewProjection(const Matrix4 &viewProjection) {
+        CameraFrustum frustum;
+        const Matrix4 inv = viewProjection.Inverse();
+
+        for (uint32_t f = 0; f < 2; ++f)
+            for (uint32_t t = 0; t < 2; ++t)
+                for (uint32_t r = 0; r < 2; ++r)
+                    frustum.m_corners[(f << 2) | (t << 1) | r] =
+                            Float3{r ? 1.0f : -1.0f, t ? 1.0f : -1.0f, f ? 1.0f : 0.0f} * inv;
+
+        frustum.BuildPlanes();
+        return frustum;
+    }
+
     Float3 CameraFrustum::GetCenter() const {
         Float3 center = {0, 0, 0};
         for (const auto &corner: m_corners) {

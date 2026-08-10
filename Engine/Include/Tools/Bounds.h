@@ -4,6 +4,7 @@
 
 #pragma once
 #include "Alias.h"
+#include <cmath>
 
 namespace RTGDEngine {
     struct BoundingSphere {

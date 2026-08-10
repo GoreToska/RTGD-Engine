@@ -5,7 +5,11 @@
 #pragma once
 
 #include <flecs.h>
+#include <span>
+
 #include "Render/FrameConstants.h"
+#include "Render/RenderScene.h"
+#include "Render/RenderView.h"
 
 #ifdef  RTGD_EDITOR
 #include <vector>
@@ -25,8 +29,8 @@ namespace RTGDEngine {
         FrameConstants &Frame;
         flecs::world &World;
         RGResources *Graph = nullptr;
-#ifdef  RTGD_EDITOR
-        std::vector<flecs::entity> *PickEntities = nullptr; // owned by RenderSystem
-#endif
+        const RenderScene *Scene = nullptr;
+        const RenderView *MainView = nullptr;
+        std::span<const RenderView> ShadowViews;
     };
 } // RTGDEngine

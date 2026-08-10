@@ -21,6 +21,8 @@ namespace RTGDEngine {
                                              const Float3 &forward,
                                              float fovYRadians, float aspectRatio, float nearZ, float farZ);
 
+        static CameraFrustum FromViewProjection(const Matrix4 &viewProjection);
+
         [[nodiscard]] const std::array<Float3, CORNER_COUNT> &GetCorners() const { return m_corners; }
 
         [[nodiscard]] Float3 GetCenter() const;
@@ -30,6 +32,8 @@ namespace RTGDEngine {
         [[nodiscard]] bool Intersects(const BoundingSphere &sphere) const;
 
         [[nodiscard]] bool Intersects(const AABB &box) const;
+
+        [[nodiscard]] const std::array<Float4, PLANE_COUNT> &GetPlanes() const { return m_planes; }
 
     private:
         void BuildPlanes();

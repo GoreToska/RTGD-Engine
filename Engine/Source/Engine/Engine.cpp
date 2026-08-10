@@ -282,9 +282,9 @@ namespace RTGDEngine {
     void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {
         InputSystem::Instance().Update();
         TimerSystem::Instance().Update(deltaTime);
-        CameraSystem::Update(world, deltaTime);
         EditorCameraSystem::Update(world, deltaTime);
         MovementSystem::Update(world, deltaTime);
+        CameraSystem::Update(world, deltaTime);
 
         LightSystem::Update(world);
     }

@@ -8,6 +8,8 @@
 #include <RenderDevice.h>
 
 #include "FrameConstants.h"
+#include "RenderScene.h"
+#include "RenderView.h"
 #include "Graph/RenderGraph.h"
 #include "ShadowMap/ShadowSettings.h"
 
@@ -41,6 +43,8 @@ namespace RTGDEngine {
 
     public:
         bool Initialize(const NativeWindowHandle &handle, int width, int height);
+
+        void BuildMainView(flecs::world &world);
 
         void ExecuteFrame(flecs::world &world);
 
@@ -84,9 +88,12 @@ namespace RTGDEngine {
 
         ShadowSettings m_shadowSettings = {};
 
-#ifdef RTGD_EDITOR
-        std::vector<flecs::entity> m_pickEntities = {};
+        RenderScene m_renderScene = {};
+        RenderView m_mainView = {};
+        std::vector<RenderView> m_shadowViews = {};
+        bool m_cullingEnabled = true;
 
+#ifdef RTGD_EDITOR
         Diligent::RefCntAutoPtr<Diligent::ITexture> m_idReadbackTexture = {};
         Diligent::RefCntAutoPtr<Diligent::IFence> m_pickFence = {};
         Diligent::Uint64 m_pickFenceValue = 0;

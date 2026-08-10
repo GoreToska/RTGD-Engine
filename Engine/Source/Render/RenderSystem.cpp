@@ -9,6 +9,7 @@
 #include <SwapChain.h>
 
 #include "Components/CameraComponent.h"
+#include "Components/TransformComponent.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
 #include "Render/Graph/RGResources.h"
@@ -95,8 +96,9 @@ namespace RTGDEngine {
         m_graph.AddPass(std::make_unique<ShadowPass>());
         m_graph.AddPass(std::make_unique<LightPass>());
         auto debug = std::make_unique<DebugViewPass>();
-        debug->SetChannel(EDebugChannel::Normal);
+        debug->SetChannel(EDebugChannel::Diffuse);
         debug->SetEnabled(false);
+
         m_graph.AddPass(std::move(debug));
         m_graph.AddPass(std::make_unique<CompositePass>());
 
@@ -106,18 +108,40 @@ namespace RTGDEngine {
         return true;
     }
 
+    void RTGDRenderSystem::BuildMainView(flecs::world &world) {
+        const uint32_t count = m_renderScene.Count();
+        m_mainView.Mask.Resize(count);
+
+        flecs::entity cameraEntity = CameraSystem::GetActiveCamera(world);
+        const auto *camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
+        const auto *transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
+
+        if (!camera || !transform || !m_cullingEnabled) {
+            m_mainView.Mask.SetAll(count);
+            return;
+        }
+
+        m_mainView.Frustum = CameraFrustum::FromViewProjection(camera->ViewMatrix * camera->ProjectionMatrix);
+
+        CullFrustum(m_renderScene.Bounds(), FrustumSIMD::From(m_mainView.Frustum), 0, count, m_mainView.Mask.Words());
+        m_mainView.Mask.OrWith(m_renderScene.AlwaysVisible());
+    }
+
     void RTGDRenderSystem::ExecuteFrame(flecs::world &world) {
         RGResources resources(*m_swapChain);
         resources.ImportBackbuffer();
         resources.ImportSwapchainDepth();
 
+        m_renderScene.Gather(world);
+        BuildMainView(world);
+
         RenderContext renderCtx = {
             *m_device, *m_pImmediateContext, m_frameConstants, world, &resources
         };
 
-#ifdef RTGD_EDITOR
-        renderCtx.PickEntities = &m_pickEntities;
-#endif
+        renderCtx.Scene = &m_renderScene;
+        renderCtx.MainView = &m_mainView;
+        renderCtx.ShadowViews = m_shadowViews;
         m_graph.Execute(renderCtx);
     }
 
@@ -214,10 +238,10 @@ namespace RTGDEngine {
 
         m_pImmediateContext->UnmapTextureSubresource(m_idReadbackTexture, 0, 0);
 
-        if (id == 0 || id > m_pickEntities.size())
+        if (id == 0 || id > m_renderScene.Entities().size())
             return {};
 
-        return m_pickEntities[id - 1];
+        return m_renderScene.Entities()[id - 1];
     }
 #endif
 
