@@ -15,57 +15,13 @@
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
 #include "Render/Graph/RenderContext.h"
+#include "Render/ShadowMap/ShadowCascades.h"
 #include "Systems/CameraSystem.h"
 #include "Tools/CameraFrustum.h"
 #include "Tools/Logger.h"
 
 
 namespace RTGDEngine {
-    namespace {
-        struct CascadeFit {
-            Matrix4 ViewProjection = Matrix4::Identity();
-            float DepthRange = 1;
-            float TexelWorldSize = 1;
-        };
-
-        void CascadeGrid(const uint32_t cascadeCount, uint32_t &cols, uint32_t &rows) {
-            cols = cascadeCount > 1 ? 2 : 1;
-            rows = cascadeCount > 2 ? 2 : 1;
-        }
-
-        CascadeFit BuildCascadeMatrix(const CameraComponent &camera, const TransformComponent &transform,
-                                      const Float3 &lightDirection, float sliceNear, float sliceFar,
-                                      uint32_t resolution) {
-            const CameraFrustum slice = CameraFrustum::FromPerspective(
-                transform.Position, transform.GetRight(), transform.GetUp(), transform.GetForward(),
-                camera.FOVDegrees * Diligent::PI_F / 180.0f, camera.AspectRatio, sliceNear, sliceFar);
-
-            const BoundingSphere bounds = slice.GetBoundingSphere();
-            const float radius = std::ceil(bounds.Radius * 16.0f) / 16.0f;
-            const float texelWorldSize = 2.0f * radius / static_cast<float>(resolution);
-            constexpr float casterPadding = 100.0f;
-            const float depthRange = 2.0f * radius + casterPadding;
-
-            const Float3 direction = Diligent::normalize(lightDirection);
-            const Float3 up = std::abs(direction.y) > 0.99f ? Float3{0, 0, 1} : Float3{0, 1, 0};
-            const Float3 right = Diligent::normalize(Diligent::cross(up, direction));
-            const Float3 realUp = Diligent::cross(direction, right);
-
-            const float snappedX = std::floor(Diligent::dot(bounds.Center, right) / texelWorldSize) * texelWorldSize;
-            const float snappedY = std::floor(Diligent::dot(bounds.Center, realUp) / texelWorldSize) * texelWorldSize;
-            const Float3 center = right * snappedX + realUp * snappedY + direction * Diligent::dot(
-                                      bounds.Center, direction);
-
-            const Float3 eye = center - direction * (radius + casterPadding);
-            const Matrix4 view = LookAtLH(eye, center, up);
-            const Matrix4 projection = Matrix4::OrthoOffCenter(-radius, radius, -radius, radius, 0.0f,
-                                                               depthRange, false);
-
-
-            return {view * projection, depthRange, texelWorldSize};
-        }
-    }
-
     void ShadowPass::Execute(RenderContext &context) {
         flecs::entity cameraEntity = CameraSystem::GetActiveCamera(context.World);
         if (!cameraEntity.is_valid()) {
@@ -102,10 +58,7 @@ namespace RTGDEngine {
         float sliceNear = nearZ;
 
         for (uint32_t i = 0; i < cascadeCount; ++i) {
-            const float p = static_cast<float>(i + 1) / static_cast<float>(cascadeCount);
-            const float logSplit = nearZ * std::pow(farZ / nearZ, p);
-            const float uniformSplit = nearZ + (farZ - nearZ) * p;
-            const float sliceFar = s.SplitLambda * logSplit + (1.0f - s.SplitLambda) * uniformSplit;
+            float sliceFar = GetCascadeSplitFar(nearZ, farZ, i, s.SplitLambda, cascadeCount);
 
             const CascadeFit fit = BuildCascadeMatrix(*camera, *cameraTransform,
                                                       light.Direction, sliceNear, sliceFar, s.Resolution);
@@ -129,7 +82,7 @@ namespace RTGDEngine {
         cb.Params.w = static_cast<float>(cascadeCount);
         cb.Params2.x = s.CascadeBlend;
         cb.Params2.y = s.DebugCascades ? 1.0f : 0.0f;
-        
+
         context.Frame.UpdateShadow(cb);
 
         using namespace Diligent;

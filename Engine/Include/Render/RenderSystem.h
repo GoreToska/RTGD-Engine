@@ -46,6 +46,8 @@ namespace RTGDEngine {
 
         void BuildMainView(flecs::world &world);
 
+        void BuildShadowViews(flecs::world &world);
+
         void ExecuteFrame(flecs::world &world);
 
         void Present();

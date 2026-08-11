@@ -9,6 +9,10 @@
 namespace RTGDEngine {
     struct RenderView {
         CameraFrustum Frustum;
+        Matrix4 ViewProjection = Matrix4::Identity();
         VisibilityMask Mask;
+        float DepthRange = 1.0f; // only for shadows
+        float TexelWorldSize = 1.0f; // only for shadows
+        float SplitFar = 0.0f; // only for shadows
     };
 }

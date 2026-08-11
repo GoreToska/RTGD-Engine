@@ -9,6 +9,7 @@
 #include <SwapChain.h>
 
 #include "Components/CameraComponent.h"
+#include "Components/LightComponent.h"
 #include "Components/TransformComponent.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
@@ -19,6 +20,7 @@
 #include "Render/Graph/Pass/GBufferPass.h"
 #include "Render/Graph/Pass/LightPass.h"
 #include "Render/Graph/Pass/ShadowPass.h"
+#include "Render/ShadowMap/ShadowCascades.h"
 #include "Systems/CameraSystem.h"
 #include "Tools/Logger.h"
 
@@ -127,6 +129,55 @@ namespace RTGDEngine {
         m_mainView.Mask.OrWith(m_renderScene.AlwaysVisible());
     }
 
+    void RTGDRenderSystem::BuildShadowViews(flecs::world &world) {
+        const uint32_t count = m_renderScene.Count();
+        const uint32_t cascadeCount = std::clamp(m_shadowSettings.CascadeCount, 1u, MAX_SHADOW_CASCADES);
+
+        flecs::entity cameraEntity = CameraSystem::GetActiveCamera(world);
+        const auto *camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
+        const auto *transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
+
+        if (!camera || !transform) {
+            m_shadowViews.clear();
+            return;
+        }
+
+        DirectionalLightComponent light;
+        world.each([&](const DirectionalLightComponent &l) { light = l; });
+
+        m_shadowViews.resize(cascadeCount);
+
+        const float nearZ = camera->NearPlane;
+        const float farZ = std::min(camera->FarPlane, m_shadowSettings.ShadowDistance);
+        float sliceNear = nearZ;
+
+        for (uint32_t i = 0; i < cascadeCount; ++i) {
+            const float sliceFar = GetCascadeSplitFar(nearZ, farZ, i, m_shadowSettings.SplitLambda, cascadeCount);
+            const CascadeFit fit = BuildCascadeMatrix(*camera, *transform, light.Direction,
+                                                      sliceNear, sliceFar, m_shadowSettings.Resolution);
+
+            RenderView &view = m_shadowViews[i];
+            view.ViewProjection = fit.ViewProjection;
+            view.DepthRange = fit.DepthRange;
+            view.TexelWorldSize = fit.TexelWorldSize;
+            view.SplitFar = sliceFar;
+
+            view.Mask.Resize(count);
+
+            if (!m_cullingEnabled) {
+                view.Mask.SetAll(count);
+            } else {
+                view.Frustum = CameraFrustum::FromViewProjection(fit.ViewProjection);
+                CullFrustum(m_renderScene.Bounds(), FrustumSIMD::From(view.Frustum), 0, count, view.Mask.Words());
+                view.Mask.OrWith(m_renderScene.AlwaysVisible());
+            }
+
+            view.Mask.AndWith(m_renderScene.ShadowCasters());
+
+            sliceNear = sliceFar;
+        }
+    }
+
     void RTGDRenderSystem::ExecuteFrame(flecs::world &world) {
         RGResources resources(*m_swapChain);
         resources.ImportBackbuffer();
@@ -134,6 +185,7 @@ namespace RTGDEngine {
 
         m_renderScene.Gather(world);
         BuildMainView(world);
+        BuildShadowViews(world);
 
         RenderContext renderCtx = {
             *m_device, *m_pImmediateContext, m_frameConstants, world, &resources
