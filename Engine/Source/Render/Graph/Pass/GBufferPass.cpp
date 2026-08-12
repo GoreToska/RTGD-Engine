@@ -105,13 +105,16 @@ namespace RTGDEngine {
                 if (h == INVALID_TEXTURE_HANDLE)
                     return;
 
-                const TextureData &tex = rm.GetTexture(h);
-                if (!tex.SRV)
+                const TextureData *tex = &rm.GetTexture(h);
+                if (!tex->SRV && h != fallback && fallback != INVALID_TEXTURE_HANDLE)
+                    tex = &rm.GetTexture(fallback);
+
+                if (!tex->SRV)
                     return;
 
                 auto *var = gbufMat.SRB->GetVariableByName(SHADER_TYPE_PIXEL, name);
                 if (var)
-                    var->Set(tex.SRV, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
+                    var->Set(tex->SRV, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
             };
 
             bindTex("g_Diffuse", objMat.DiffuseTexture, def);
