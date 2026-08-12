@@ -70,6 +70,12 @@ namespace RTGDEngine {
 #endif
 
     private:
+        struct CullJob {
+            uint32_t ViewIndex;
+            uint32_t ChunkBegin;
+            uint32_t ChunkEnd;
+        };
+
         bool m_initialized = false;
 
         std::mutex m_resizeMutex;
@@ -95,10 +101,16 @@ namespace RTGDEngine {
         std::vector<RenderView> m_shadowViews = {};
         bool m_cullingEnabled = true;
 
+        std::vector<RenderView*> m_cullViews = {};
+        std::vector<FrustumSIMD> m_cullFrustums = {};
+        std::vector<CullJob> m_cullJobs = {};
+
 #ifdef RTGD_EDITOR
         Diligent::RefCntAutoPtr<Diligent::ITexture> m_idReadbackTexture = {};
         Diligent::RefCntAutoPtr<Diligent::IFence> m_pickFence = {};
         Diligent::Uint64 m_pickFenceValue = 0;
 #endif
+
+        void CullViews();
     };
 }

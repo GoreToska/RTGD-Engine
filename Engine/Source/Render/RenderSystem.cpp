@@ -11,6 +11,7 @@
 #include "Components/CameraComponent.h"
 #include "Components/LightComponent.h"
 #include "Components/TransformComponent.h"
+#include "JobSystem/JobSystem.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
 #include "Render/Graph/RGResources.h"
@@ -125,8 +126,8 @@ namespace RTGDEngine {
 
         m_mainView.Frustum = CameraFrustum::FromViewProjection(camera->ViewMatrix * camera->ProjectionMatrix);
 
-        CullFrustum(m_renderScene.Bounds(), FrustumSIMD::From(m_mainView.Frustum), 0, count, m_mainView.Mask.Words());
-        m_mainView.Mask.OrWith(m_renderScene.AlwaysVisible());
+        m_cullViews.push_back(&m_mainView);
+        m_cullFrustums.push_back(FrustumSIMD::From(m_mainView.Frustum));
     }
 
     void RTGDRenderSystem::BuildShadowViews(flecs::world &world) {
@@ -168,11 +169,9 @@ namespace RTGDEngine {
                 view.Mask.SetAll(count);
             } else {
                 view.Frustum = CameraFrustum::FromViewProjection(fit.ViewProjection);
-                CullFrustum(m_renderScene.Bounds(), FrustumSIMD::From(view.Frustum), 0, count, view.Mask.Words());
-                view.Mask.OrWith(m_renderScene.AlwaysVisible());
+                m_cullViews.push_back(&m_shadowViews[i]);
+                m_cullFrustums.push_back(FrustumSIMD::From(view.Frustum));
             }
-
-            view.Mask.AndWith(m_renderScene.ShadowCasters());
 
             sliceNear = sliceFar;
         }
@@ -184,8 +183,18 @@ namespace RTGDEngine {
         resources.ImportSwapchainDepth();
 
         m_renderScene.Gather(world);
+        m_cullViews.clear();
+        m_cullFrustums.clear();
+
         BuildMainView(world);
         BuildShadowViews(world);
+        CullViews();
+
+        for (RenderView *view: m_cullViews)
+            view->Mask.OrWith(m_renderScene.AlwaysVisible());
+
+        for (RenderView &view: m_shadowViews)
+            view.Mask.AndWith(m_renderScene.ShadowCasters());
 
         RenderContext renderCtx = {
             *m_device, *m_pImmediateContext, m_frameConstants, world, &resources
@@ -296,6 +305,41 @@ namespace RTGDEngine {
         return m_renderScene.Entities()[id - 1];
     }
 #endif
+
+    void RTGDRenderSystem::CullViews() {
+        constexpr uint32_t WORD_BITS = 64;
+        constexpr uint32_t CHUNKS_PER_JOB = 32;
+        constexpr uint32_t MIN_PARALLEL_ITEMS = 4096;
+
+        const uint32_t count = m_renderScene.Count();
+        const uint32_t viewCount = static_cast<uint32_t>(m_cullViews.size());
+        if (count == 0 || viewCount == 0)
+            return;
+
+        const BoundsView bounds = m_renderScene.Bounds();
+        const uint32_t chunkCount = (count + WORD_BITS - 1) / WORD_BITS;
+
+        if (count * viewCount < MIN_PARALLEL_ITEMS) {
+            for (uint32_t v = 0; v < viewCount; ++v)
+                CullFrustum(bounds, m_cullFrustums[v], 0, count, m_cullViews[v]->Mask.Words());
+        } else {
+            m_cullJobs.clear();
+            for (uint32_t v = 0; v < viewCount; ++v)
+                for (uint32_t c = 0; c < chunkCount; c += CHUNKS_PER_JOB)
+                    m_cullJobs.push_back({v, c, std::min(c + CHUNKS_PER_JOB, chunkCount)});
+
+            JobSystem::Instance().ParallelFor(static_cast<uint32_t>(m_cullJobs.size()), 1,
+                                              [&](uint32_t begin, uint32_t end, uint32_t) {
+                                                  for (uint32_t j = begin; j < end; ++j) {
+                                                      const CullJob &job = m_cullJobs[j];
+                                                      CullFrustum(bounds, m_cullFrustums[job.ViewIndex],
+                                                                  job.ChunkBegin * WORD_BITS,
+                                                                  std::min(job.ChunkEnd * WORD_BITS, count),
+                                                                  m_cullViews[job.ViewIndex]->Mask.Words());
+                                                  }
+                                              });
+        }
+    }
 
     void RTGDRenderSystem::Shutdown() {
         LogInfo("Render System Shutdown");
