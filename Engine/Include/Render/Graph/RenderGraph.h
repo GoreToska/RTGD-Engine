@@ -12,7 +12,7 @@
 
 #include "RGTexturePool.h"
 
-// TODO: add topo sort & culling
+// TODO: add topo sort
 
 namespace RTGDEngine {
     struct RenderContext;

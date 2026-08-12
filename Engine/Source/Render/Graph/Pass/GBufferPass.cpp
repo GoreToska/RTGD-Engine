@@ -15,12 +15,15 @@
 #include "Render/Graph/RGResources.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine {
-    const char *GBufferPass::Name() const {
+namespace RTGDEngine
+{
+    const char* GBufferPass::Name() const
+    {
         return "GBuffer";
     }
 
-    void GBufferPass::Setup(RGBuilder &builder) {
+    void GBufferPass::Setup(RGBuilder& builder)
+    {
         IRenderPass::Setup(builder);
 
         using namespace Diligent;
@@ -38,28 +41,30 @@ namespace RTGDEngine {
 #endif
     }
 
-    void GBufferPass::Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) {
+    void GBufferPass::Initialize(Diligent::IRenderDevice& device, Diligent::ISwapChain& swapChain)
+    {
         m_material = PipelineFactory::CreateGBufferPipeline(device, GetAbsolutePath("Shaders"));
     }
 
-    void GBufferPass::Execute(RenderContext &context) {
+    void GBufferPass::Execute(RenderContext& context)
+    {
         using namespace Diligent;
 
-        auto &g = *context.Graph;
-        ITextureView *diffuseRTV = g.RTV(m_diffuse);
-        ITextureView *normalRTV = g.RTV(m_normal);
-        ITextureView *positionRTV = g.RTV(m_position);
-        ITextureView *pbrRTV = g.RTV(m_pbr);
-        ITextureView *depthDSV = g.DSV(m_depth);
+        auto& g = *context.Graph;
+        ITextureView* diffuseRTV = g.RTV(m_diffuse);
+        ITextureView* normalRTV = g.RTV(m_normal);
+        ITextureView* positionRTV = g.RTV(m_position);
+        ITextureView* pbrRTV = g.RTV(m_pbr);
+        ITextureView* depthDSV = g.DSV(m_depth);
 #ifdef RTGD_EDITOR
-        ITextureView *idRTV = g.RTV(m_id);
+        ITextureView* idRTV = g.RTV(m_id);
 #endif
 
-        auto &rm = RenderResourceManager::Instance();
+        auto& rm = RenderResourceManager::Instance();
         TextureHandle def = rm.GetDefaultTextureHandle();
         TextureHandle defNormal = rm.GetDefaultNormalTextureHandle();
 
-        ITextureView *rtvs[] = {
+        ITextureView* rtvs[] = {
             diffuseRTV,
             normalRTV,
             positionRTV,
@@ -91,42 +96,20 @@ namespace RTGDEngine {
             depthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
             RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
-        const MaterialData &gbufMat = rm.GetMaterial(m_material);
-        if (!gbufMat.PSO || !gbufMat.SRB) return;
+        const MaterialData& gbufMat = rm.GetMaterial(m_material);
+        if (!gbufMat.PSO || !gbufMat.SRB)
+            return;
 
-        const RenderScene &scene = *context.Scene;
-        context.MainView->Mask.ForEach([&](uint32_t i) {
-            const MeshData &meshData = rm.GetMesh(scene.Mesh()[i]);
+        const RenderScene& scene = *context.Scene;
+        context.MainView->Mask.ForEach([&](uint32_t i)
+        {
+            const MeshData& meshData = rm.GetMesh(scene.Mesh()[i]);
 
-            const MaterialData &objMat = rm.GetMaterial(scene.Material()[i]);
+            MaterialData& objMat = rm.GetMaterial(scene.Material()[i]);
 
-            auto bindTex = [&](const char *name, TextureHandle handle, TextureHandle fallback) {
-                TextureHandle h = (handle != INVALID_TEXTURE_HANDLE) ? handle : fallback;
-                if (h == INVALID_TEXTURE_HANDLE)
-                    return;
-
-                const TextureData *tex = &rm.GetTexture(h);
-                if (!tex->SRV && h != fallback && fallback != INVALID_TEXTURE_HANDLE)
-                    tex = &rm.GetTexture(fallback);
-
-                if (!tex->SRV)
-                    return;
-
-                auto *var = gbufMat.SRB->GetVariableByName(SHADER_TYPE_PIXEL, name);
-                if (var)
-                    var->Set(tex->SRV, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
-            };
-
-            bindTex("g_Diffuse", objMat.DiffuseTexture, def);
-            bindTex("g_Normal", objMat.NormalTexture, defNormal);
-            bindTex("g_MetallicRoughness", objMat.MetallicRoughnessTexture, def);
-            bindTex("g_AO", objMat.AOTexture, def);
-
-            if (def != INVALID_TEXTURE_HANDLE) {
-                const TextureData &defTex = rm.GetTexture(def);
-                auto *samVar = gbufMat.SRB->GetVariableByName(SHADER_TYPE_PIXEL, "g_Sampler");
-                if (samVar && defTex.Sampler)
-                    samVar->Set(defTex.Sampler, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
+            if (!objMat.SRB || objMat.IsDirty)
+            {
+                RenderResourceManager::BuildGBufferSRB(objMat, gbufMat.PSO);
             }
 
             ObjectConstantBuffer objectCB{};
@@ -138,16 +121,17 @@ namespace RTGDEngine {
 
             context.Context.SetPipelineState(gbufMat.PSO);
             context.Context.CommitShaderResources(
-                gbufMat.SRB, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+                objMat.SRB, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
-            IBuffer *vbs[] = {meshData.VertexBuffer};
+            IBuffer* vbs[] = {meshData.VertexBuffer};
             Uint64 offsets[] = {0};
             context.Context.SetVertexBuffers(
                 0, 1, vbs, offsets,
                 RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
                 SET_VERTEX_BUFFERS_FLAG_RESET);
 
-            if (meshData.IndexBuffer && meshData.IndexCount > 0) {
+            if (meshData.IndexBuffer && meshData.IndexCount > 0)
+            {
                 context.Context.SetIndexBuffer(
                     meshData.IndexBuffer, 0,
                     RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
@@ -157,7 +141,9 @@ namespace RTGDEngine {
                 draw.IndexType = VT_UINT32;
                 draw.Flags = DRAW_FLAG_VERIFY_ALL;
                 context.Context.DrawIndexed(draw);
-            } else {
+            }
+            else
+            {
                 DrawAttribs draw;
                 draw.NumVertices = meshData.VertexCount;
                 draw.Flags = DRAW_FLAG_VERIFY_ALL;

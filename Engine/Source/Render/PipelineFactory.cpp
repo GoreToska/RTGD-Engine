@@ -10,10 +10,12 @@
 #include "Render/Vertex.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine {
-    MaterialHandle PipelineFactory::CreateTrianglePipeline(Diligent::IRenderDevice &device,
-                                                           Diligent::ISwapChain &swapChain,
-                                                           const std::string &absolutePath) {
+namespace RTGDEngine
+{
+    MaterialHandle PipelineFactory::CreateTrianglePipeline(Diligent::IRenderDevice& device,
+                                                           Diligent::ISwapChain& swapChain,
+                                                           const std::string& absolutePath)
+    {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
@@ -31,7 +33,8 @@ namespace RTGDEngine {
         shaderCI.FilePath = "TriangleVS.hlsl";
         device.CreateShader(shaderCI, &pVS);
 
-        if (!pVS) {
+        if (!pVS)
+        {
             LogError("Failed to create Triangle VS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -42,7 +45,8 @@ namespace RTGDEngine {
         shaderCI.FilePath = "TrianglePS.hlsl";
         device.CreateShader(shaderCI, &pPS);
 
-        if (!pPS) {
+        if (!pPS)
+        {
             LogError("Failed to create Triangle PS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -72,7 +76,8 @@ namespace RTGDEngine {
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
 
-        if (!data.PSO) {
+        if (!data.PSO)
+        {
             LogError("Failed to create Triangle PSO");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -84,8 +89,9 @@ namespace RTGDEngine {
         return RenderResourceManager::Instance().RegisterMaterial("triangle", std::move(data));
     }
 
-    MaterialHandle PipelineFactory::CreateMeshPipeline(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain,
-                                                       const std::string &absolutePath) {
+    MaterialHandle PipelineFactory::CreateMeshPipeline(Diligent::IRenderDevice& device, Diligent::ISwapChain& swapChain,
+                                                       const std::string& absolutePath)
+    {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
@@ -102,7 +108,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Mesh VS";
         shaderCI.FilePath = "MeshVS.hlsl";
         device.CreateShader(shaderCI, &pVS);
-        if (!pVS) {
+        if (!pVS)
+        {
             LogError("Failed to create Mesh VS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -112,7 +119,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Mesh PS";
         shaderCI.FilePath = "MeshPS.hlsl";
         device.CreateShader(shaderCI, &pPS);
-        if (!pPS) {
+        if (!pPS)
+        {
             LogError("Failed to create Mesh PS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -140,7 +148,8 @@ namespace RTGDEngine {
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
-        if (!data.PSO) {
+        if (!data.PSO)
+        {
             LogError("Failed to create Mesh PSO");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -151,8 +160,9 @@ namespace RTGDEngine {
         return RenderResourceManager::Instance().RegisterMaterial("mesh_default", std::move(data));
     }
 
-    MaterialHandle PipelineFactory::CreateShadowPipeline(Diligent::IRenderDevice &device,
-                                                         const std::string &absolutePath) {
+    MaterialHandle PipelineFactory::CreateShadowPipeline(Diligent::IRenderDevice& device,
+                                                         const std::string& absolutePath)
+    {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
@@ -174,7 +184,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Shadow VS";
         shaderCI.FilePath = "ShadowVS.hlsl";
         device.CreateShader(shaderCI, &pVS);
-        if (!pVS) {
+        if (!pVS)
+        {
             LogError("Failed to create Shadow VS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -208,7 +219,8 @@ namespace RTGDEngine {
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
-        if (!data.PSO) {
+        if (!data.PSO)
+        {
             LogError("Failed to create Shadow PSO");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -217,15 +229,16 @@ namespace RTGDEngine {
 
         BindStandardConstantBuffers(*data.SRB);
 
-        auto *shadowVar = data.SRB->GetVariableByName(SHADER_TYPE_VERTEX, "ShadowConstants");
+        auto* shadowVar = data.SRB->GetVariableByName(SHADER_TYPE_VERTEX, "ShadowConstants");
         if (shadowVar)
             shadowVar->Set(&RTGDRenderSystem::Instance().GetFrameConstants().Shadow());
 
         return RenderResourceManager::Instance().RegisterMaterial("shadow", std::move(data));
     }
 
-    MaterialHandle PipelineFactory::CreateGBufferPipeline(Diligent::IRenderDevice &device,
-                                                          const std::string &absolutePath) {
+    MaterialHandle PipelineFactory::CreateGBufferPipeline(Diligent::IRenderDevice& device,
+                                                          const std::string& absolutePath)
+    {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
@@ -247,7 +260,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "GBuffer VS";
         shaderCI.FilePath = "GBufferVS.hlsl";
         device.CreateShader(shaderCI, &pVS);
-        if (!pVS) {
+        if (!pVS)
+        {
             LogError("Failed to create GBuffer VS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -258,7 +272,8 @@ namespace RTGDEngine {
         shaderCI.FilePath = "GBufferPS.hlsl";
 
         device.CreateShader(shaderCI, &pPS);
-        if (!pPS) {
+        if (!pPS)
+        {
             LogError("Failed to create GBuffer PS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -294,18 +309,35 @@ namespace RTGDEngine {
         {
             {SHADER_TYPE_VERTEX, "CameraConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
             {SHADER_TYPE_VERTEX, "ObjectConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
-            {SHADER_TYPE_PIXEL, "g_Diffuse", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
-            {SHADER_TYPE_PIXEL, "g_Normal", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
-            {SHADER_TYPE_PIXEL, "g_MetallicRoughness", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
-            {SHADER_TYPE_PIXEL, "g_AO", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
-            {SHADER_TYPE_PIXEL, "g_Sampler", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC},
+            {SHADER_TYPE_PIXEL, "g_Diffuse", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
+            {SHADER_TYPE_PIXEL, "g_Normal", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
+            {SHADER_TYPE_PIXEL, "g_MetallicRoughness", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
+            {SHADER_TYPE_PIXEL, "g_AO", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
         };
         psoCI.PSODesc.ResourceLayout.Variables = vars;
         psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
 
+        SamplerDesc samDesc;
+        samDesc.MinFilter = FILTER_TYPE_LINEAR;
+        samDesc.MagFilter = FILTER_TYPE_LINEAR;
+        samDesc.MipFilter = FILTER_TYPE_LINEAR;
+        samDesc.AddressU = TEXTURE_ADDRESS_WRAP;
+        samDesc.AddressV = TEXTURE_ADDRESS_WRAP;
+        samDesc.AddressW = TEXTURE_ADDRESS_WRAP;
+        samDesc.MaxAnisotropy = 8;
+
+        ImmutableSamplerDesc immSamplers[] =
+        {
+            {SHADER_TYPE_PIXEL, "g_Sampler", samDesc},
+        };
+
+        psoCI.PSODesc.ResourceLayout.ImmutableSamplers = immSamplers;
+        psoCI.PSODesc.ResourceLayout.NumImmutableSamplers = std::size(immSamplers);
+
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
-        if (!data.PSO) {
+        if (!data.PSO)
+        {
             LogError("Failed to create GBuffer PSO");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -317,9 +349,10 @@ namespace RTGDEngine {
             "gbuffer", std::move(data));
     }
 
-    MaterialHandle PipelineFactory::CreateLightingPipeline(Diligent::IRenderDevice &device,
-                                                           Diligent::ISwapChain &swapChain,
-                                                           const std::string &absolutePath) {
+    MaterialHandle PipelineFactory::CreateLightingPipeline(Diligent::IRenderDevice& device,
+                                                           Diligent::ISwapChain& swapChain,
+                                                           const std::string& absolutePath)
+    {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
@@ -336,7 +369,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Lighting VS";
         shaderCI.FilePath = "LightingVS.hlsl";
         device.CreateShader(shaderCI, &pVS);
-        if (!pVS) {
+        if (!pVS)
+        {
             LogError("Failed to create Lighting VS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -346,7 +380,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Lighting PS";
         shaderCI.FilePath = "LightingPS.hlsl";
         device.CreateShader(shaderCI, &pPS);
-        if (!pPS) {
+        if (!pPS)
+        {
             LogError("Failed to create Lighting PS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -400,15 +435,17 @@ namespace RTGDEngine {
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
-        if (!data.PSO) {
+        if (!data.PSO)
+        {
             LogError("Failed to create Lighting PSO");
             return INVALID_MATERIAL_HANDLE;
         }
 
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
 
-        auto bindVar = [&](SHADER_TYPE type, const char *name, IDeviceObject *obj) {
-            auto *var = data.SRB->GetVariableByName(type, name);
+        auto bindVar = [&](SHADER_TYPE type, const char* name, IDeviceObject* obj)
+        {
+            auto* var = data.SRB->GetVariableByName(type, name);
             if (var && obj)
                 var->Set(obj);
         };
@@ -421,9 +458,10 @@ namespace RTGDEngine {
             "lighting", std::move(data));
     }
 
-    MaterialHandle PipelineFactory::CreateDebugViewPipeline(Diligent::IRenderDevice &device,
-                                                            Diligent::ISwapChain &swapChain,
-                                                            const std::string &absolutePath) {
+    MaterialHandle PipelineFactory::CreateDebugViewPipeline(Diligent::IRenderDevice& device,
+                                                            Diligent::ISwapChain& swapChain,
+                                                            const std::string& absolutePath)
+    {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
@@ -440,7 +478,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Debug view VS";
         shaderCI.FilePath = "LightingVS.hlsl";
         device.CreateShader(shaderCI, &pVS);
-        if (!pVS) {
+        if (!pVS)
+        {
             LogError("Failed to create Lighting VS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -450,7 +489,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Debug view PS";
         shaderCI.FilePath = "DebugViewPS.hlsl";
         device.CreateShader(shaderCI, &pPS);
-        if (!pPS) {
+        if (!pPS)
+        {
             LogError("Failed to create debug view PS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -481,7 +521,8 @@ namespace RTGDEngine {
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
-        if (!data.PSO) {
+        if (!data.PSO)
+        {
             LogError("Failed to create Lighting PSO");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -492,9 +533,10 @@ namespace RTGDEngine {
             "debug_view", std::move(data));
     }
 
-    MaterialHandle PipelineFactory::CreateCompositePipeline(Diligent::IRenderDevice &device,
-                                                            Diligent::ISwapChain &swapChain,
-                                                            const std::string &absolutePath) {
+    MaterialHandle PipelineFactory::CreateCompositePipeline(Diligent::IRenderDevice& device,
+                                                            Diligent::ISwapChain& swapChain,
+                                                            const std::string& absolutePath)
+    {
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
@@ -511,7 +553,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Lighting VS";
         shaderCI.FilePath = "LightingVS.hlsl";
         device.CreateShader(shaderCI, &pVS);
-        if (!pVS) {
+        if (!pVS)
+        {
             LogError("Failed to create Lighting VS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -521,7 +564,8 @@ namespace RTGDEngine {
         shaderCI.Desc.Name = "Composite PS";
         shaderCI.FilePath = "CompositePS.hlsl";
         device.CreateShader(shaderCI, &pPS);
-        if (!pPS) {
+        if (!pPS)
+        {
             LogError("Failed to create Composite PS");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -566,7 +610,8 @@ namespace RTGDEngine {
 
         MaterialData data;
         device.CreateGraphicsPipelineState(psoCI, &data.PSO);
-        if (!data.PSO) {
+        if (!data.PSO)
+        {
             LogError("Failed to create Lighting PSO");
             return INVALID_MATERIAL_HANDLE;
         }
@@ -577,14 +622,16 @@ namespace RTGDEngine {
             "lighting", std::move(data));
     }
 
-    void PipelineFactory::BindStandardConstantBuffers(Diligent::IShaderResourceBinding &srb) {
+    void PipelineFactory::BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb)
+    {
         using namespace Diligent;
 
-        auto &rs = RTGDRenderSystem::Instance();
+        auto& rs = RTGDRenderSystem::Instance();
 
-        struct Binding {
-            const char *name;
-            IBuffer *buffer;
+        struct Binding
+        {
+            const char* name;
+            IBuffer* buffer;
         };
 
         const Binding bindings[] =
@@ -594,13 +641,16 @@ namespace RTGDEngine {
             {"LightConstants", &rs.GetFrameConstants().Light()},
         };
 
-        for (const auto &[name, buffer]: bindings) {
+        for (const auto& [name, buffer]: bindings)
+        {
             if (!buffer)
                 continue;
 
-            for (auto shaderType: {SHADER_TYPE_VERTEX, SHADER_TYPE_PIXEL}) {
-                auto *var = srb.GetVariableByName(shaderType, name);
-                if (var) {
+            for (auto shaderType: {SHADER_TYPE_VERTEX, SHADER_TYPE_PIXEL})
+            {
+                auto* var = srb.GetVariableByName(shaderType, name);
+                if (var)
+                {
                     var->Set(buffer);
                     LogInfo("Bound '{}' to shader stage {}", name,
                             shaderType == SHADER_TYPE_VERTEX ? "VS" : "PS");

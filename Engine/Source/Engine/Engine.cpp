@@ -52,9 +52,9 @@ namespace RTGDEngine {
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
 
-        SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
+        //SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
 
-        //SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Stress10k.scene"));
+        SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Stress10k.scene"));
 
         return true;
     }
