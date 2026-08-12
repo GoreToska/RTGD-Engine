@@ -53,17 +53,8 @@ namespace RTGDEngine {
 #endif
 
         SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
-        SceneManager::Instance().GetActiveScene()->SaveToFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
 
-        TimerSystem::Instance().SetTimer([] {
-            SceneManager::Instance().RequestLoadScene(GetAbsolutePath("Assets/Scenes/Additive.scene"));
-            LogInfo("Timer: requested LOAD Additive");
-        }, 3.0f);
-
-        TimerSystem::Instance().SetTimer([] {
-            SceneManager::Instance().RequestUnloadScene("Additive");
-            LogInfo("Timer: requested UNLOAD Additive");
-        }, 8.0f);
+        //SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Stress10k.scene"));
 
         return true;
     }
@@ -282,9 +273,9 @@ namespace RTGDEngine {
     void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {
         InputSystem::Instance().Update();
         TimerSystem::Instance().Update(deltaTime);
-        CameraSystem::Update(world, deltaTime);
         EditorCameraSystem::Update(world, deltaTime);
         MovementSystem::Update(world, deltaTime);
+        CameraSystem::Update(world, deltaTime);
 
         LightSystem::Update(world);
     }

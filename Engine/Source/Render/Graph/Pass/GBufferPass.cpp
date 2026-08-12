@@ -13,6 +13,7 @@
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RGResources.h"
+#include "Tools/Logger.h"
 
 namespace RTGDEngine {
     const char *GBufferPass::Name() const {
@@ -84,40 +85,36 @@ namespace RTGDEngine {
 #ifdef RTGD_EDITOR
         context.Context.ClearRenderTarget(idRTV, clearColor,
                                           RESOURCE_STATE_TRANSITION_MODE_VERIFY);
-        context.PickEntities->clear();
 #endif
 
         context.Context.ClearDepthStencil(
             depthDSV, CLEAR_DEPTH_FLAG, 1.0f, 0,
             RESOURCE_STATE_TRANSITION_MODE_VERIFY);
 
-        context.World.each([&](flecs::entity e,
-                               const MeshComponent &meshComp,
-                               const RenderComponent &render,
-                               TransformComponent &transform) {
-            if (!render.IsVisible)
-                return;
+        const MaterialData &gbufMat = rm.GetMaterial(m_material);
+        if (!gbufMat.PSO || !gbufMat.SRB) return;
 
-            const MeshData &meshData = rm.GetMesh(meshComp.Mesh.Handle);
-            const MaterialData &gbufMat = rm.GetMaterial(m_material);
+        const RenderScene &scene = *context.Scene;
+        context.MainView->Mask.ForEach([&](uint32_t i) {
+            const MeshData &meshData = rm.GetMesh(scene.Mesh()[i]);
 
-            if (!meshData.VertexBuffer || !gbufMat.PSO || !gbufMat.SRB)
-                return;
-
-            const MaterialData &objMat = rm.GetMaterial(meshComp.Material.Handle);
+            const MaterialData &objMat = rm.GetMaterial(scene.Material()[i]);
 
             auto bindTex = [&](const char *name, TextureHandle handle, TextureHandle fallback) {
                 TextureHandle h = (handle != INVALID_TEXTURE_HANDLE) ? handle : fallback;
                 if (h == INVALID_TEXTURE_HANDLE)
                     return;
 
-                const TextureData &tex = rm.GetTexture(h);
-                if (!tex.SRV)
+                const TextureData *tex = &rm.GetTexture(h);
+                if (!tex->SRV && h != fallback && fallback != INVALID_TEXTURE_HANDLE)
+                    tex = &rm.GetTexture(fallback);
+
+                if (!tex->SRV)
                     return;
 
                 auto *var = gbufMat.SRB->GetVariableByName(SHADER_TYPE_PIXEL, name);
                 if (var)
-                    var->Set(tex.SRV, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
+                    var->Set(tex->SRV, SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE);
             };
 
             bindTex("g_Diffuse", objMat.DiffuseTexture, def);
@@ -133,10 +130,9 @@ namespace RTGDEngine {
             }
 
             ObjectConstantBuffer objectCB{};
-            objectCB.Model = transform.GetWorldMatrix();
+            objectCB.Model = scene.World()[i];
 #ifdef RTGD_EDITOR
-            context.PickEntities->push_back(e);
-            objectCB.EntityID = static_cast<uint32_t>(context.PickEntities->size());
+            objectCB.EntityID = i + 1;
 #endif
             context.Frame.UpdateObject(objectCB);
 

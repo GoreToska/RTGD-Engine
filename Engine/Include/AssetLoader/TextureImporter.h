@@ -19,6 +19,7 @@ namespace RTGDEngine
         std::string ErrorMessage;
     };
 
+
     class TextureImporter
     {
     public:

@@ -6,87 +6,23 @@
 
 #include <flecs.h>
 
-#include "Components/CameraComponent.h"
-#include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
-#include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
 #include "Render/Graph/RenderContext.h"
-#include "Systems/CameraSystem.h"
-#include "Tools/CameraFrustum.h"
-#include "Tools/Logger.h"
+#include "Render/ShadowMap/ShadowCascades.h"
 
 
 namespace RTGDEngine {
-    namespace {
-        struct CascadeFit {
-            Matrix4 ViewProjection = Matrix4::Identity();
-            float DepthRange = 1;
-            float TexelWorldSize = 1;
-        };
-
-        void CascadeGrid(const uint32_t cascadeCount, uint32_t &cols, uint32_t &rows) {
-            cols = cascadeCount > 1 ? 2 : 1;
-            rows = cascadeCount > 2 ? 2 : 1;
-        }
-
-        CascadeFit BuildCascadeMatrix(const CameraComponent &camera, const TransformComponent &transform,
-                                      const Float3 &lightDirection, float sliceNear, float sliceFar,
-                                      uint32_t resolution) {
-            const CameraFrustum slice = CameraFrustum::FromPerspective(
-                transform.Position, transform.GetRight(), transform.GetUp(), transform.GetForward(),
-                camera.FOVDegrees * Diligent::PI_F / 180.0f, camera.AspectRatio, sliceNear, sliceFar);
-
-            const BoundingSphere bounds = slice.GetBoundingSphere();
-            const float radius = std::ceil(bounds.Radius * 16.0f) / 16.0f;
-            const float texelWorldSize = 2.0f * radius / static_cast<float>(resolution);
-            constexpr float casterPadding = 100.0f;
-            const float depthRange = 2.0f * radius + casterPadding;
-
-            const Float3 direction = Diligent::normalize(lightDirection);
-            const Float3 up = std::abs(direction.y) > 0.99f ? Float3{0, 0, 1} : Float3{0, 1, 0};
-            const Float3 right = Diligent::normalize(Diligent::cross(up, direction));
-            const Float3 realUp = Diligent::cross(direction, right);
-
-            const float snappedX = std::floor(Diligent::dot(bounds.Center, right) / texelWorldSize) * texelWorldSize;
-            const float snappedY = std::floor(Diligent::dot(bounds.Center, realUp) / texelWorldSize) * texelWorldSize;
-            const Float3 center = right * snappedX + realUp * snappedY + direction * Diligent::dot(
-                                      bounds.Center, direction);
-
-            const Float3 eye = center - direction * (radius + casterPadding);
-            const Matrix4 view = LookAtLH(eye, center, up);
-            const Matrix4 projection = Matrix4::OrthoOffCenter(-radius, radius, -radius, radius, 0.0f,
-                                                               depthRange, false);
-
-
-            return {view * projection, depthRange, texelWorldSize};
-        }
-    }
-
     void ShadowPass::Execute(RenderContext &context) {
-        flecs::entity cameraEntity = CameraSystem::GetActiveCamera(context.World);
-        if (!cameraEntity.is_valid()) {
-            LogWarn("No camera set to render shadow pass.");
+        if (context.ShadowViews.empty() || !context.Scene)
             return;
-        }
-
-        const auto *camera = cameraEntity.try_get<CameraComponent>();
-        const auto *cameraTransform = cameraEntity.try_get<TransformComponent>();
-        if (!camera || !cameraTransform) {
-            LogWarn("No camera set to render shadow pass.");
-            return;
-        }
-
-        DirectionalLightComponent light;
-        context.World.each([&](const DirectionalLightComponent &l) {
-            light = l;
-        });
 
         const auto &s = RTGDRenderSystem::Instance().GetShadowSettings();
-        const uint32_t cascadeCount = std::clamp(s.CascadeCount, 1u, MAX_SHADOW_CASCADES);
+        const uint32_t cascadeCount = static_cast<uint32_t>(context.ShadowViews.size());
+        const RenderScene &scene = *context.Scene;
 
         uint32_t cols = 0;
         uint32_t rows = 0;
@@ -95,32 +31,20 @@ namespace RTGDEngine {
         const uint32_t atlasWidth = s.Resolution * cols;
         const uint32_t atlasHeight = s.Resolution * rows;
 
-        const float nearZ = camera->NearPlane;
-        const float farZ = std::min(camera->FarPlane, s.ShadowDistance);
-
         ShadowConstantBuffer cb{};
-        float sliceNear = nearZ;
 
         for (uint32_t i = 0; i < cascadeCount; ++i) {
-            const float p = static_cast<float>(i + 1) / static_cast<float>(cascadeCount);
-            const float logSplit = nearZ * std::pow(farZ / nearZ, p);
-            const float uniformSplit = nearZ + (farZ - nearZ) * p;
-            const float sliceFar = s.SplitLambda * logSplit + (1.0f - s.SplitLambda) * uniformSplit;
+            const RenderView &view = context.ShadowViews[i];
 
-            const CascadeFit fit = BuildCascadeMatrix(*camera, *cameraTransform,
-                                                      light.Direction, sliceNear, sliceFar, s.Resolution);
+            cb.LightViewProjection[i] = view.ViewProjection;
+            cb.CascadeParams[i] = {1 / view.DepthRange, view.TexelWorldSize, 0.0f, 0.0f};
 
-            cb.LightViewProjection[i] = fit.ViewProjection;
-            cb.CascadeParams[i] = {1 / fit.DepthRange, fit.TexelWorldSize, 0.0f, 0.0f};
-
-            cb.CascadeSplits[i] = sliceFar;
+            cb.CascadeSplits[i] = view.SplitFar;
             cb.AtlasRects[i] = {
                 static_cast<float>(i % cols) / static_cast<float>(cols),
                 static_cast<float>(i / cols) / static_cast<float>(rows),
                 1.0f / static_cast<float>(cols), 1.0f / static_cast<float>(rows)
             };
-
-            sliceNear = sliceFar;
         }
 
         cb.Params.x = s.DepthBias;
@@ -129,7 +53,7 @@ namespace RTGDEngine {
         cb.Params.w = static_cast<float>(cascadeCount);
         cb.Params2.x = s.CascadeBlend;
         cb.Params2.y = s.DebugCascades ? 1.0f : 0.0f;
-        
+
         context.Frame.UpdateShadow(cb);
 
         using namespace Diligent;
@@ -154,17 +78,11 @@ namespace RTGDEngine {
             vp.MaxDepth = 1.0f;
             context.Context.SetViewports(1, &vp, atlasWidth, atlasHeight);
 
-            context.World.each([&](flecs::entity entity, const MeshComponent &mesh, const RenderComponent &render,
-                                   TransformComponent &transform) {
-                if (!render.IsVisible)
-                    return;
-
-                const MeshData &meshData = rm.GetMesh(mesh.Mesh.Handle);
-                if (!meshData.VertexBuffer)
-                    return;
+            context.ShadowViews[cascade].Mask.ForEach([&](uint32_t i) {
+                const MeshData &meshData = rm.GetMesh(scene.Mesh()[i]);
 
                 ObjectConstantBuffer objectCB{};
-                objectCB.Model = transform.GetWorldMatrix();
+                objectCB.Model = scene.World()[i];
                 objectCB.CascadeIndex = cascade;
                 context.Frame.UpdateObject(objectCB);
 

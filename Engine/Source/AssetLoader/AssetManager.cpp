@@ -57,7 +57,8 @@ namespace RTGDEngine {
             RenderResourceManager::Instance().QueueMeshUpload(
                 handle,
                 std::move(data.Vertices),
-                std::move(data.Indices));
+                std::move(data.Indices),
+                data.LocalBounds);
 
             if (onComplete)
                 onComplete(handle);
@@ -94,7 +95,8 @@ namespace RTGDEngine {
         RenderResourceManager::Instance().QueueMeshUpload(
             handle,
             std::move(data.Vertices),
-            std::move(data.Indices));
+            std::move(data.Indices),
+            data.LocalBounds);
 
         LogInfo("AssetLoader: sync loaded '{}' → handle {}", absolutePath, handle);
         return handle;

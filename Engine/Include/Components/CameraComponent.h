@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <flecs.h>
+
 #include "Tools/Alias.h"
 
 namespace RTGDEngine {

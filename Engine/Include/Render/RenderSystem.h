@@ -8,6 +8,8 @@
 #include <RenderDevice.h>
 
 #include "FrameConstants.h"
+#include "RenderScene.h"
+#include "RenderView.h"
 #include "Graph/RenderGraph.h"
 #include "ShadowMap/ShadowSettings.h"
 
@@ -42,6 +44,10 @@ namespace RTGDEngine {
     public:
         bool Initialize(const NativeWindowHandle &handle, int width, int height);
 
+        void BuildMainView(flecs::world &world);
+
+        void BuildShadowViews(flecs::world &world);
+
         void ExecuteFrame(flecs::world &world);
 
         void Present();
@@ -64,6 +70,12 @@ namespace RTGDEngine {
 #endif
 
     private:
+        struct CullJob {
+            uint32_t ViewIndex;
+            uint32_t ChunkBegin;
+            uint32_t ChunkEnd;
+        };
+
         bool m_initialized = false;
 
         std::mutex m_resizeMutex;
@@ -84,12 +96,21 @@ namespace RTGDEngine {
 
         ShadowSettings m_shadowSettings = {};
 
-#ifdef RTGD_EDITOR
-        std::vector<flecs::entity> m_pickEntities = {};
+        RenderScene m_renderScene = {};
+        RenderView m_mainView = {};
+        std::vector<RenderView> m_shadowViews = {};
+        bool m_cullingEnabled = true;
 
+        std::vector<RenderView*> m_cullViews = {};
+        std::vector<FrustumSIMD> m_cullFrustums = {};
+        std::vector<CullJob> m_cullJobs = {};
+
+#ifdef RTGD_EDITOR
         Diligent::RefCntAutoPtr<Diligent::ITexture> m_idReadbackTexture = {};
         Diligent::RefCntAutoPtr<Diligent::IFence> m_pickFence = {};
         Diligent::Uint64 m_pickFenceValue = 0;
 #endif
+
+        void CullViews();
     };
 }

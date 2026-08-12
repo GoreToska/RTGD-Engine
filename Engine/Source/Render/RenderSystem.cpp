@@ -9,6 +9,9 @@
 #include <SwapChain.h>
 
 #include "Components/CameraComponent.h"
+#include "Components/LightComponent.h"
+#include "Components/TransformComponent.h"
+#include "JobSystem/JobSystem.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/Graph/RenderContext.h"
 #include "Render/Graph/RGResources.h"
@@ -18,6 +21,7 @@
 #include "Render/Graph/Pass/GBufferPass.h"
 #include "Render/Graph/Pass/LightPass.h"
 #include "Render/Graph/Pass/ShadowPass.h"
+#include "Render/ShadowMap/ShadowCascades.h"
 #include "Systems/CameraSystem.h"
 #include "Tools/Logger.h"
 
@@ -95,8 +99,9 @@ namespace RTGDEngine {
         m_graph.AddPass(std::make_unique<ShadowPass>());
         m_graph.AddPass(std::make_unique<LightPass>());
         auto debug = std::make_unique<DebugViewPass>();
-        debug->SetChannel(EDebugChannel::Normal);
+        debug->SetChannel(EDebugChannel::Diffuse);
         debug->SetEnabled(false);
+
         m_graph.AddPass(std::move(debug));
         m_graph.AddPass(std::make_unique<CompositePass>());
 
@@ -106,18 +111,98 @@ namespace RTGDEngine {
         return true;
     }
 
+    void RTGDRenderSystem::BuildMainView(flecs::world &world) {
+        const uint32_t count = m_renderScene.Count();
+        m_mainView.Mask.Resize(count);
+
+        flecs::entity cameraEntity = CameraSystem::GetActiveCamera(world);
+        const auto *camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
+        const auto *transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
+
+        if (!camera || !transform || !m_cullingEnabled) {
+            m_mainView.Mask.SetAll(count);
+            return;
+        }
+
+        m_mainView.Frustum = CameraFrustum::FromViewProjection(camera->ViewMatrix * camera->ProjectionMatrix);
+
+        m_cullViews.push_back(&m_mainView);
+        m_cullFrustums.push_back(FrustumSIMD::From(m_mainView.Frustum));
+    }
+
+    void RTGDRenderSystem::BuildShadowViews(flecs::world &world) {
+        const uint32_t count = m_renderScene.Count();
+        const uint32_t cascadeCount = std::clamp(m_shadowSettings.CascadeCount, 1u, MAX_SHADOW_CASCADES);
+
+        flecs::entity cameraEntity = CameraSystem::GetActiveCamera(world);
+        const auto *camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
+        const auto *transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
+
+        if (!camera || !transform) {
+            m_shadowViews.clear();
+            return;
+        }
+
+        DirectionalLightComponent light;
+        world.each([&](const DirectionalLightComponent &l) { light = l; });
+
+        m_shadowViews.resize(cascadeCount);
+
+        const float nearZ = camera->NearPlane;
+        const float farZ = std::min(camera->FarPlane, m_shadowSettings.ShadowDistance);
+        float sliceNear = nearZ;
+
+        for (uint32_t i = 0; i < cascadeCount; ++i) {
+            const float sliceFar = GetCascadeSplitFar(nearZ, farZ, i, m_shadowSettings.SplitLambda, cascadeCount);
+            const CascadeFit fit = BuildCascadeMatrix(*camera, *transform, light.Direction,
+                                                      sliceNear, sliceFar, m_shadowSettings.Resolution);
+
+            RenderView &view = m_shadowViews[i];
+            view.ViewProjection = fit.ViewProjection;
+            view.DepthRange = fit.DepthRange;
+            view.TexelWorldSize = fit.TexelWorldSize;
+            view.SplitFar = sliceFar;
+
+            view.Mask.Resize(count);
+
+            if (!m_cullingEnabled) {
+                view.Mask.SetAll(count);
+            } else {
+                view.Frustum = CameraFrustum::FromViewProjection(fit.ViewProjection);
+                m_cullViews.push_back(&m_shadowViews[i]);
+                m_cullFrustums.push_back(FrustumSIMD::From(view.Frustum));
+            }
+
+            sliceNear = sliceFar;
+        }
+    }
+
     void RTGDRenderSystem::ExecuteFrame(flecs::world &world) {
         RGResources resources(*m_swapChain);
         resources.ImportBackbuffer();
         resources.ImportSwapchainDepth();
 
+        m_renderScene.Gather(world);
+        m_cullViews.clear();
+        m_cullFrustums.clear();
+
+        BuildMainView(world);
+        BuildShadowViews(world);
+        CullViews();
+
+        for (RenderView *view: m_cullViews)
+            view->Mask.OrWith(m_renderScene.AlwaysVisible());
+
+        for (RenderView &view: m_shadowViews)
+            view.Mask.AndWith(m_renderScene.ShadowCasters());
+
         RenderContext renderCtx = {
             *m_device, *m_pImmediateContext, m_frameConstants, world, &resources
         };
 
-#ifdef RTGD_EDITOR
-        renderCtx.PickEntities = &m_pickEntities;
-#endif
+        renderCtx.Scene = &m_renderScene;
+        renderCtx.MainView = &m_mainView;
+        renderCtx.ShadowViews = m_shadowViews;
         m_graph.Execute(renderCtx);
     }
 
@@ -214,12 +299,47 @@ namespace RTGDEngine {
 
         m_pImmediateContext->UnmapTextureSubresource(m_idReadbackTexture, 0, 0);
 
-        if (id == 0 || id > m_pickEntities.size())
+        if (id == 0 || id > m_renderScene.Entities().size())
             return {};
 
-        return m_pickEntities[id - 1];
+        return m_renderScene.Entities()[id - 1];
     }
 #endif
+
+    void RTGDRenderSystem::CullViews() {
+        constexpr uint32_t WORD_BITS = 64;
+        constexpr uint32_t CHUNKS_PER_JOB = 32;
+        constexpr uint32_t MIN_PARALLEL_ITEMS = 4096;
+
+        const uint32_t count = m_renderScene.Count();
+        const uint32_t viewCount = static_cast<uint32_t>(m_cullViews.size());
+        if (count == 0 || viewCount == 0)
+            return;
+
+        const BoundsView bounds = m_renderScene.Bounds();
+        const uint32_t chunkCount = (count + WORD_BITS - 1) / WORD_BITS;
+
+        if (count * viewCount < MIN_PARALLEL_ITEMS) {
+            for (uint32_t v = 0; v < viewCount; ++v)
+                CullFrustum(bounds, m_cullFrustums[v], 0, count, m_cullViews[v]->Mask.Words());
+        } else {
+            m_cullJobs.clear();
+            for (uint32_t v = 0; v < viewCount; ++v)
+                for (uint32_t c = 0; c < chunkCount; c += CHUNKS_PER_JOB)
+                    m_cullJobs.push_back({v, c, std::min(c + CHUNKS_PER_JOB, chunkCount)});
+
+            JobSystem::Instance().ParallelFor(static_cast<uint32_t>(m_cullJobs.size()), 1,
+                                              [&](uint32_t begin, uint32_t end, uint32_t) {
+                                                  for (uint32_t j = begin; j < end; ++j) {
+                                                      const CullJob &job = m_cullJobs[j];
+                                                      CullFrustum(bounds, m_cullFrustums[job.ViewIndex],
+                                                                  job.ChunkBegin * WORD_BITS,
+                                                                  std::min(job.ChunkEnd * WORD_BITS, count),
+                                                                  m_cullViews[job.ViewIndex]->Mask.Words());
+                                                  }
+                                              });
+        }
+    }
 
     void RTGDRenderSystem::Shutdown() {
         LogInfo("Render System Shutdown");
