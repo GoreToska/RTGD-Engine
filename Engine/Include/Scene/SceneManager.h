@@ -77,6 +77,8 @@ namespace RTGDEngine {
 
         void ReparentEntity(flecs::entity e, flecs::entity parent = {});
 
+        void EnqueueCommand(std::function<void(flecs::world &)> func);
+
     private:
         std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};
         std::shared_ptr<Scene> m_activeScene = nullptr;

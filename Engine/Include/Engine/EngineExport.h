@@ -48,8 +48,6 @@ ENGINE_API void Engine_Resize(int w, int h);
 
 ENGINE_API void Engine_Shutdown();
 
-ENGINE_API void Engine_GetEntities(EntityCallback callback);
-
 ENGINE_API uint64_t Engine_PickEntity(int x, int y);
 
 ENGINE_API void Engine_RenameEntity(uint64_t id, const char *name);
@@ -67,4 +65,17 @@ ENGINE_API void Engine_SetEntityDestroyedCallback(EntityDestroyedCallback cb);
 ENGINE_API void Engine_SetEntityRenamedCallback(EntityRenamedCallback cb);
 
 ENGINE_API void Engine_SetEntityReparentedCallback(EntityReparentedCallback cb);
+
+ENGINE_API uint32_t Editor_GetSelectedVersion(void);
+
+ENGINE_API uint32_t Editor_GetHierarchyVersion(void);
+
+ENGINE_API int Editor_GetSelectedEntityJson(char *buf, int cap);
+
+ENGINE_API int Editor_GetHierarchyJson(char *buf, int cap);
+
+ENGINE_API void Editor_SetSelectedEntity(uint64_t id);
+
+ENGINE_API void Editor_SetFieldValue(uint64_t entityID, const char *component, const char *fieldPath,
+                                     const char *value);
 }

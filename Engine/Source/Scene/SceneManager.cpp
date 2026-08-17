@@ -215,6 +215,11 @@ namespace RTGDEngine {
         EventBus::Instance().Emit(Events::OnEntityReparented, {e.id(), oldParent.id(), newParent.id()}, {});
     }
 
+    void SceneManager::EnqueueCommand(std::function<void(flecs::world &)> func) {
+        std::lock_guard lock(m_commandsMutex);
+        m_commands.emplace_back(std::move(func));
+    }
+
     flecs::world &SceneManager::GetWorld() {
         return m_world;
     }
