@@ -53,8 +53,6 @@ add_library(Engine SHARED
         Include/Scene/SceneManager.h
         Include/Tools/MetaTypes.h
         Source/Tools/MetaTypes.cpp
-        Source/Engine/InspectorExports.cpp
-        Include/Engine/InspectorExports.h
         Source/Platform/IPlatformWindow.cpp
         Include/Platform/IPlatformWindow.h
         Include/Platform/Linux/LinuxPlatformWindow.h
@@ -120,6 +118,8 @@ add_library(Engine SHARED
         Include/Render/RenderView.h
         Source/Render/ShadowMap/ShadowCascades.cpp
         Include/Render/ShadowMap/ShadowCascades.h
+        Source/Engine/EditorBridge.cpp
+        Include/Engine/EditorBridge.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -129,8 +129,6 @@ set_target_properties(Engine PROPERTIES PREFIX "")
 if (RTGD_EDITOR)
     target_compile_definitions(Engine PUBLIC RTGD_EDITOR)
 endif ()
-
-target_compile_definitions(Engine PRIVATE INSPECTOR_EXPORTS)
 
 target_include_directories(Engine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/Include

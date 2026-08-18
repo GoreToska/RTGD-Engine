@@ -7,6 +7,7 @@
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/UUIDComponent.h"
+#include "Engine/EditorBridge.h"
 #include "Input/InputSystem.h"
 #include "JobSystem/JobSystem.h"
 #include "Platform/IPlatformWindow.h"
@@ -34,6 +35,10 @@ namespace RTGDEngine {
         JobSystem::Instance().Initialize();
 
         SceneManager::Instance().Initialize();
+
+#ifdef RTGD_EDITOR
+        EditorBridge::Instance().Initialize();
+#endif
 
         RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
                                                 m_platformWindow->GetHeight());
@@ -156,6 +161,10 @@ namespace RTGDEngine {
             m_gameModule->Update(deltaTime);
 
         PostUpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
+
+#ifdef RTGD_EDITOR
+        EditorBridge::Instance().PublishSnapshot();
+#endif
 
         Render();
     }

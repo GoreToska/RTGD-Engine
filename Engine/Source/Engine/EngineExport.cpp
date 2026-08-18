@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "Components/UUIDComponent.h"
+#include "Engine/EditorBridge.h"
 #include "Engine/Engine.h"
 #include "Event/Events.h"
 #include "Input/InputSystem.h"
@@ -104,21 +105,6 @@ void Engine_Shutdown() {
     Engine::Instance().Stop();
 }
 
-void Engine_GetEntities(EntityCallback callback) {
-    auto scene = SceneManager::Instance().GetActiveScene();
-    if (!scene || !callback)
-        return;
-
-    SceneManager::Instance().GetWorld().query_builder<UUIDComponent>()
-            .with(flecs::ChildOf, scene->GetRoot())
-            // only active scene? maybe need to have separate func to get all additive scenes
-            .build()
-            .each([&](flecs::entity e, UUIDComponent) {
-                if (e.name().length() > 0)
-                    callback(e.name().c_str(), e.id(), e.parent().id());
-            });
-}
-
 uint64_t Engine_PickEntity(int x, int y) {
 #ifdef RTGD_EDITOR
     if (x < 0 || y < 0)
@@ -131,7 +117,7 @@ uint64_t Engine_PickEntity(int x, int y) {
 }
 
 void Engine_RenameEntity(uint64_t id, const char *name) {
-    SceneManager::Instance().EnqueueRenameEntity(SceneManager::Instance().GetEntity(id), name);
+    SceneManager::Instance().EnqueueRenameEntity(id, name);
 }
 
 void Engine_CreateEntity(const char *name) {
@@ -139,13 +125,11 @@ void Engine_CreateEntity(const char *name) {
 }
 
 void Engine_DeleteEntity(uint64_t id) {
-    SceneManager::Instance().EnqueueDestroyEntity(SceneManager::Instance().GetWorld().entity(id));
+    SceneManager::Instance().EnqueueDestroyEntity(id);
 }
 
 void Engine_ReparentEntity(uint64_t id, uint64_t parentID) {
-    SceneManager::Instance().EnqueueReparentEntity(
-        SceneManager::Instance().GetEntity(id),
-        SceneManager::Instance().GetEntity(parentID));
+    SceneManager::Instance().EnqueueReparentEntity(id, parentID);
 }
 
 void Engine_SetEntityCreatedCallback(EntityCreatedCallback cb) {
@@ -162,5 +146,64 @@ void Engine_SetEntityRenamedCallback(EntityRenamedCallback cb) {
 
 void Engine_SetEntityReparentedCallback(EntityReparentedCallback cb) {
     g_onReparented = cb;
+}
+
+void Editor_SetFieldValue(uint64_t entityID, const char *component, const char *fieldPath, const char *value) {
+    if (!component || !fieldPath || !value) return;
+
+    SceneManager::Instance().EnqueueCommand(
+        [entityID, comp = std::string(component), path = std::string(fieldPath), val = std::string(value)](
+    flecs::world &world) {
+            const flecs::entity e = world.entity(entityID);
+            if (!e.is_alive()) return;
+
+            const ecs_entity_t compId = ecs_lookup(world, comp.c_str());
+            if (!compId || !e.has(compId)) return;
+
+            void *ptr = ecs_get_mut_id(world, e, compId);
+            if (!ptr) return;
+
+            ecs_meta_cursor_t cur = ecs_meta_cursor(world, compId, ptr);
+            if (!cur.valid) return;
+            if (ecs_meta_push(&cur) != 0) return;
+            if (ecs_meta_try_dotmember(&cur, path.c_str()) != 0) return;
+            if (ecs_meta_set_string(&cur, val.c_str()) != 0) return;
+
+            ecs_modified_id(world, e, compId);
+        });
+}
+
+uint32_t Editor_GetSelectedVersion() {
+#ifdef RTGD_EDITOR
+    return EditorBridge::Instance().SelectedVersion();
+#endif
+    return 0;
+}
+
+uint32_t Editor_GetHierarchyVersion() {
+#ifdef RTGD_EDITOR
+    return EditorBridge::Instance().HierarchyVersion();
+#endif
+    return 0;
+}
+
+int Editor_GetSelectedEntityJson(char *buf, int cap) {
+#ifdef RTGD_EDITOR
+    return EditorBridge::Instance().CopySelectedJson(buf, cap);
+#endif
+    return -1;
+}
+
+int Editor_GetHierarchyJson(char *buf, int cap) {
+#ifdef RTGD_EDITOR
+    return EditorBridge::Instance().CopyHierarchyJson(buf, cap);
+#endif
+    return -1;
+}
+
+void Editor_SetSelectedEntity(uint64_t id) {
+#ifdef RTGD_EDITOR
+    EditorBridge::Instance().SetSelected(id);
+#endif
 }
 } // extern "C"
