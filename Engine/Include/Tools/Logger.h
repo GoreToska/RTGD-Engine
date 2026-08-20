@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Engine/EngineExport.h"
+#include "Tools/RTGDMacros.h"
 #include <spdlog/spdlog.h>
 
 namespace RTGDEngine
@@ -32,6 +33,8 @@ namespace RTGDEngine
         std::unique_ptr<spdlog::logger> m_logger;
         bool m_isInitialized = false;
     };
+
+    DECLARE_GLOBAL_SINGLETON(Logger, GLogger)
 }
 
 #if defined(_MSC_VER)
@@ -40,17 +43,17 @@ namespace RTGDEngine
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
-#define LogTrace(...)    RTGDEngine::Logger::Instance().GetLogger().log( \
+#define LogTrace(...)    RTGDEngine::GLogger.GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::trace, __VA_ARGS__)
 
-#define LogInfo(...)     RTGDEngine::Logger::Instance().GetLogger().log( \
+#define LogInfo(...)     RTGDEngine::GLogger.GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::info, __VA_ARGS__)
 
-#define LogWarn(...)     RTGDEngine::Logger::Instance().GetLogger().log( \
+#define LogWarn(...)     RTGDEngine::GLogger.GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::warn, __VA_ARGS__)
 
-#define LogError(...)    RTGDEngine::Logger::Instance().GetLogger().log( \
+#define LogError(...)    RTGDEngine::GLogger.GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::err, __VA_ARGS__)
 
-#define LogCritical(...) RTGDEngine::Logger::Instance().GetLogger().log( \
+#define LogCritical(...) RTGDEngine::GLogger.GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::critical, __VA_ARGS__)

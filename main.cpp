@@ -18,22 +18,24 @@ int main() {
         return 1;
     }
 
-    if (!RTGDEngine::Engine::Instance().Initialize(std::move(window))) {
+    if (!RTGDEngine::GEngine.Initialize(std::move(window))) {
         LogError("Failed to initialize engine!");
         return 1;
     }
 
+    RTGDEngine::GEngine.LoadGameModule(GAME_MODULE_PATH);
+
     using Clock = std::chrono::high_resolution_clock;
     auto lastTime = Clock::now();
 
-    while (RTGDEngine::Engine::Instance().PollEvents()) {
+    while (RTGDEngine::GEngine.PollEvents()) {
         auto now = Clock::now();
         float dt = std::chrono::duration<float>(now - lastTime).count();
         lastTime = now;
-        RTGDEngine::Engine::Instance().Update(dt);
+        RTGDEngine::GEngine.Update(dt);
     }
 
-    RTGDEngine::Engine::Instance().Shutdown();
+    RTGDEngine::GEngine.Shutdown();
     window->Destroy();
     return 0;
 }

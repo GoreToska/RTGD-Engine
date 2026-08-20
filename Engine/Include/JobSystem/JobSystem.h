@@ -75,4 +75,6 @@ namespace RTGDEngine {
         std::mutex m_tasksMutex = {};
         std::vector<std::shared_ptr<JobHandle> > m_activeTasks = {};
     };
+
+    DECLARE_GLOBAL_SINGLETON(JobSystem, GJobSystem)
 } // RTGDEngine

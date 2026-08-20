@@ -105,4 +105,6 @@ namespace RTGDEngine {
         std::vector<QueuedEvent> m_queue = {};
         SubID m_nextSub = 1;
     };
+
+    DECLARE_GLOBAL_SINGLETON(EventBus, GEventBus)
 }

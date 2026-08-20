@@ -71,6 +71,8 @@ namespace RTGDEngine {
         // Parent ID here can be a scene ID too - if scene ID is passed, entity will be created as part of this scene (for additional scenes support)
         flecs::entity CreateEntity(const std::string &name, flecs::entity parent = {});
 
+        flecs::entity GetGameRoot();
+
         void DestroyEntity(flecs::entity e);
 
         void RenameEntity(flecs::entity e, const std::string &name);
@@ -93,4 +95,6 @@ namespace RTGDEngine {
         std::mutex m_loadMutex = {};
         std::vector<PendingSceneLoad> m_completedLoads = {};
     };
+
+    DECLARE_GLOBAL_SINGLETON(SceneManager, GScene)
 } // RTGDEngine

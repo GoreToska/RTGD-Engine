@@ -11,11 +11,21 @@
 
 #include <nlohmann/json.hpp>
 
+#include "Components/GameRootTag.h"
+#include "Scene/SceneManager.h"
+
 namespace RTGDEngine {
     Scene::Scene(flecs::world &world, const std::string &name)
         : m_name(name), m_world(&world) {
         m_root = m_world->entity(name.c_str());
         LogInfo("Scene created: '{}'", m_name);
+    }
+
+    flecs::entity Scene::GetOrCreateGameRoot() {
+        if (m_gameRoot.is_alive()) return m_gameRoot;
+
+        m_gameRoot = GScene.CreateEntity("GameRoot", m_root).add<GameRootTag>();
+        return m_gameRoot;
     }
 
     flecs::entity Scene::Find(const std::string &name) {

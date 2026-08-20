@@ -40,7 +40,7 @@ namespace RTGDEngine {
         m_entities.reserve(upper);
 #endif
 
-        auto &rm = RenderResourceManager::Instance();
+        auto &rm = GRenderResources;
 
         world.each([&](flecs::entity e, const MeshComponent &mc, const RenderComponent &rc, TransformComponent &tc) {
             if (!rc.IsVisible) return;

@@ -57,4 +57,6 @@ namespace RTGDEngine {
 
         mutable std::mutex m_registryMutex = {};
     };
+
+    DECLARE_GLOBAL_SINGLETON(AssetManager, GAssets)
 } // RTGDEngine

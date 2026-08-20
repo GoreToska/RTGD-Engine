@@ -20,7 +20,7 @@
 
 namespace RTGDEngine {
     void AssetManager::Initialize() {
-        RenderResourceManager::Instance().OnAssetDestroyed = [](uint32_t v, EAssetType t) {
+        GRenderResources.OnAssetDestroyed = [](uint32_t v, EAssetType t) {
             Instance().OnResourceDestroyed(v, t);
         };
     }
@@ -33,12 +33,12 @@ namespace RTGDEngine {
             std::lock_guard lock(m_registryMutex);
 
             if (auto it = m_meshByPath.find(key); it != m_meshByPath.end()) {
-                if (RenderResourceManager::Instance().IsAlive(it->second))
+                if (GRenderResources.IsAlive(it->second))
                     return it->second;
                 m_meshByPath.erase(it);
             }
 
-            handle = RenderResourceManager::Instance().RegisterMesh(key, MeshData{}, AssetID(key));
+            handle = GRenderResources.RegisterMesh(key, MeshData{}, AssetID(key));
             m_meshByPath[key] = handle;
             m_meshPathByHandle[handle] = key;
         }
@@ -46,7 +46,7 @@ namespace RTGDEngine {
 
         LogInfo("Async load queued '{}' - handle {}", key, handle);
 
-        JobSystem::Instance().Submit([key, handle, onComplete]() {
+        GJobSystem.Submit([key, handle, onComplete]() {
             MeshImportData data = MeshImporter::Import(key);
 
             if (!data.Success) {
@@ -54,7 +54,7 @@ namespace RTGDEngine {
                 return;
             }
 
-            RenderResourceManager::Instance().QueueMeshUpload(
+            GRenderResources.QueueMeshUpload(
                 handle,
                 std::move(data.Vertices),
                 std::move(data.Indices),
@@ -75,13 +75,13 @@ namespace RTGDEngine {
             std::lock_guard lock(m_registryMutex);
 
             if (auto it = m_meshByPath.find(key); it != m_meshByPath.end()) {
-                if (RenderResourceManager::Instance().IsAlive(it->second))
+                if (GRenderResources.IsAlive(it->second))
                     return it->second;
                 m_meshByPath.erase(it);
             }
 
 
-            handle = RenderResourceManager::Instance().RegisterMesh(absolutePath, MeshData{}, AssetID(key));
+            handle = GRenderResources.RegisterMesh(absolutePath, MeshData{}, AssetID(key));
             m_meshByPath[key] = handle;
             m_meshPathByHandle[handle] = key;
         }
@@ -92,7 +92,7 @@ namespace RTGDEngine {
         if (!data.Success)
             return INVALID_MESH_HANDLE;
 
-        RenderResourceManager::Instance().QueueMeshUpload(
+        GRenderResources.QueueMeshUpload(
             handle,
             std::move(data.Vertices),
             std::move(data.Indices),
@@ -111,19 +111,19 @@ namespace RTGDEngine {
             std::lock_guard lock(m_registryMutex);
 
             if (auto it = m_textureByPath.find(key); it != m_textureByPath.end()) {
-                if (RenderResourceManager::Instance().IsAlive(it->second))
+                if (GRenderResources.IsAlive(it->second))
                     return it->second;
                 m_textureByPath.erase(it);
             }
 
-            handle = RenderResourceManager::Instance().RegisterTexture(key, TextureData{}, AssetID(key));
+            handle = GRenderResources.RegisterTexture(key, TextureData{}, AssetID(key));
             m_textureByPath[key] = handle;
             m_textureHandleByPath[handle] = key;
         }
 
         LogInfo("AssetLoader: async texture queued '{}' → handle {}", key, handle);
 
-        JobSystem::Instance().Submit([key, handle, isSRGB, onComplete]() {
+        GJobSystem.Submit([key, handle, isSRGB, onComplete]() {
             TextureImportData data = TextureImporter::Import(key);
 
             if (!data.Success) {
@@ -131,7 +131,7 @@ namespace RTGDEngine {
                 return;
             }
 
-            RenderResourceManager::Instance().QueueTextureUpload(
+            GRenderResources.QueueTextureUpload(
                 handle, std::move(data.Pixels),
                 data.Width, data.Height, data.Channels, isSRGB);
 
@@ -147,7 +147,7 @@ namespace RTGDEngine {
         {
             std::lock_guard lock(m_registryMutex);
             if (auto it = m_materialByPath.find(key); it != m_materialByPath.end()) {
-                if (RenderResourceManager::Instance().IsAlive(it->second))
+                if (GRenderResources.IsAlive(it->second))
                     return it->second;
 
                 m_materialByPath.erase(it);
@@ -164,7 +164,7 @@ namespace RTGDEngine {
         try {
             f >> j;
 
-            auto &rs = RTGDRenderSystem::Instance();
+            auto &rs = GRenderSystem;
 
             MaterialHandle mat = PipelineFactory::CreateMeshPipeline(
                 rs.GetDevice(), rs.GetSwapChain(), GetAbsolutePath("Shaders"));
@@ -192,7 +192,7 @@ namespace RTGDEngine {
                 std::lock_guard lock(m_registryMutex);
                 m_materialByPath[key] = mat;
                 m_materialPathByHandle[mat] = key;
-                RenderResourceManager::Instance().MarkMaterialLoaded(mat, AssetID(key));
+                GRenderResources.MarkMaterialLoaded(mat, AssetID(key));
             }
 
             return mat;
@@ -210,12 +210,12 @@ namespace RTGDEngine {
             std::lock_guard lock(m_registryMutex);
 
             if (auto it = m_textureByPath.find(key); it != m_textureByPath.end()) {
-                if (RenderResourceManager::Instance().IsAlive(it->second))
+                if (GRenderResources.IsAlive(it->second))
                     return it->second;
                 m_textureByPath.erase(it);
             }
 
-            handle = RenderResourceManager::Instance().RegisterTexture(absolutePath, TextureData{}, AssetID(key));
+            handle = GRenderResources.RegisterTexture(absolutePath, TextureData{}, AssetID(key));
             m_textureByPath[key] = handle;
             m_textureHandleByPath[handle] = key;
         }
@@ -224,7 +224,7 @@ namespace RTGDEngine {
         if (!data.Success)
             return INVALID_TEXTURE_HANDLE;
 
-        RenderResourceManager::Instance().QueueTextureUpload(
+        GRenderResources.QueueTextureUpload(
             handle,
             std::move(data.Pixels),
             data.Width, data.Height, data.Channels,
@@ -235,7 +235,7 @@ namespace RTGDEngine {
 
     void AssetManager::AssignTexture(MaterialHandle material, ETextureSlot slot, const std::string &meshAbsPath,
                                      bool srgb) {
-        RenderResourceManager::Instance().QueueTextureBind(material, GetTexture(meshAbsPath, srgb), slot);
+        GRenderResources.QueueTextureBind(material, GetTexture(meshAbsPath, srgb), slot);
     }
 
     const std::string &AssetManager::GetMeshPath(MeshHandle mesh) const {

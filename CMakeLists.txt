@@ -18,6 +18,10 @@ set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(ThirdParty/flecs)
 
+if (TARGET flecs)
+    target_compile_definitions(flecs PRIVATE flecs_EXPORTS)
+endif ()
+
 set(DILIGENT_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
 set(DILIGENT_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(DILIGENT_BUILD_UNITY_PLUGIN OFF CACHE BOOL "" FORCE)
@@ -51,11 +55,14 @@ add_executable(RTGD-Engine
 )
 
 target_compile_definitions(RTGD-Engine PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+target_compile_definitions(RTGD-Engine PRIVATE GAME_MODULE_PATH="$<TARGET_FILE:Game>")
 set_target_properties(RTGD-Engine PROPERTIES WIN32_EXECUTABLE FALSE)
 
 target_link_libraries(RTGD-Engine PRIVATE
         Engine
 )
+
+add_dependencies(RTGD-Engine Game)
 
 add_custom_command(TARGET RTGD-Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different

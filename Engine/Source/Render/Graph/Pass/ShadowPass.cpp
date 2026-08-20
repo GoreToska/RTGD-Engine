@@ -20,7 +20,7 @@ namespace RTGDEngine {
         if (context.ShadowViews.empty() || !context.Scene)
             return;
 
-        const auto &s = RTGDRenderSystem::Instance().GetShadowSettings();
+        const auto &s = GRenderSystem.GetShadowSettings();
         const uint32_t cascadeCount = static_cast<uint32_t>(context.ShadowViews.size());
         const RenderScene &scene = *context.Scene;
 
@@ -57,7 +57,7 @@ namespace RTGDEngine {
         context.Frame.UpdateShadow(cb);
 
         using namespace Diligent;
-        auto &rm = RenderResourceManager::Instance();
+        auto &rm = GRenderResources;
         const MaterialData &shadowMat = rm.GetMaterial(m_material);
         if (!shadowMat.PSO || !shadowMat.SRB)
             return;
@@ -123,7 +123,7 @@ namespace RTGDEngine {
     void ShadowPass::Setup(RGBuilder &builder) {
         IRenderPass::Setup(builder);
 
-        const auto &s = RTGDRenderSystem::Instance().GetShadowSettings();
+        const auto &s = GRenderSystem.GetShadowSettings();
         const uint32_t cascadeCount = std::clamp(s.CascadeCount, 1u, MAX_SHADOW_CASCADES);
 
         uint32_t cols = 0;

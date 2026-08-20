@@ -5,10 +5,8 @@
 #pragma once
 #include <gainput/gainput.h>
 
-namespace RTGDEngine
-{
-    enum class EInputAction : gainput::UserButtonId
-    {
+namespace RTGDEngine {
+    enum class EInputAction : gainput::UserButtonId {
         MoveForward = 0,
         MoveBackward,
         MoveLeft,
@@ -23,11 +21,14 @@ namespace RTGDEngine
         MouseRight,
         Escape,
 
+        CtrlLeft,
+        ReloadGameModule,
+        TogglePlayMode,
+
         Count
     };
 
-    inline gainput::UserButtonId ID(EInputAction action)
-    {
+    inline gainput::UserButtonId ID(EInputAction action) {
         return static_cast<gainput::UserButtonId>(action);
     }
 }

@@ -154,7 +154,7 @@ namespace RTGDEngine
         mat.SRB.Release();
         pso->CreateShaderResourceBinding(&mat.SRB, true);
 
-        auto& fc = RTGDRenderSystem::Instance().GetFrameConstants();
+        auto& fc = GRenderSystem.GetFrameConstants();
         if (auto* v = mat.SRB->GetVariableByName(SHADER_TYPE_VERTEX, "CameraConstants"))
             v->Set(&fc.Camera());
         if (auto* v = mat.SRB->GetVariableByName(SHADER_TYPE_VERTEX, "ObjectConstants"))
@@ -342,7 +342,7 @@ namespace RTGDEngine
             RebindPendingMaterials(upload.Handle);
 
             if (IsAlive(upload.Handle))
-                EventBus::Instance().Emit(Events::OnAssetLoaded,
+                GEventBus.Emit(Events::OnAssetLoaded,
                                           {m_textures[upload.Handle.Index()].assetID, EAssetType::Texture}, {});
 
             LogInfo("FlushTextureUploads: done → handle {}, {}x{}",
@@ -603,7 +603,7 @@ namespace RTGDEngine
             if (OnAssetDestroyed)
                 OnAssetDestroyed(d.handleValue, d.type);
             if (d.assetId)
-                EventBus::Instance().Emit(Events::OnAssetUnloaded, {d.assetId, d.type}, {});
+                GEventBus.Emit(Events::OnAssetUnloaded, {d.assetId, d.type}, {});
         }
     }
 
@@ -616,7 +616,7 @@ namespace RTGDEngine
         }
 
         m_materials[handle.Index()].assetID = assetID;
-        EventBus::Instance().Emit(Events::OnAssetLoaded, {assetID, EAssetType::Material}, {});
+        GEventBus.Emit(Events::OnAssetLoaded, {assetID, EAssetType::Material}, {});
     }
 
     const MeshData& RenderResourceManager::GetMesh(MeshHandle handle) const
@@ -735,7 +735,7 @@ namespace RTGDEngine
             UpdateMesh(upload.Handle, std::move(data));
 
             if (IsAlive(upload.Handle))
-                EventBus::Instance().Emit(Events::OnAssetLoaded,
+                GEventBus.Emit(Events::OnAssetLoaded,
                                           {m_meshes[upload.Handle.Index()].assetID, EAssetType::Mesh}, {});
 
             LogInfo("RenderResourceManager: GPU upload done → handle {}, {} vertices, {} indices",

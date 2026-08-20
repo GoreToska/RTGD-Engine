@@ -12,11 +12,12 @@
 
 namespace RTGDEngine {
     void EditorCameraSystem::Update(const flecs::world &world, float deltaTime) {
-        auto &input = InputSystem::Instance();
+        auto &input = GInput;
 
         world.each([&](EditorCameraMovementComponent &editorCam,
                        VelocityComponent &velocity,
                        TransformComponent &transform) {
+            Float3 dir{};
             velocity.Linear = {0.0f, 0.0f, 0.0f};
             velocity.Angular = {0.0f, 0.0f, 0.0f};
 
@@ -47,17 +48,22 @@ namespace RTGDEngine {
             const auto right = transform.GetRight();
 
             if (input.IsDown(EInputAction::MoveForward))
-                velocity.Linear += forward * speed;
+                dir += forward;
             if (input.IsDown(EInputAction::MoveBackward))
-                velocity.Linear -= forward * speed;
+                dir -= forward;
             if (input.IsDown(EInputAction::MoveRight))
-                velocity.Linear += right * speed;
+                dir += right;
             if (input.IsDown(EInputAction::MoveLeft))
-                velocity.Linear -= right * speed;
+                dir -= right;
             if (input.IsDown(EInputAction::MoveUp))
-                velocity.Linear.y += speed;
+                dir.y += 1.0f;
             if (input.IsDown(EInputAction::MoveDown))
-                velocity.Linear.y -= speed;
+                dir.y -= 1.0f;
+
+            if (Diligent::length(dir) > 0.000001f)
+                dir = Diligent::normalize(dir);
+
+            velocity.Linear = dir * speed;
         });
     }
 } // RTGDEngine

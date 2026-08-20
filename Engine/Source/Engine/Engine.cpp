@@ -6,7 +6,10 @@
 #include "AssetLoader/AssetManager.h"
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
+#include "Components/GameRootTag.h"
+#include "Components/TransformComponent.h"
 #include "Components/UUIDComponent.h"
+#include "Components/VelocityComponent.h"
 #include "Engine/EditorBridge.h"
 #include "Input/InputSystem.h"
 #include "JobSystem/JobSystem.h"
@@ -27,26 +30,47 @@
 namespace RTGDEngine {
     constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
 
+    void Engine::RegisterBaseSystems() {
+        AddSystem([](flecs::world &, float dt) {
+            GTimer.Update(dt);
+        }, ESystemPhase::PreUpdate);
+
+        AddSystem([this](flecs::world &world, float dt) {
+            if (!m_isPlayMode)
+                EditorCameraSystem::Update(world, dt);
+        }, ESystemPhase::Update, 0);
+
+        AddSystem(MovementSystem::Update, ESystemPhase::Update, 0);
+        AddSystem(CameraSystem::Update, ESystemPhase::Update, 20);
+
+        AddSystem([](flecs::world &world, float) {
+            LightSystem::Update(world);
+        }, ESystemPhase::Update, 30);
+    }
+
     bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window) {
         m_platformWindow = std::move(window);
 
-        Logger::Instance().Initialize();
+        GLogger.Initialize();
 
-        JobSystem::Instance().Initialize();
+        GJobSystem.Initialize();
 
-        SceneManager::Instance().Initialize();
+        GScene.Initialize();
 
 #ifdef RTGD_EDITOR
-        EditorBridge::Instance().Initialize();
+        GEditorBridge.Initialize();
+
+        GScene.GetWorld().entity("EditorCamera").add<TransformComponent>().add<CameraComponent>().add<
+            EditorCameraMovementComponent>().add<VelocityComponent>().add<UUIDComponent>();
 #endif
 
-        RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
+        GRenderSystem.Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
                                                 m_platformWindow->GetHeight());
 
-        RenderResourceManager::Instance().Initialize(RTGDRenderSystem::Instance().GetDevice(),
-                                                     RTGDRenderSystem::Instance().GetContext());
+        GRenderResources.Initialize(GRenderSystem.GetDevice(),
+                                                     GRenderSystem.GetContext());
 
-        InputSystem::Instance().AddWindowHandle(m_platformWindow.get());
+        GInput.AddWindowHandle(m_platformWindow.get());
 
         m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
         m_platformWindow->OnClose = []() { Instance().OnClose(); };
@@ -57,9 +81,7 @@ namespace RTGDEngine {
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
 
-        //SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
-
-        SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Stress10k.scene"));
+        RegisterBaseSystems();
 
         return true;
     }
@@ -103,44 +125,57 @@ namespace RTGDEngine {
     }
 #endif
 
-    void Engine::Shutdown() {
-        EventBus::Instance().Process();
+    void Engine::DestroyGameContent() {
+        GScene.GetWorld().delete_with<GameRootTag>();
+    }
 
-        if (m_gameModule && m_destroyFunc) {
-            m_destroyFunc(m_gameModule.release());
+    void Engine::UnloadGameModule() {
+        if (m_gameLib && m_gameModule) {
+            m_gameModule->Shutdown();
+            ClearSystems(ESystemGroup::Game);
+            DestroyGameContent();
+
+            m_gameModule.release();
+            m_gameLib.reset();
         }
+    }
 
-        // TODO: kill game dll
-        /*if (m_gameDllHandle) {
-            FreeLibrary(m_gameDllHandle);
-            m_gameDllHandle = nullptr;
-        }*/
+    bool Engine::ReloadGameModule() {
+        auto path = m_gameLib->GetPath();
+        UnloadGameModule();
+        return LoadGameModule(path);
+    }
 
-        RTGDRenderSystem::Instance().Shutdown();
+    void Engine::Shutdown() {
+        GEventBus.Process();
+
+        GRenderSystem.Shutdown();
+
+        UnloadGameModule();
     }
 
     bool Engine::LoadGameModule(const std::string &dllPath) {
-        // TODO: load game library
-        /*m_gameDllHandle = LoadLibraryA(dllPath.c_str());
-        if (!m_gameDllHandle) {
-            LogError("Failed to load DLL: {}", dllPath);
+        m_gameLib = CreateDynamicLibrary();
+
+        if (!m_gameLib->Load(dllPath)) {
+            LogError("Failed to load game module: {}.", dllPath);
+            m_gameLib.reset();
             return false;
         }
 
-        m_createFunc = reinterpret_cast<CreateGameModuleFunc>(GetProcAddress(m_gameDllHandle, "CreateGameModule"));
-        m_destroyFunc = reinterpret_cast<DestroyGameModuleFunc>(GetProcAddress(m_gameDllHandle, "DestroyGameModule"));
+        m_getGameModuleFunc = reinterpret_cast<GetGameModuleFunc>(m_gameLib->GetSymbol("GetGameModule"));
 
-        if (!m_createFunc || !m_destroyFunc) {
-            LogError("Failed to get exported functions");
-            FreeLibrary(m_gameDllHandle);
-            m_gameDllHandle = nullptr;
+        if (!m_getGameModuleFunc) {
+            LogError("Failed to get game module symbol: {}.", dllPath);
+            m_gameLib.reset();
             return false;
         }
 
-        m_gameModule.reset(m_createFunc());
-        if (m_gameModule)
-            m_gameModule->Initialize();
-            */
+        LogInfo("Loaded game module: {}.", dllPath);
+
+        m_gameModule.reset(m_getGameModuleFunc());
+
+        m_gameModule->Initialize();
 
         return true;
     }
@@ -150,42 +185,58 @@ namespace RTGDEngine {
     }
 
     void Engine::Update(const float deltaTime) {
-        JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
-        SceneManager::Instance().ApplyPendingSceneChanges();
-        SceneManager::Instance().ApplyPendingEntityCommands();
-        EventBus::Instance().Process();
+        GJobSystem.Flush(MAX_JOBS_TO_REMOVE);
+        GScene.ApplyPendingSceneChanges();
+        GScene.ApplyPendingEntityCommands();
+        GEventBus.Process();
 
-        UpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
+        GInput.Update();
 
-        if (m_gameModule)
-            m_gameModule->Update(deltaTime);
+        if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
+                EInputAction::ReloadGameModule)) {
+            ReloadGameModule();
+        }
 
-        PostUpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
+        if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
+                EInputAction::TogglePlayMode)) {
+            TogglePlayMode();
+        }
+
+        auto &world = GScene.GetWorld();
+        RunPhase(ESystemPhase::PreUpdate, world, deltaTime);
+
+        m_fixedAccumulator += deltaTime;
+        while (m_fixedAccumulator >= m_fixedTimeStep) {
+            RunPhase(ESystemPhase::FixedUpdate, world, m_fixedTimeStep);
+            m_fixedAccumulator -= m_fixedTimeStep;
+        }
+
+        RunPhase(ESystemPhase::Update, world, deltaTime);
+        RunPhase(ESystemPhase::PostUpdate, world, deltaTime);
+
+        GInput.PostUpdate();
 
 #ifdef RTGD_EDITOR
-        EditorBridge::Instance().PublishSnapshot();
+        GEditorBridge.PublishSnapshot();
 #endif
 
         Render();
     }
 
     void Engine::Render() {
-        RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetWorld());
+        GRenderSystem.ApplyPendingResize(GScene.GetWorld());
 
-        auto &rs = RTGDRenderSystem::Instance();
+        auto &rs = GRenderSystem;
         auto &device = rs.GetDevice();
         auto &context = rs.GetContext();
-        auto &rm = RenderResourceManager::Instance();
+        auto &rm = GRenderResources;
 
         rm.FlushMeshUploads(device);
         rm.FlushTextureUploads(device, context);
         rm.ProcessPendingDestroys();
 
-        RTGDRenderSystem::Instance().ExecuteFrame(SceneManager::Instance().GetWorld());
-        RTGDRenderSystem::Instance().Present();
-
-        /*if (m_gameModule)
-            m_gameModule->Render();*/
+        GRenderSystem.ExecuteFrame(GScene.GetWorld());
+        GRenderSystem.Present();
     }
 
     void Engine::CreateConsole() {
@@ -202,6 +253,42 @@ namespace RTGDEngine {
         m_resizePending = true;
         m_pendingW = w;
         m_pendingH = h;
+    }
+
+    void Engine::TogglePlayMode() {
+        m_isPlayMode = !m_isPlayMode;
+
+        if (m_isPlayMode) {
+            LogInfo("Entering play mode.");
+            m_gameModule->OnStart();
+        } else {
+            LogInfo("Exiting play mode.");
+            m_gameModule->OnStop();
+            ClearSystems(ESystemGroup::Game);
+            DestroyGameContent();
+        }
+    }
+
+    void Engine::AddSystem(SystemFunc func, ESystemPhase phase, int order, ESystemGroup group) {
+        auto &list = m_systems[static_cast<int>(phase)];
+        list.push_back({std::move(func), order, group});
+        std::stable_sort(list.begin(), list.end(), [](const SystemEntry &a, const SystemEntry &b) {
+            return a.Order < b.Order;
+        });
+    }
+
+    void Engine::ClearSystems(ESystemGroup group) {
+        for (auto &list: m_systems) {
+            std::erase_if(list, [group](const SystemEntry &entry) {
+                return group == entry.Group;
+            });
+        }
+    }
+
+    void Engine::RunPhase(ESystemPhase phase, flecs::world &world, float deltaTime) {
+        for (auto &entry: m_systems[static_cast<size_t>(phase)]) {
+            entry.Func(world, deltaTime);
+        }
     }
 
     void Engine::RenderThreadMain(std::unique_ptr<IPlatformWindow> window, std::promise<bool> initPromise) {
@@ -245,10 +332,10 @@ namespace RTGDEngine {
             h = m_pendingH;
         }
 
-        RTGDRenderSystem::Instance().Resize(w, h);
-        InputSystem::Instance().Resize(w, h);
+        GRenderSystem.Resize(w, h);
+        GInput.Resize(w, h);
         m_platformWindow->SetSize(w, h);
-        EventBus::Instance().Emit(Events::OnWindowResized, {w, h}, {});
+        GEventBus.Emit(Events::OnWindowResized, {w, h}, {});
     }
 
 #ifdef RTGD_EDITOR
@@ -264,7 +351,7 @@ namespace RTGDEngine {
             m_pickRequest.Pending = false;
         }
 
-        const flecs::entity e = RTGDRenderSystem::Instance().PickEntity(x, y);
+        const flecs::entity e = GRenderSystem.PickEntity(x, y);
         {
             std::lock_guard<std::mutex> lock(m_pickMutex);
             m_pickRequest.Result = e.id();
@@ -276,20 +363,6 @@ namespace RTGDEngine {
 #endif
 
     void Engine::OnClose() {
-        EventBus::Instance().Emit(Events::OnWindowClosed, {}, {});
-    }
-
-    void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {
-        InputSystem::Instance().Update();
-        TimerSystem::Instance().Update(deltaTime);
-        EditorCameraSystem::Update(world, deltaTime);
-        MovementSystem::Update(world, deltaTime);
-        CameraSystem::Update(world, deltaTime);
-
-        LightSystem::Update(world);
-    }
-
-    void Engine::PostUpdateSystems(const flecs::world &world, float deltaTime) {
-        InputSystem::Instance().PostUpdate();
+        GEventBus.Emit(Events::OnWindowClosed, {}, {});
     }
 }
