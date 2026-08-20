@@ -18,7 +18,6 @@
 #include "Platform/DynamicLibraryFactory.h"
 
 
-
 namespace RTGDEngine {
     enum class ESystemPhase {
         PreUpdate,
@@ -130,9 +129,5 @@ namespace RTGDEngine {
         std::array<std::vector<SystemEntry>, 4> m_systems = {};
         float m_fixedTimeStep = 1.0f / 60.0f;
         float m_fixedAccumulator = 0.0f;
-
-        void UpdateSystems(flecs::world &world, float deltaTime);
-
-        void PostUpdateSystems(flecs::world &world, float deltaTime);
     };
 }

@@ -205,6 +205,7 @@ namespace RTGDEngine {
         auto &world = SceneManager::Instance().GetWorld();
         RunPhase(ESystemPhase::PreUpdate, world, deltaTime);
 
+        m_fixedAccumulator += deltaTime;
         while (m_fixedAccumulator >= m_fixedTimeStep) {
             RunPhase(ESystemPhase::FixedUpdate, world, m_fixedTimeStep);
             m_fixedTimeStep -= m_fixedAccumulator;
