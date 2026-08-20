@@ -184,6 +184,10 @@ namespace RTGDEngine {
         return entity;
     }
 
+    flecs::entity SceneManager::GetGameRoot() {
+        return m_activeScene->GetOrCreateGameRoot();
+    }
+
     void SceneManager::DestroyEntity(flecs::entity e) {
         if (!e.is_alive())
             return;

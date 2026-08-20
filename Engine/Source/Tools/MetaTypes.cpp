@@ -5,6 +5,7 @@
 #include "Tools/MetaTypes.h"
 
 #include "Components/CameraComponent.h"
+#include "Components/GameRootTag.h"
 #include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RenderComponent.h"
@@ -58,6 +59,7 @@ namespace RTGDEngine {
                     .set_doc_brief("Quaternion (x, y, z, w)")
                     .set_doc_detail("Rotation represented as a unit quaternion");
 
+        GameRootTag::RegisterMeta(world);
         TransformComponent::RegisterMeta(world);
         CameraComponent::RegisterMeta(world);
         EditorCameraMovementComponent::RegisterMeta(world);

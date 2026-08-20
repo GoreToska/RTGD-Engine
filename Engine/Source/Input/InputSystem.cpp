@@ -22,18 +22,21 @@ namespace RTGDEngine {
         m_map = std::make_unique<InputMap>(m_manager);
 
         using A = EInputAction;
-        m_map->MapBool(ID(A::MoveForward), m_keyboard, gainput::KeyW);
-        m_map->MapBool(ID(A::MoveBackward), m_keyboard, gainput::KeyS);
-        m_map->MapBool(ID(A::MoveLeft), m_keyboard, gainput::KeyA);
-        m_map->MapBool(ID(A::MoveRight), m_keyboard, gainput::KeyD);
-        m_map->MapBool(ID(A::MoveUp), m_keyboard, gainput::KeyE);
-        m_map->MapBool(ID(A::MoveDown), m_keyboard, gainput::KeyQ);
-        m_map->MapBool(ID(A::SpeedBoost), m_keyboard, gainput::KeyShiftL);
-        m_map->MapBool(ID(A::Escape), m_keyboard, gainput::KeyEscape);
+        m_map->MapBool(ID(A::MoveForward), m_keyboard, KeyW);
+        m_map->MapBool(ID(A::MoveBackward), m_keyboard, KeyS);
+        m_map->MapBool(ID(A::MoveLeft), m_keyboard, KeyA);
+        m_map->MapBool(ID(A::MoveRight), m_keyboard, KeyD);
+        m_map->MapBool(ID(A::MoveUp), m_keyboard, KeyE);
+        m_map->MapBool(ID(A::MoveDown), m_keyboard, KeyQ);
+        m_map->MapBool(ID(A::SpeedBoost), m_keyboard, KeyShiftL);
+        m_map->MapBool(ID(A::Escape), m_keyboard, KeyEscape);
 
-        m_map->MapBool(ID(A::MouseRight), m_mouse, gainput::MouseButtonRight);
-        m_map->MapFloat(ID(A::LookX), m_mouse, gainput::MouseAxisX);
-        m_map->MapFloat(ID(A::LookY), m_mouse, gainput::MouseAxisY);
+        m_map->MapBool(ID(A::CtrlLeft), m_keyboard, KeyCtrlL);
+        m_map->MapBool(ID(A::ReloadGameModule), m_keyboard, KeyR);
+
+        m_map->MapBool(ID(A::MouseRight), m_mouse, MouseButtonRight);
+        m_map->MapFloat(ID(A::LookX), m_mouse, MouseAxisX);
+        m_map->MapFloat(ID(A::LookY), m_mouse, MouseAxisY);
     }
 
     // TODO: need to initialize once and just switch focus of windows
@@ -126,6 +129,39 @@ namespace RTGDEngine {
         return m_map->GetBool(ID(action));
     }
 
+    bool InputSystem::IsDown(ActionID action) const {
+        return m_map->GetBool(action);
+    }
+
+    bool InputSystem::IsPressed(ActionID action) const {
+        return m_map->GetBoolIsNew(action);
+    }
+
+    bool InputSystem::IsReleased(ActionID action) const {
+        return m_map->GetBoolWasDown(action);
+    }
+
+    float InputSystem::GetAxis(ActionID action) const {
+        return m_map->GetFloat(action);
+    }
+
+    ActionID InputSystem::RegisterAction(const std::string &name) {
+        if (auto it = m_customActions.find(name); it != m_customActions.end())
+            return it->second;
+
+        ActionID id = m_nextActionID++;
+        m_customActions.emplace(name, id);
+        return id;
+    }
+
+    void InputSystem::BindKey(ActionID action, gainput::Key key) const {
+        m_map->MapBool(action, m_keyboard, key);
+    }
+
+    void InputSystem::BindMouseButton(ActionID action, gainput::MouseButton button) const {
+        m_map->MapBool(action, m_mouse, button);
+    }
+
     bool InputSystem::IsPressed(const EInputAction action) const {
         return m_map->GetBoolIsNew(ID(action));
     }
@@ -150,12 +186,12 @@ namespace RTGDEngine {
         return m_mouseDeltaY;
     }
 
-    void InputSystem::InjectKey(gainput::Key key, bool down) const {
+    void InputSystem::InjectKey(Key key, bool down) const {
         if (m_injectKeyboard)
             m_injectKeyboard->InjectButton(key, down);
     }
 
-    void InputSystem::InjectMouseButton(gainput::MouseButton button, bool down) const {
+    void InputSystem::InjectMouseButton(MouseButton button, bool down) const {
         if (m_injectMouseButton)
             m_injectMouseButton->InjectButton(button, down);
     }
@@ -191,7 +227,7 @@ namespace RTGDEngine {
     void InputSystem::CreateMouseDevice(EInputSource source) {
         switch (source) {
             case EInputSource::NativeEvents:
-                m_mouse = m_manager.CreateDevice<gainput::InputDeviceMouse>();
+                m_mouse = m_manager.CreateDevice<InputDeviceMouse>();
                 break;
             case EInputSource::Injected:
                 m_mouse = m_manager.CreateDevice<MouseDevice>();

@@ -6,7 +6,10 @@
 #include "AssetLoader/AssetManager.h"
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
+#include "Components/GameRootTag.h"
+#include "Components/TransformComponent.h"
 #include "Components/UUIDComponent.h"
+#include "Components/VelocityComponent.h"
 #include "Engine/EditorBridge.h"
 #include "Input/InputSystem.h"
 #include "JobSystem/JobSystem.h"
@@ -38,6 +41,9 @@ namespace RTGDEngine {
 
 #ifdef RTGD_EDITOR
         EditorBridge::Instance().Initialize();
+
+        SceneManager::Instance().GetWorld().entity("EditorCamera").add<TransformComponent>().add<CameraComponent>().add<
+            EditorCameraMovementComponent>().add<VelocityComponent>().add<UUIDComponent>();
 #endif
 
         RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
@@ -56,10 +62,6 @@ namespace RTGDEngine {
 #elif defined(__linux__)
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
-
-        //SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Default.scene"));
-
-        SceneManager::Instance().GetActiveScene()->LoadFromFile(GetAbsolutePath("Assets/Scenes/Stress10k.scene"));
 
         return true;
     }
@@ -103,44 +105,54 @@ namespace RTGDEngine {
     }
 #endif
 
+    void Engine::UnloadGameModule() {
+        if (m_gameLib && m_gameModule) {
+            m_gameModule->Shutdown();
+
+            SceneManager::Instance().GetWorld().query_builder<>().with<GameRootTag>().build().each([](flecs::entity e) {
+                e.destruct();
+            });
+
+            m_gameModule.release();
+            m_gameLib.reset();
+        }
+    }
+
+    bool Engine::ReloadGameModule() {
+        auto path = m_gameLib->GetPath();
+        UnloadGameModule();
+        return LoadGameModule(path);
+    }
+
     void Engine::Shutdown() {
         EventBus::Instance().Process();
 
-        if (m_gameModule && m_destroyFunc) {
-            m_destroyFunc(m_gameModule.release());
-        }
-
-        // TODO: kill game dll
-        /*if (m_gameDllHandle) {
-            FreeLibrary(m_gameDllHandle);
-            m_gameDllHandle = nullptr;
-        }*/
-
         RTGDRenderSystem::Instance().Shutdown();
+
+        UnloadGameModule();
     }
 
     bool Engine::LoadGameModule(const std::string &dllPath) {
-        // TODO: load game library
-        /*m_gameDllHandle = LoadLibraryA(dllPath.c_str());
-        if (!m_gameDllHandle) {
-            LogError("Failed to load DLL: {}", dllPath);
+        m_gameLib = CreateDynamicLibrary();
+
+        if (!m_gameLib->Load(dllPath)) {
+            LogError("Failed to load game module: {}.", dllPath);
+            m_gameLib.reset();
             return false;
         }
 
-        m_createFunc = reinterpret_cast<CreateGameModuleFunc>(GetProcAddress(m_gameDllHandle, "CreateGameModule"));
-        m_destroyFunc = reinterpret_cast<DestroyGameModuleFunc>(GetProcAddress(m_gameDllHandle, "DestroyGameModule"));
+        m_getGameModuleFunc = reinterpret_cast<GetGameModuleFunc>(m_gameLib->GetSymbol("GetGameModule"));
 
-        if (!m_createFunc || !m_destroyFunc) {
-            LogError("Failed to get exported functions");
-            FreeLibrary(m_gameDllHandle);
-            m_gameDllHandle = nullptr;
+        if (!m_getGameModuleFunc) {
+            LogError("Failed to get game module symbol: {}.", dllPath);
+            m_gameLib.reset();
             return false;
         }
 
-        m_gameModule.reset(m_createFunc());
-        if (m_gameModule)
-            m_gameModule->Initialize();
-            */
+        LogInfo("Loaded game module: {}.", dllPath);
+
+        m_gameModule.reset(m_getGameModuleFunc());
+        m_gameModule->Initialize();
 
         return true;
     }
@@ -157,8 +169,14 @@ namespace RTGDEngine {
 
         UpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
 
-        if (m_gameModule)
+        if (InputSystem::Instance().IsDown(EInputAction::CtrlLeft) && InputSystem::Instance().IsPressed(
+                EInputAction::ReloadGameModule)) {
+            ReloadGameModule();
+        }
+
+        if (m_gameModule) {
             m_gameModule->Update(deltaTime);
+        }
 
         PostUpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
 
@@ -183,9 +201,6 @@ namespace RTGDEngine {
 
         RTGDRenderSystem::Instance().ExecuteFrame(SceneManager::Instance().GetWorld());
         RTGDRenderSystem::Instance().Present();
-
-        /*if (m_gameModule)
-            m_gameModule->Render();*/
     }
 
     void Engine::CreateConsole() {

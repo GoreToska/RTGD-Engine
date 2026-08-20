@@ -14,6 +14,7 @@
 #include "Platform/IPlatformWindow.h"
 #include "Engine/EngineExport.h"
 #include "Tools/RTGDMacros.h"
+#include "Platform/DynamicLibraryFactory.h"
 
 
 namespace RTGDEngine {
@@ -32,7 +33,12 @@ namespace RTGDEngine {
 
 #ifdef RTGD_EDITOR
         uint64_t RequestPick(int x, int y);
+
 #endif
+
+        void UnloadGameModule();
+
+        bool ReloadGameModule();
 
         void Shutdown();
 
@@ -69,11 +75,10 @@ namespace RTGDEngine {
 
         // TODO: Engine owns window for now, but need to refactor this in future
         std::unique_ptr<IPlatformWindow> m_platformWindow = nullptr;
-        std::unique_ptr<IGameModule> m_gameModule = nullptr;
 
-        //HMODULE m_gameDllHandle = nullptr;
-        CreateGameModuleFunc m_createFunc = nullptr;
-        DestroyGameModuleFunc m_destroyFunc = nullptr;
+        std::unique_ptr<IDynamicLibrary> m_gameLib = nullptr;
+        std::unique_ptr<IGameModule> m_gameModule = nullptr;
+        GetGameModuleFunc m_getGameModuleFunc = nullptr;
 
         std::thread m_renderThread = {};
         std::atomic<bool> m_isRunning = {false};

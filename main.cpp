@@ -23,6 +23,8 @@ int main() {
         return 1;
     }
 
+    RTGDEngine::Engine::Instance().LoadGameModule(GAME_MODULE_PATH);
+
     using Clock = std::chrono::high_resolution_clock;
     auto lastTime = Clock::now();
 

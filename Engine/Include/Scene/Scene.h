@@ -23,6 +23,8 @@ namespace RTGDEngine {
 
         ~Scene() = default;
 
+        flecs::entity GetOrCreateGameRoot();
+
         flecs::entity Find(const std::string &name);
 
         [[nodiscard]] flecs::entity GetRoot() const;
@@ -53,5 +55,6 @@ namespace RTGDEngine {
         std::string m_name;
         flecs::world *m_world;
         flecs::entity m_root;
+        flecs::entity m_gameRoot;
     };
 } // RTGDEngine

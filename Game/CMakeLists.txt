@@ -1,17 +1,16 @@
 add_library(Game SHARED
         Source/Game.cpp
-        Source/dllmain.cpp
+        Include/GameExpoty.h
 )
 
 target_include_directories(Game PRIVATE
         ${CMAKE_SOURCE_DIR}/Game/Include
-        ${CMAKE_SOURCE_DIR}/Engine/include
-        ${CMAKE_SOURCE_DIR}/ThirdParty/flecs/include
+        ${CMAKE_SOURCE_DIR}/Engine/Include
 )
 
 target_link_libraries(Game PRIVATE
         Engine
-        flecs_static
+        flecs
 )
 
 target_compile_definitions(Game PRIVATE GAME_EXPORTS)

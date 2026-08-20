@@ -120,6 +120,14 @@ add_library(Engine SHARED
         Include/Render/ShadowMap/ShadowCascades.h
         Source/Engine/EditorBridge.cpp
         Include/Engine/EditorBridge.h
+        Include/Platform/IDynamicLibrary.h
+        Source/Platform/DynamicLibraryFactory.cpp
+        Include/Platform/DynamicLibraryFactory.h
+        Source/Platform/Linux/LinuxDynamicLibrary.cpp
+        Include/Platform/Linux/LinuxDynamicLibrary.h
+        Source/Platform/Windows/WindowsDynamicLibrary.cpp
+        Include/Platform/Windows/WindowsDynamicLibrary.h
+        Include/Components/GameRootTag.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -139,7 +147,7 @@ target_include_directories(Engine PUBLIC
 target_link_libraries(Engine PUBLIC
         Diligent-Common
         Diligent-GraphicsTools
-        flecs_static
+        flecs
         spdlog::spdlog
         gainput
         assimp
@@ -158,6 +166,7 @@ elseif (UNIX AND NOT APPLE)
             X11
             Xi
             Xfixes
+            ${CMAKE_DL_LIBS}
     )
 endif ()
 

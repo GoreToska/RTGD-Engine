@@ -10,6 +10,7 @@
 #include "EInputAction.h"
 #include "Engine/EngineExport.h"
 #include "Platform/WindowEvent.h"
+#include "Tools/Alias.h"
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine {
@@ -32,11 +33,19 @@ namespace RTGDEngine {
 
         [[nodiscard]] bool IsDown(EInputAction action) const;
 
+        [[nodiscard]] bool IsDown(ActionID action) const;
+
         [[nodiscard]] bool IsPressed(EInputAction action) const;
+
+        [[nodiscard]] bool IsPressed(ActionID action) const;
 
         [[nodiscard]] bool IsReleased(EInputAction action) const;
 
+        [[nodiscard]] bool IsReleased(ActionID action) const;
+
         [[nodiscard]] float GetAxis(EInputAction action) const;
+
+        [[nodiscard]] float GetAxis(ActionID action) const;
 
         [[nodiscard]] bool IsMouseCaptured() const;
 
@@ -56,6 +65,12 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) const;
 
+        ActionID RegisterAction(const std::string &name);
+
+        void BindKey(ActionID action, gainput::Key key) const;
+
+        void BindMouseButton(ActionID action, gainput::MouseButton button) const;
+
     private:
         void CreateKeyboardDevice();
 
@@ -67,6 +82,9 @@ namespace RTGDEngine {
 
         gainput::InputManager m_manager = {};
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
+        std::unordered_map<std::string, ActionID> m_customActions = {};
+        ActionID m_nextActionID = static_cast<ActionID>(EInputAction::Count);
+
         gainput::DeviceId m_keyboard = gainput::InvalidDeviceId;
         gainput::DeviceId m_mouse = gainput::InvalidDeviceId;
 
