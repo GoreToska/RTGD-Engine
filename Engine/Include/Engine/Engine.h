@@ -8,6 +8,7 @@
 #include <flecs.h>
 #include <future>
 #include <thread>
+#include <functional>
 
 #include "Engine/IGameModule.h"
 #include "Engine/IEngineInterface.h"
@@ -17,7 +18,20 @@
 #include "Platform/DynamicLibraryFactory.h"
 
 
+
 namespace RTGDEngine {
+    enum class ESystemPhase {
+        PreUpdate,
+        FixedUpdate,
+        Update,
+        PostUpdate,
+    };
+
+    enum class ESystemGroup {
+        Engine,
+        Game,
+    };
+
     class IPlatformWindow;
 
     class ENGINE_API Engine : public IEngineInterface {
@@ -33,7 +47,6 @@ namespace RTGDEngine {
 
 #ifdef RTGD_EDITOR
         uint64_t RequestPick(int x, int y);
-
 #endif
 
         void UnloadGameModule();
@@ -54,6 +67,15 @@ namespace RTGDEngine {
 
         void Resize(int w, int h);
 
+        void TogglePlayMode();
+
+        using SystemFunc = std::function<void(flecs::world &, float)>;
+
+        void AddSystem(SystemFunc func, ESystemPhase phase = ESystemPhase::Update, int order = 0,
+                       ESystemGroup group = ESystemGroup::Engine);
+
+        void ClearSystems(ESystemGroup group);
+
     private:
         struct PickRequest {
             int X = 0;
@@ -63,9 +85,21 @@ namespace RTGDEngine {
             bool Done = false;
         };
 
+        struct SystemEntry {
+            SystemFunc Func;
+            int Order = 0;
+            ESystemGroup Group = ESystemGroup::Engine;
+        };
+
+        void RunPhase(ESystemPhase phase, flecs::world &world, float deltaTime);
+
         void RenderThreadMain(std::unique_ptr<IPlatformWindow> window, std::promise<bool> initPromise);
 
         void ApplyPendingResize();
+
+        void DestroyGameContent();
+
+        void RegisterBaseSystems();
 
 #ifdef RTGD_EDITOR
         void ServicePick();
@@ -80,6 +114,8 @@ namespace RTGDEngine {
         std::unique_ptr<IGameModule> m_gameModule = nullptr;
         GetGameModuleFunc m_getGameModuleFunc = nullptr;
 
+        bool m_isPlayMode = false;
+
         std::thread m_renderThread = {};
         std::atomic<bool> m_isRunning = {false};
         std::mutex m_pickMutex = {};
@@ -91,8 +127,12 @@ namespace RTGDEngine {
         int m_pendingW = 0;
         int m_pendingH = 0;
 
-        void UpdateSystems(const flecs::world &world, float deltaTime);
+        std::array<std::vector<SystemEntry>, 4> m_systems = {};
+        float m_fixedTimeStep = 1.0f / 60.0f;
+        float m_fixedAccumulator = 0.0f;
 
-        void PostUpdateSystems(const flecs::world &world, float deltaTime);
+        void UpdateSystems(flecs::world &world, float deltaTime);
+
+        void PostUpdateSystems(flecs::world &world, float deltaTime);
     };
 }

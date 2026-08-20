@@ -33,6 +33,7 @@ namespace RTGDEngine {
 
         m_map->MapBool(ID(A::CtrlLeft), m_keyboard, KeyCtrlL);
         m_map->MapBool(ID(A::ReloadGameModule), m_keyboard, KeyR);
+        m_map->MapBool(ID(A::TogglePlayMode), m_keyboard, KeyP);
 
         m_map->MapBool(ID(A::MouseRight), m_mouse, MouseButtonRight);
         m_map->MapFloat(ID(A::LookX), m_mouse, MouseAxisX);

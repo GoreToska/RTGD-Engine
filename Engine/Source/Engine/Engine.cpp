@@ -30,6 +30,24 @@
 namespace RTGDEngine {
     constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
 
+    void Engine::RegisterBaseSystems() {
+        AddSystem([](flecs::world &, float dt) {
+            TimerSystem::Instance().Update(dt);
+        }, ESystemPhase::PreUpdate);
+
+        AddSystem([this](flecs::world &world, float dt) {
+            if (!m_isPlayMode)
+                EditorCameraSystem::Update(world, dt);
+        }, ESystemPhase::Update, 0);
+
+        AddSystem(MovementSystem::Update, ESystemPhase::Update, 0);
+        AddSystem(CameraSystem::Update, ESystemPhase::Update, 20);
+
+        AddSystem([](flecs::world &world, float) {
+            LightSystem::Update(world);
+        }, ESystemPhase::Update, 30);
+    }
+
     bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window) {
         m_platformWindow = std::move(window);
 
@@ -62,6 +80,8 @@ namespace RTGDEngine {
 #elif defined(__linux__)
         LogInfo("Engine initialized with ID: {}", m_platformWindow->GetHandle().window);
 #endif
+
+        RegisterBaseSystems();
 
         return true;
     }
@@ -105,13 +125,15 @@ namespace RTGDEngine {
     }
 #endif
 
+    void Engine::DestroyGameContent() {
+        SceneManager::Instance().GetWorld().delete_with<GameRootTag>();
+    }
+
     void Engine::UnloadGameModule() {
         if (m_gameLib && m_gameModule) {
             m_gameModule->Shutdown();
-
-            SceneManager::Instance().GetWorld().query_builder<>().with<GameRootTag>().build().each([](flecs::entity e) {
-                e.destruct();
-            });
+            ClearSystems(ESystemGroup::Game);
+            DestroyGameContent();
 
             m_gameModule.release();
             m_gameLib.reset();
@@ -152,6 +174,7 @@ namespace RTGDEngine {
         LogInfo("Loaded game module: {}.", dllPath);
 
         m_gameModule.reset(m_getGameModuleFunc());
+
         m_gameModule->Initialize();
 
         return true;
@@ -167,18 +190,30 @@ namespace RTGDEngine {
         SceneManager::Instance().ApplyPendingEntityCommands();
         EventBus::Instance().Process();
 
-        UpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
+        InputSystem::Instance().Update();
 
         if (InputSystem::Instance().IsDown(EInputAction::CtrlLeft) && InputSystem::Instance().IsPressed(
                 EInputAction::ReloadGameModule)) {
             ReloadGameModule();
         }
 
-        if (m_gameModule) {
-            m_gameModule->Update(deltaTime);
+        if (InputSystem::Instance().IsDown(EInputAction::CtrlLeft) && InputSystem::Instance().IsPressed(
+                EInputAction::TogglePlayMode)) {
+            TogglePlayMode();
         }
 
-        PostUpdateSystems(SceneManager::Instance().GetWorld(), deltaTime);
+        auto &world = SceneManager::Instance().GetWorld();
+        RunPhase(ESystemPhase::PreUpdate, world, deltaTime);
+
+        while (m_fixedAccumulator >= m_fixedTimeStep) {
+            RunPhase(ESystemPhase::FixedUpdate, world, m_fixedTimeStep);
+            m_fixedTimeStep -= m_fixedAccumulator;
+        }
+
+        RunPhase(ESystemPhase::Update, world, deltaTime);
+        RunPhase(ESystemPhase::PostUpdate, world, deltaTime);
+
+        InputSystem::Instance().PostUpdate();
 
 #ifdef RTGD_EDITOR
         EditorBridge::Instance().PublishSnapshot();
@@ -217,6 +252,42 @@ namespace RTGDEngine {
         m_resizePending = true;
         m_pendingW = w;
         m_pendingH = h;
+    }
+
+    void Engine::TogglePlayMode() {
+        m_isPlayMode = !m_isPlayMode;
+
+        if (m_isPlayMode) {
+            LogInfo("Entering play mode.");
+            m_gameModule->OnStart();
+        } else {
+            LogInfo("Exiting play mode.");
+            m_gameModule->OnStop();
+            ClearSystems(ESystemGroup::Game);
+            DestroyGameContent();
+        }
+    }
+
+    void Engine::AddSystem(SystemFunc func, ESystemPhase phase, int order, ESystemGroup group) {
+        auto &list = m_systems[static_cast<int>(phase)];
+        list.push_back({std::move(func), order, group});
+        std::stable_sort(list.begin(), list.end(), [](const SystemEntry &a, const SystemEntry &b) {
+            return a.Order < b.Order;
+        });
+    }
+
+    void Engine::ClearSystems(ESystemGroup group) {
+        for (auto &list: m_systems) {
+            std::erase_if(list, [group](const SystemEntry &entry) {
+                return group == entry.Group;
+            });
+        }
+    }
+
+    void Engine::RunPhase(ESystemPhase phase, flecs::world &world, float deltaTime) {
+        for (auto &entry: m_systems[static_cast<size_t>(phase)]) {
+            entry.Func(world, deltaTime);
+        }
     }
 
     void Engine::RenderThreadMain(std::unique_ptr<IPlatformWindow> window, std::promise<bool> initPromise) {
@@ -292,19 +363,5 @@ namespace RTGDEngine {
 
     void Engine::OnClose() {
         EventBus::Instance().Emit(Events::OnWindowClosed, {}, {});
-    }
-
-    void Engine::UpdateSystems(const flecs::world &world, float deltaTime) {
-        InputSystem::Instance().Update();
-        TimerSystem::Instance().Update(deltaTime);
-        EditorCameraSystem::Update(world, deltaTime);
-        MovementSystem::Update(world, deltaTime);
-        CameraSystem::Update(world, deltaTime);
-
-        LightSystem::Update(world);
-    }
-
-    void Engine::PostUpdateSystems(const flecs::world &world, float deltaTime) {
-        InputSystem::Instance().PostUpdate();
     }
 }

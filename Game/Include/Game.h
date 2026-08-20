@@ -14,7 +14,15 @@ public:
 
     void Shutdown() override;
 
+    void OnStart() override;
+
+    void OnStop() override;
+
 private:
+    void PlayerMovementSystem(flecs::world &world, float deltaTime);
+
+    void CameraUpdate(flecs::world &world, float deltaTime);
+
     bool m_isInitialized = false;
 
     ActionID m_moveForward;
@@ -23,5 +31,8 @@ private:
     ActionID m_moveRight;
 
     Entity m_player;
+    Entity m_playerCam;
+
+    Float3 m_cameraOffset = {0.0f, 2.0f, -2.0f};
     float m_speed = 1.0f;
 };

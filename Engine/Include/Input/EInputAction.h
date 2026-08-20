@@ -23,6 +23,7 @@ namespace RTGDEngine {
 
         CtrlLeft,
         ReloadGameModule,
+        TogglePlayMode,
 
         Count
     };
