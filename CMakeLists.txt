@@ -62,6 +62,8 @@ target_link_libraries(RTGD-Engine PRIVATE
         Engine
 )
 
+add_dependencies(RTGD-Engine Game)
+
 add_custom_command(TARGET RTGD-Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_SOURCE_DIR}/Assets" "$<TARGET_FILE_DIR:RTGD-Engine>/Assets"

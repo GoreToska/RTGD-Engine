@@ -208,7 +208,7 @@ namespace RTGDEngine {
         m_fixedAccumulator += deltaTime;
         while (m_fixedAccumulator >= m_fixedTimeStep) {
             RunPhase(ESystemPhase::FixedUpdate, world, m_fixedTimeStep);
-            m_fixedTimeStep -= m_fixedAccumulator;
+            m_fixedAccumulator -= m_fixedTimeStep;
         }
 
         RunPhase(ESystemPhase::Update, world, deltaTime);

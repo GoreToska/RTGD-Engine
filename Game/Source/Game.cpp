@@ -92,6 +92,9 @@ void Game::PlayerMovementSystem(flecs::world &world, float deltaTime) {
         dir.x -= 1;
     }
 
+    if (Diligent::length(dir) > 0.000001f)
+        dir = Diligent::normalize(dir);
+
     m_player.set<RTGDEngine::VelocityComponent>({dir * m_speed, {}});
 }
 
