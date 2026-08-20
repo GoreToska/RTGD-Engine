@@ -3,8 +3,9 @@
 
 #include "Engine/IGameModule.h"
 #include "Tools/Alias.h"
+#include "Tools/RTGDMacros.h"
 
-class Game : public RTGDEngine::IGameModule {
+class Game : public IGameModule {
 public:
     static Game &Instance();
 
@@ -36,3 +37,5 @@ private:
     Float3 m_cameraOffset = {0.0f, 2.0f, -2.0f};
     float m_speed = 5.0f;
 };
+
+DECLARE_GLOBAL_SINGLETON(Game, GGame)

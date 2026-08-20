@@ -130,4 +130,6 @@ namespace RTGDEngine {
         float m_fixedTimeStep = 1.0f / 60.0f;
         float m_fixedAccumulator = 0.0f;
     };
+
+    DECLARE_GLOBAL_SINGLETON(Engine, GEngine)
 }

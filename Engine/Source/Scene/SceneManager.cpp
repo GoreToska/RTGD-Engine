@@ -20,17 +20,17 @@ namespace RTGDEngine {
 
         m_world.observer<>().with<SceneEntity>().event(flecs::OnAdd)
                 .each([](flecs::entity entity) {
-                    EventBus::Instance().Emit(Events::OnEntityCreated, {entity.id()}, {});
+                    GEventBus.Emit(Events::OnEntityCreated, {entity.id()}, {});
                 });
 
         m_world.observer<>().with<SceneEntity>().event(flecs::OnRemove)
                 .each([](flecs::entity entity) {
-                    EventBus::Instance().Emit(Events::OnEntityDestroyed, {entity.id()}, {});
+                    GEventBus.Emit(Events::OnEntityDestroyed, {entity.id()}, {});
                 });
 
         m_world.observer<>().with<SceneEntity>().with<flecs::Identifier>(flecs::Name).event(flecs::OnSet)
                 .each([](flecs::entity entity) {
-                    EventBus::Instance().Emit(Events::OnEntityRenamed, {entity.id()}, {});
+                    GEventBus.Emit(Events::OnEntityRenamed, {entity.id()}, {});
                 });
 
         CreateScene("Untitled");
@@ -49,7 +49,7 @@ namespace RTGDEngine {
             m_activeScene = scene;
 
         LogInfo("SceneManager: created scene '{}'", name);
-        EventBus::Instance().Emit(Events::OnSceneCreated, {scene->GetRoot()}, {});
+        GEventBus.Emit(Events::OnSceneCreated, {scene->GetRoot()}, {});
 
         return scene;
     }
@@ -63,7 +63,7 @@ namespace RTGDEngine {
             return;
         }
 
-        EventBus::Instance().Emit(Events::OnSceneUnloaded, {it->second->GetRoot()}, {});
+        GEventBus.Emit(Events::OnSceneUnloaded, {it->second->GetRoot()}, {});
 
         it->second->GetRoot().destruct();
         m_scenes.erase(it);
@@ -83,7 +83,7 @@ namespace RTGDEngine {
 
         uint64_t prev = m_activeScene ? m_activeScene->GetRoot() : 0;
         m_activeScene = it->second;
-        EventBus::Instance().Emit(Events::OnActiveSceneChanged, {prev, m_activeScene->GetRoot()}, {});
+        GEventBus.Emit(Events::OnActiveSceneChanged, {prev, m_activeScene->GetRoot()}, {});
         LogInfo("SceneManager: active scene → '{}'", name);
     }
 
@@ -116,7 +116,7 @@ namespace RTGDEngine {
         for (auto &load: ready) {
             auto scene = CreateScene(load.name);
             scene->ApplyEntities(load.entities);
-            EventBus::Instance().Emit(Events::OnSceneLoaded, {scene->GetRoot()}, {});
+            GEventBus.Emit(Events::OnSceneLoaded, {scene->GetRoot()}, {});
         }
 
         if (!m_pendingActive.empty() && HasScene(m_pendingActive)) {
@@ -216,7 +216,7 @@ namespace RTGDEngine {
             return;
 
         e.child_of(newParent);
-        EventBus::Instance().Emit(Events::OnEntityReparented, {e.id(), oldParent.id(), newParent.id()}, {});
+        GEventBus.Emit(Events::OnEntityReparented, {e.id(), oldParent.id(), newParent.id()}, {});
     }
 
     void SceneManager::EnqueueCommand(std::function<void(flecs::world &)> func) {
@@ -229,7 +229,7 @@ namespace RTGDEngine {
     }
 
     void SceneManager::RequestLoadScene(const std::string &absolutePath) {
-        JobSystem::Instance().Submit([this, absolutePath]() {
+        GJobSystem.Submit([this, absolutePath]() {
             std::ifstream f(absolutePath);
             if (!f) {
                 LogError("Scene not found '{}'", absolutePath);

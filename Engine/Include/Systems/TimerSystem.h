@@ -44,4 +44,6 @@ namespace RTGDEngine {
         std::vector<uint32_t> m_freeList = {};
         std::vector<std::function<void()> > m_functionsToExecute = {};
     };
+
+    DECLARE_GLOBAL_SINGLETON(TimerSystem, GTimer)
 } // RTGDEngine

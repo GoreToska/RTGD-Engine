@@ -207,4 +207,6 @@ namespace RTGDEngine
         TextureHandle m_defaultTexture = INVALID_TEXTURE_HANDLE;
         TextureHandle m_defaultNormalTexture = INVALID_TEXTURE_HANDLE;
     };
+
+    DECLARE_GLOBAL_SINGLETON(RenderResourceManager, GRenderResources)
 } // RTGDEngine

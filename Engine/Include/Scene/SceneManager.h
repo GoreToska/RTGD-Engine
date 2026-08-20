@@ -95,4 +95,6 @@ namespace RTGDEngine {
         std::mutex m_loadMutex = {};
         std::vector<PendingSceneLoad> m_completedLoads = {};
     };
+
+    DECLARE_GLOBAL_SINGLETON(SceneManager, GScene)
 } // RTGDEngine

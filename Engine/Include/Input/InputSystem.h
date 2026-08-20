@@ -99,4 +99,6 @@ namespace RTGDEngine {
 
         // TODO: add vector of current windows
     };
+
+    DECLARE_GLOBAL_SINGLETON(InputSystem, GInput)
 }

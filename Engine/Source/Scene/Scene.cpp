@@ -24,7 +24,7 @@ namespace RTGDEngine {
     flecs::entity Scene::GetOrCreateGameRoot() {
         if (m_gameRoot.is_alive()) return m_gameRoot;
 
-        m_gameRoot = SceneManager::Instance().CreateEntity("GameRoot", m_root).add<GameRootTag>();
+        m_gameRoot = GScene.CreateEntity("GameRoot", m_root).add<GameRootTag>();
         return m_gameRoot;
     }
 

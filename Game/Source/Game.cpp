@@ -20,11 +20,11 @@ Game &Game::Instance() {
 
 void Game::Initialize() {
     LogInfo("Initializing game.");
-    RTGDEngine::SceneManager::Instance().GetActiveScene()->LoadFromFile(
-        RTGDEngine::GetAbsolutePath("Assets/Scenes/Default.scene"));
+    GScene.GetActiveScene()->LoadFromFile(
+        GetAbsolutePath("Assets/Scenes/Default.scene"));
 
 
-    /*RTGDEngine::SceneManager::Instance().GetActiveScene()->LoadFromFile(
+    /*RTGDEngine::GScene.GetActiveScene()->LoadFromFile(
         RTGDEngine::GetAbsolutePath("Assets/Scenes/Stress10k.scene"));*/
 }
 
@@ -35,79 +35,73 @@ void Game::Shutdown() {
 }
 
 void Game::OnStart() {
-    auto &input = RTGDEngine::InputSystem::Instance();
+    m_moveForward = GInput.RegisterAction("PlayerMoveForward");
+    m_moveBackward = GInput.RegisterAction("PlayerMoveBackward");
+    m_moveLeft = GInput.RegisterAction("PlayerMoveLeft");
+    m_moveRight = GInput.RegisterAction("PlayerMoveRight");
 
-    m_moveForward = input.RegisterAction("PlayerMoveForward");
-    m_moveBackward = input.RegisterAction("PlayerMoveBackward");
-    m_moveLeft = input.RegisterAction("PlayerMoveLeft");
-    m_moveRight = input.RegisterAction("PlayerMoveRight");
+    GInput.BindKey(m_moveForward, gainput::KeyW);
+    GInput.BindKey(m_moveBackward, gainput::KeyS);
+    GInput.BindKey(m_moveLeft, gainput::KeyA);
+    GInput.BindKey(m_moveRight, gainput::KeyD);
 
-    input.BindKey(m_moveForward, gainput::KeyW);
-    input.BindKey(m_moveBackward, gainput::KeyS);
-    input.BindKey(m_moveLeft, gainput::KeyA);
-    input.BindKey(m_moveRight, gainput::KeyD);
+    m_player = GScene.CreateEntity(
+        "Player", GScene.GetGameRoot());
 
-    m_player = RTGDEngine::SceneManager::Instance().CreateEntity(
-        "Player", RTGDEngine::SceneManager::Instance().GetGameRoot());
+    m_player.set<MeshComponent>({{"Assets/BoxTextured.gltf"}, {"Assets/Materials/Cube.mat"}})
+            .set<RenderComponent>({true, true})
+            .set<TransformComponent>({{0.0f, 1.0f, 0.0f}})
+            .set<VelocityComponent>({});
 
-    m_player.set<RTGDEngine::MeshComponent>({{"Assets/BoxTextured.gltf"}, {"Assets/Materials/Cube.mat"}})
-            .set<RTGDEngine::RenderComponent>({true, true})
-            .set<RTGDEngine::TransformComponent>({{0.0f, 1.0f, 0.0f}})
-            .set<RTGDEngine::VelocityComponent>({});
+    m_playerCam = GScene.CreateEntity(
+        "PlayerCamera", GScene.GetGameRoot());
 
+    m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({});
 
-    m_playerCam = RTGDEngine::SceneManager::Instance().CreateEntity(
-        "PlayerCamera", RTGDEngine::SceneManager::Instance().GetGameRoot());
-
-    m_playerCam.set<RTGDEngine::CameraComponent>({.Priority = 1}).set<RTGDEngine::TransformComponent>({});
-
-    auto &engine = RTGDEngine::Engine::Instance();
-    engine.AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), RTGDEngine::ESystemPhase::PreUpdate, 0,
-                     RTGDEngine::ESystemGroup::Game);
-    engine.AddSystem(std::bind_front(&Game::CameraUpdate, this), RTGDEngine::ESystemPhase::Update, 10,
-                     RTGDEngine::ESystemGroup::Game);
+    GEngine.AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::PreUpdate, 0,
+                     ESystemGroup::Game);
+    GEngine.AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
+                     ESystemGroup::Game);
 }
 
 void Game::OnStop() {
 }
 
 void Game::PlayerMovementSystem(flecs::world &world, float deltaTime) {
-    auto &input = RTGDEngine::InputSystem::Instance();
-
     Float3 dir{};
 
-    if (input.IsDown(m_moveForward)) {
+    if (GInput.IsDown(m_moveForward)) {
         dir.z += 1;
     }
 
-    if (input.IsDown(m_moveBackward)) {
+    if (GInput.IsDown(m_moveBackward)) {
         dir.z -= 1;
     }
 
-    if (input.IsDown(m_moveRight)) {
+    if (GInput.IsDown(m_moveRight)) {
         dir.x += 1;
     }
 
-    if (input.IsDown(m_moveLeft)) {
+    if (GInput.IsDown(m_moveLeft)) {
         dir.x -= 1;
     }
 
     if (Diligent::length(dir) > 0.000001f)
         dir = Diligent::normalize(dir);
 
-    m_player.set<RTGDEngine::VelocityComponent>({dir * m_speed, {}});
+    m_player.set<VelocityComponent>({dir * m_speed, {}});
 }
 
 void Game::CameraUpdate(flecs::world &world, float deltaTime) {
-    auto &playerTransform = m_player.get_mut<RTGDEngine::TransformComponent>();
-    auto &camTransform = m_playerCam.get_mut<RTGDEngine::TransformComponent>();
+    auto &playerTransform = m_player.get_mut<TransformComponent>();
+    auto &camTransform = m_playerCam.get_mut<TransformComponent>();
 
     camTransform.Position = playerTransform.Position + m_cameraOffset;
     camTransform.LookAt(playerTransform.Position);
 }
 
 extern "C" {
-GAME_API RTGDEngine::IGameModule *GetGameModule() {
-    return &Game::Instance();
+GAME_API IGameModule *GetGameModule() {
+    return &GGame;
 }
 }

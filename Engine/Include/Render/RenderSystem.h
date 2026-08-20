@@ -113,4 +113,6 @@ namespace RTGDEngine {
 
         void CullViews();
     };
+
+    DECLARE_GLOBAL_SINGLETON(RTGDRenderSystem, GRenderSystem)
 }

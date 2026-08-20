@@ -32,7 +32,7 @@ namespace RTGDEngine {
 
     void Engine::RegisterBaseSystems() {
         AddSystem([](flecs::world &, float dt) {
-            TimerSystem::Instance().Update(dt);
+            GTimer.Update(dt);
         }, ESystemPhase::PreUpdate);
 
         AddSystem([this](flecs::world &world, float dt) {
@@ -51,26 +51,26 @@ namespace RTGDEngine {
     bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window) {
         m_platformWindow = std::move(window);
 
-        Logger::Instance().Initialize();
+        GLogger.Initialize();
 
-        JobSystem::Instance().Initialize();
+        GJobSystem.Initialize();
 
-        SceneManager::Instance().Initialize();
+        GScene.Initialize();
 
 #ifdef RTGD_EDITOR
-        EditorBridge::Instance().Initialize();
+        GEditorBridge.Initialize();
 
-        SceneManager::Instance().GetWorld().entity("EditorCamera").add<TransformComponent>().add<CameraComponent>().add<
+        GScene.GetWorld().entity("EditorCamera").add<TransformComponent>().add<CameraComponent>().add<
             EditorCameraMovementComponent>().add<VelocityComponent>().add<UUIDComponent>();
 #endif
 
-        RTGDRenderSystem::Instance().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
+        GRenderSystem.Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
                                                 m_platformWindow->GetHeight());
 
-        RenderResourceManager::Instance().Initialize(RTGDRenderSystem::Instance().GetDevice(),
-                                                     RTGDRenderSystem::Instance().GetContext());
+        GRenderResources.Initialize(GRenderSystem.GetDevice(),
+                                                     GRenderSystem.GetContext());
 
-        InputSystem::Instance().AddWindowHandle(m_platformWindow.get());
+        GInput.AddWindowHandle(m_platformWindow.get());
 
         m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
         m_platformWindow->OnClose = []() { Instance().OnClose(); };
@@ -126,7 +126,7 @@ namespace RTGDEngine {
 #endif
 
     void Engine::DestroyGameContent() {
-        SceneManager::Instance().GetWorld().delete_with<GameRootTag>();
+        GScene.GetWorld().delete_with<GameRootTag>();
     }
 
     void Engine::UnloadGameModule() {
@@ -147,9 +147,9 @@ namespace RTGDEngine {
     }
 
     void Engine::Shutdown() {
-        EventBus::Instance().Process();
+        GEventBus.Process();
 
-        RTGDRenderSystem::Instance().Shutdown();
+        GRenderSystem.Shutdown();
 
         UnloadGameModule();
     }
@@ -185,24 +185,24 @@ namespace RTGDEngine {
     }
 
     void Engine::Update(const float deltaTime) {
-        JobSystem::Instance().Flush(MAX_JOBS_TO_REMOVE);
-        SceneManager::Instance().ApplyPendingSceneChanges();
-        SceneManager::Instance().ApplyPendingEntityCommands();
-        EventBus::Instance().Process();
+        GJobSystem.Flush(MAX_JOBS_TO_REMOVE);
+        GScene.ApplyPendingSceneChanges();
+        GScene.ApplyPendingEntityCommands();
+        GEventBus.Process();
 
-        InputSystem::Instance().Update();
+        GInput.Update();
 
-        if (InputSystem::Instance().IsDown(EInputAction::CtrlLeft) && InputSystem::Instance().IsPressed(
+        if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
                 EInputAction::ReloadGameModule)) {
             ReloadGameModule();
         }
 
-        if (InputSystem::Instance().IsDown(EInputAction::CtrlLeft) && InputSystem::Instance().IsPressed(
+        if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
                 EInputAction::TogglePlayMode)) {
             TogglePlayMode();
         }
 
-        auto &world = SceneManager::Instance().GetWorld();
+        auto &world = GScene.GetWorld();
         RunPhase(ESystemPhase::PreUpdate, world, deltaTime);
 
         m_fixedAccumulator += deltaTime;
@@ -214,29 +214,29 @@ namespace RTGDEngine {
         RunPhase(ESystemPhase::Update, world, deltaTime);
         RunPhase(ESystemPhase::PostUpdate, world, deltaTime);
 
-        InputSystem::Instance().PostUpdate();
+        GInput.PostUpdate();
 
 #ifdef RTGD_EDITOR
-        EditorBridge::Instance().PublishSnapshot();
+        GEditorBridge.PublishSnapshot();
 #endif
 
         Render();
     }
 
     void Engine::Render() {
-        RTGDRenderSystem::Instance().ApplyPendingResize(SceneManager::Instance().GetWorld());
+        GRenderSystem.ApplyPendingResize(GScene.GetWorld());
 
-        auto &rs = RTGDRenderSystem::Instance();
+        auto &rs = GRenderSystem;
         auto &device = rs.GetDevice();
         auto &context = rs.GetContext();
-        auto &rm = RenderResourceManager::Instance();
+        auto &rm = GRenderResources;
 
         rm.FlushMeshUploads(device);
         rm.FlushTextureUploads(device, context);
         rm.ProcessPendingDestroys();
 
-        RTGDRenderSystem::Instance().ExecuteFrame(SceneManager::Instance().GetWorld());
-        RTGDRenderSystem::Instance().Present();
+        GRenderSystem.ExecuteFrame(GScene.GetWorld());
+        GRenderSystem.Present();
     }
 
     void Engine::CreateConsole() {
@@ -332,10 +332,10 @@ namespace RTGDEngine {
             h = m_pendingH;
         }
 
-        RTGDRenderSystem::Instance().Resize(w, h);
-        InputSystem::Instance().Resize(w, h);
+        GRenderSystem.Resize(w, h);
+        GInput.Resize(w, h);
         m_platformWindow->SetSize(w, h);
-        EventBus::Instance().Emit(Events::OnWindowResized, {w, h}, {});
+        GEventBus.Emit(Events::OnWindowResized, {w, h}, {});
     }
 
 #ifdef RTGD_EDITOR
@@ -351,7 +351,7 @@ namespace RTGDEngine {
             m_pickRequest.Pending = false;
         }
 
-        const flecs::entity e = RTGDRenderSystem::Instance().PickEntity(x, y);
+        const flecs::entity e = GRenderSystem.PickEntity(x, y);
         {
             std::lock_guard<std::mutex> lock(m_pickMutex);
             m_pickRequest.Result = e.id();
@@ -363,6 +363,6 @@ namespace RTGDEngine {
 #endif
 
     void Engine::OnClose() {
-        EventBus::Instance().Emit(Events::OnWindowClosed, {}, {});
+        GEventBus.Emit(Events::OnWindowClosed, {}, {});
     }
 }

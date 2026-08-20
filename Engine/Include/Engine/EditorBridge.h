@@ -40,5 +40,7 @@ namespace RTGDEngine {
         std::atomic<uint32_t> m_hierarchyVersion = 0;
         std::atomic<bool> m_hierarchyDirty = true;
     };
+
+    DECLARE_GLOBAL_SINGLETON(EditorBridge, GEditorBridge)
 } // RTGDEngine
 #endif

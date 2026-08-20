@@ -60,7 +60,7 @@ namespace RTGDEngine
         ITextureView* idRTV = g.RTV(m_id);
 #endif
 
-        auto& rm = RenderResourceManager::Instance();
+        auto& rm = GRenderResources;
         TextureHandle def = rm.GetDefaultTextureHandle();
         TextureHandle defNormal = rm.GetDefaultNormalTextureHandle();
 
