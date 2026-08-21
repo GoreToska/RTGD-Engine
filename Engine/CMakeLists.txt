@@ -128,6 +128,11 @@ add_library(Engine SHARED
         Source/Platform/Windows/WindowsDynamicLibrary.cpp
         Include/Platform/Windows/WindowsDynamicLibrary.h
         Include/Components/GameRootTag.h
+        Source/Systems/Physics/PhysicsSystem.cpp
+        Include/Systems/Physics/PhysicsSystem.h
+        Include/Components/PhysicsComponent.h
+        Include/Systems/Physics/PhysicsLayer.h
+        Include/Tools/JoltConversions.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -142,6 +147,7 @@ target_include_directories(Engine PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/Include
         ${CMAKE_SOURCE_DIR}/ThirdParty/gainput/lib/include
         ${CMAKE_SOURCE_DIR}/ThirdParty/stb
+        ${CMAKE_SOURCE_DIR}/ThirdParty/JoltPhysics
 )
 
 target_link_libraries(Engine PUBLIC
@@ -153,6 +159,7 @@ target_link_libraries(Engine PUBLIC
         assimp
         enkiTS
         nlohmann_json::nlohmann_json
+        Jolt
 )
 
 if (WIN32)
@@ -225,11 +232,11 @@ add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_SOURCE_DIR}/Shaders" "$<TARGET_FILE_DIR:Engine>/Shaders"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        "${CMAKE_SOURCE_DIR}/Assets"  "$<TARGET_FILE_DIR:Engine>/Assets"
+        "${CMAKE_SOURCE_DIR}/Assets" "$<TARGET_FILE_DIR:Engine>/Assets"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_SOURCE_DIR}/Shaders" "${EDITOR_OUT}/Shaders"
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-        "${CMAKE_SOURCE_DIR}/Assets"  "${EDITOR_OUT}/Assets"
+        "${CMAKE_SOURCE_DIR}/Assets" "${EDITOR_OUT}/Assets"
         COMMENT "Syncing shaders and assets"
         VERBATIM
 )

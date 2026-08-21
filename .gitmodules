@@ -22,3 +22,6 @@
 [submodule "ThirdParty/json"]
 	path = ThirdParty/json
 	url = https://github.com/nlohmann/json.git
+[submodule "ThirdParty/JoltPhysics"]
+	path = ThirdParty/JoltPhysics
+	url = https://github.com/jrouwe/JoltPhysics.git

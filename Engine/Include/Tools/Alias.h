@@ -4,7 +4,6 @@
 
 #pragma once
 #include "BasicMath.hpp"
-#include <nlohmann/json.hpp>
 #include <flecs.h>
 
 #include "gainput/gainput.h"

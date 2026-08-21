@@ -86,10 +86,15 @@ namespace RTGDEngine {
             return false;
         }
 
+        m_lastLoadedPath = absolutePath;
         std::stringstream ss;
         ss << f.rdbuf();
         Deserialize(ss.str());
         return true;
+    }
+
+    bool Scene::Reload() {
+        return m_lastLoadedPath.empty() ? false : LoadFromFile(m_lastLoadedPath);
     }
 
     std::vector<Scene::EntityData> Scene::ParseScene(const std::string &json) {

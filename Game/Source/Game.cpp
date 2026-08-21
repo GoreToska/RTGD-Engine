@@ -5,6 +5,7 @@
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/MeshComponent.h"
+#include "Components/PhysicsComponent.h"
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/VelocityComponent.h"
@@ -59,9 +60,9 @@ void Game::OnStart() {
     m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({});
 
     GEngine.AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::PreUpdate, 0,
-                     ESystemGroup::Game);
+                      ESystemGroup::Game);
     GEngine.AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
-                     ESystemGroup::Game);
+                      ESystemGroup::Game);
 }
 
 void Game::OnStop() {

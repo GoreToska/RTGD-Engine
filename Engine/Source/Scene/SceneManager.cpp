@@ -98,6 +98,12 @@ namespace RTGDEngine {
         return scene;
     }
 
+    void SceneManager::ReloadAll() {
+        for (auto &[name, scene]: m_scenes) {
+            scene->Reload();
+        }
+    }
+
     void SceneManager::RequestActiveScene(const std::string &name) {
         m_pendingActive = name;
     }

@@ -7,6 +7,7 @@
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/GameRootTag.h"
+#include "Components/PhysicsComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/UUIDComponent.h"
 #include "Components/VelocityComponent.h"
@@ -26,6 +27,7 @@
 #include "Tools/Logger.h"
 #include "Event/Events.h"
 #include "Event/EventBus.h"
+#include "Systems/Physics/PhysicsSystem.h"
 
 namespace RTGDEngine {
     constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
@@ -34,6 +36,11 @@ namespace RTGDEngine {
         AddSystem([](flecs::world &, float dt) {
             GTimer.Update(dt);
         }, ESystemPhase::PreUpdate);
+
+        AddSystem([&](flecs::world &world, float dt) {
+            if (m_isPlayMode)
+                GPhysics.Update(world, dt);
+        }, ESystemPhase::FixedUpdate, 0);
 
         AddSystem([this](flecs::world &world, float dt) {
             if (!m_isPlayMode)
@@ -57,6 +64,8 @@ namespace RTGDEngine {
 
         GScene.Initialize();
 
+        GPhysics.Initialize();
+
 #ifdef RTGD_EDITOR
         GEditorBridge.Initialize();
 
@@ -65,10 +74,10 @@ namespace RTGDEngine {
 #endif
 
         GRenderSystem.Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
-                                                m_platformWindow->GetHeight());
+                                 m_platformWindow->GetHeight());
 
         GRenderResources.Initialize(GRenderSystem.GetDevice(),
-                                                     GRenderSystem.GetContext());
+                                    GRenderSystem.GetContext());
 
         GInput.AddWindowHandle(m_platformWindow.get());
 
@@ -148,10 +157,9 @@ namespace RTGDEngine {
 
     void Engine::Shutdown() {
         GEventBus.Process();
-
-        GRenderSystem.Shutdown();
-
         UnloadGameModule();
+        GRenderSystem.Shutdown();
+        GPhysics.Shutdown();
     }
 
     bool Engine::LoadGameModule(const std::string &dllPath) {
@@ -266,6 +274,7 @@ namespace RTGDEngine {
             m_gameModule->OnStop();
             ClearSystems(ESystemGroup::Game);
             DestroyGameContent();
+            GScene.ReloadAll();
         }
     }
 

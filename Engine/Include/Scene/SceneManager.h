@@ -43,6 +43,8 @@ namespace RTGDEngine {
 
         std::shared_ptr<Scene> LoadSceneFromFile(const std::string &absolutePath);
 
+        void ReloadAll();
+
         void RequestActiveScene(const std::string &name);
 
         void RequestUnloadScene(const std::string &name);

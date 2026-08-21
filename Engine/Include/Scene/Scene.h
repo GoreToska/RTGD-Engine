@@ -43,6 +43,8 @@ namespace RTGDEngine {
 
         bool LoadFromFile(const std::string &absolutePath);
 
+        bool Reload();
+
         static std::vector<EntityData> ParseScene(const std::string &json); // thread safe for async scene loading
         void ApplyEntities(const std::vector<EntityData> &entities);
 
@@ -56,5 +58,6 @@ namespace RTGDEngine {
         flecs::world *m_world;
         flecs::entity m_root;
         flecs::entity m_gameRoot;
+        std::string m_lastLoadedPath;
     };
 } // RTGDEngine

@@ -5,6 +5,7 @@
 #pragma once
 #include <functional>
 #include <string>
+#include <nlohmann/json.hpp>
 
 #include "Render/RenderHandle.h"
 #include "Render/RenderResourceManager.h"
