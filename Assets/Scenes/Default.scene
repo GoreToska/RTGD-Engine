@@ -73,5 +73,13 @@
       "PhysicsComponent": { "Shape": "Box", "MotionType": "Dynamic", "Extents": {"x":0.5,"y":0.5,"z":0.5}, "Mass": 1 },
       "UUIDComponent": { "ID": 0 }
     } }
-  }
+  },
+  {
+        "Name": "Trigger Zone",
+        "Data": { "components": {
+          "TransformComponent": { "Position": {"x":0,"y":0.5,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
+          "PhysicsComponent": { "Shape": "Box", "MotionType": "Static", "Extents": {"x":1,"y":0.5,"z":1}, "Mass": 1, "IsTrigger": true },
+          "UUIDComponent": { "ID": 0 }
+        } }
+    }
   ]

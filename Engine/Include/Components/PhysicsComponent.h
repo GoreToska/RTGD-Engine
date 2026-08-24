@@ -13,7 +13,9 @@
 #include "Systems/Physics/PhysicsSystem.h"
 #include "Systems/Physics/PhysicsLayer.h"
 #include "TransformComponent.h"
+#include "Event/Events.h"
 #include "Tools/Alias.h"
+#include "../Event/Delegate.h"
 #include "Tools/JoltConversions.h"
 
 namespace RTGDEngine {
@@ -29,8 +31,16 @@ namespace RTGDEngine {
         Float3 Extents = {0.5f, 0.5f, 0.5f}; // box - extents, sphere - radius (x)
         EMotionType MotionType = EMotionType::Dynamic;
         float Mass = 1.0f;
+        bool IsTrigger = false;
 
-        JPH::BodyID BodyID; // transient
+        // transient
+        JPH::BodyID BodyID;
+        Delegate<PhysicsSystem, const Events::CollisionEnterEvent &> OnCollisionEnter;
+        Delegate<PhysicsSystem, const Events::CollisionStayEvent &> OnCollisionStay;
+        Delegate<PhysicsSystem, const Events::CollisionExitEvent &> OnCollisionExit;
+        Delegate<PhysicsSystem, const Events::TriggerEnterEvent &> OnTriggerEnter;
+        Delegate<PhysicsSystem, const Events::TriggerStayEvent &> OnTriggerStay;
+        Delegate<PhysicsSystem, const Events::TriggerExitEvent &> OnTriggerExit;
 
         static void RegisterMeta(const flecs::world &world) {
             world.component<EPhysicsShape>()
@@ -46,7 +56,8 @@ namespace RTGDEngine {
                     .member<EPhysicsShape>("Shape")
                     .member<Float3>("Extents")
                     .member<EMotionType>("MotionType")
-                    .member<float>("Mass");
+                    .member<float>("Mass")
+                    .member<bool>("IsTrigger");
 
             auto createBody = [](flecs::entity e) {
                 auto phys = e.get_ref<PhysicsComponent>();
@@ -55,6 +66,7 @@ namespace RTGDEngine {
 
                 auto &bi = GPhysics.GetBodyInterface();
                 if (!phys->BodyID.IsInvalid()) {
+                    GPhysics.UnregisterBody(phys->BodyID);
                     bi.RemoveBody(phys->BodyID);
                     bi.DestroyBody(phys->BodyID);
                 }
@@ -87,6 +99,8 @@ namespace RTGDEngine {
                 JPH::ObjectLayer layer = phys->MotionType == EMotionType::Static ? Layers::NON_MOVING : Layers::MOVING;
 
                 JPH::BodyCreationSettings settings(shape, ToRVec3(xf->Position), ToQuat(xf->Rotation), motion, layer);
+                settings.mIsSensor = phys->IsTrigger;
+
                 if (phys->MotionType != EMotionType::Static) {
                     settings.mOverrideMassProperties = JPH::EOverrideMassProperties::MassAndInertiaProvided;
                     settings.mMassPropertiesOverride = massProps;
@@ -96,6 +110,7 @@ namespace RTGDEngine {
                                                    phys->MotionType == EMotionType::Static
                                                        ? JPH::EActivation::DontActivate
                                                        : JPH::EActivation::Activate);
+                GPhysics.RegisterBody(phys->BodyID, e.id(), phys->IsTrigger);
             };
 
             world.observer<PhysicsComponent>().event(flecs::OnSet).each(
@@ -104,15 +119,18 @@ namespace RTGDEngine {
             world.observer<TransformComponent>().event(flecs::OnSet).each(
                 [createBody](flecs::entity e, TransformComponent &) {
                     auto phys = e.get_ref<PhysicsComponent>();
-                    if (phys && phys->BodyID.IsInvalid()) createBody(e);
+                    if (phys && phys->BodyID.IsInvalid()) {
+                        createBody(e);
+                    }
                 });
 
             world.observer<PhysicsComponent>().event(flecs::OnRemove).each(
-                [](PhysicsComponent &phys) {
-                    if (phys.BodyID.IsInvalid()) return;
+                [](flecs::entity e, PhysicsComponent &c) {
+                    if (c.BodyID.IsInvalid()) return;
+                    GPhysics.UnregisterBody(c.BodyID);
                     auto &bi = GPhysics.GetBodyInterface();
-                    bi.RemoveBody(phys.BodyID);
-                    bi.DestroyBody(phys.BodyID);
+                    bi.RemoveBody(c.BodyID);
+                    bi.DestroyBody(c.BodyID);
                 });
         }
     };

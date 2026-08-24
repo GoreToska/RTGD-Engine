@@ -13,6 +13,99 @@
 #include "Tools/JoltConversions.h"
 
 namespace RTGDEngine {
+    void ContactListenerImpl::OnContactAdded(const JPH::Body &b1, const JPH::Body &b2, const JPH::ContactManifold &m,
+                                             JPH::ContactSettings &contact_settings) {
+        Owner->QueueContact(b1.GetID(), b2.GetID(), m.GetWorldSpaceContactPointOn1(0), m.mWorldSpaceNormal,
+                            EContactPhase::Enter);
+    }
+
+    void ContactListenerImpl::OnContactPersisted(const JPH::Body &b1, const JPH::Body &b2,
+                                                 const JPH::ContactManifold &m,
+                                                 JPH::ContactSettings &contact_settings) {
+        Owner->QueueContact(b1.GetID(), b2.GetID(), m.GetWorldSpaceContactPointOn1(0), m.mWorldSpaceNormal,
+                            EContactPhase::Stay);
+    }
+
+    void ContactListenerImpl::OnContactRemoved(const JPH::SubShapeIDPair &pair) {
+        Owner->QueueContact(pair.GetBody1ID(), pair.GetBody2ID(), JPH::RVec3::sZero(), JPH::Vec3::sZero(),
+                            EContactPhase::Exit);
+    }
+
+    void PhysicsSystem::RegisterBody(JPH::BodyID id, uint64_t entity, bool IsTrigger) {
+        m_bodyInfo[id] = {entity, IsTrigger};
+    }
+
+    void PhysicsSystem::UnregisterBody(JPH::BodyID id) {
+        m_bodyInfo.erase(id);
+    }
+
+    void PhysicsSystem::QueueContact(JPH::BodyID id1, JPH::BodyID id2, JPH::RVec3 point, JPH::Vec3 normal,
+                                     EContactPhase phase) {
+        std::lock_guard lock(m_contactMutex);
+        m_pendingContacts.push_back({id1, id2, point, normal, phase});
+    }
+
+    void PhysicsSystem::DispatchContact(::World &world, const PendingContact &contact) {
+        auto it1 = m_bodyInfo.find(contact.Body1);
+        auto it2 = m_bodyInfo.find(contact.Body2);
+
+        if (it1 == m_bodyInfo.end() || it2 == m_bodyInfo.end()) return;
+
+        bool isTrigger = it1->second.IsTrigger || it2->second.IsTrigger;
+        Entity e1 = world.entity(it1->second.Entity);
+        Entity e2 = world.entity(it2->second.Entity);
+
+        switch (contact.Phase) {
+            case EContactPhase::Enter: {
+                Float3 point = ToFloat3(contact.Point), normal = ToFloat3(contact.Normal);
+                if (isTrigger) {
+                    Events::TriggerEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
+                    GEventBus.Emit(Events::OnTriggerEnter, evt1, EmitBadge<PhysicsSystem>{});
+                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerEnter.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerEnter.Broadcast({}, evt2);
+                } else {
+                    Events::CollisionEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
+                    GEventBus.Emit(Events::OnCollisionEnter, evt1, EmitBadge<PhysicsSystem>{});
+                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionEnter.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionEnter.Broadcast({}, evt2);
+                }
+                break;
+            }
+            case EContactPhase::Stay: {
+                Float3 point = ToFloat3(contact.Point), normal = ToFloat3(contact.Normal);
+                if (isTrigger) {
+                    Events::TriggerStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
+                    GEventBus.Emit(Events::OnTriggerStay, evt1, EmitBadge<PhysicsSystem>{});
+                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerStay.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerStay.Broadcast({}, evt2);
+                } else {
+                    Events::CollisionStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
+                    GEventBus.Emit(Events::OnCollisionStay, evt1, EmitBadge<PhysicsSystem>{});
+                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionStay.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionStay.Broadcast({}, evt2);
+                }
+                break;
+            }
+            case EContactPhase::Exit: {
+                auto &bi = GetBodyInterface();
+                if (!bi.IsActive(contact.Body1) && !bi.IsActive(contact.Body2)) break;
+
+                if (isTrigger) {
+                    Events::TriggerExitEvent evt1{e1, e2}, evt2{e2, e1};
+                    GEventBus.Emit(Events::OnTriggerExit, evt1, EmitBadge<PhysicsSystem>{});
+                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerExit.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerExit.Broadcast({}, evt2);
+                } else {
+                    Events::CollisionExitEvent evt1{e1, e2}, evt2{e2, e1};
+                    GEventBus.Emit(Events::OnCollisionExit, evt1, EmitBadge<PhysicsSystem>{});
+                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionExit.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionExit.Broadcast({}, evt2);
+                }
+                break;
+            }
+        }
+    }
+
     void PhysicsSystem::Initialize() {
         JPH::RegisterDefaultAllocator();
         JPH::Factory::sInstance = new JPH::Factory();
@@ -30,10 +123,23 @@ namespace RTGDEngine {
         m_physicsSystem.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints,
                              m_broadPhaseLayerInterface, m_objectVsBroadPhaseLayerFilter, m_objectLayerPairFilter);
         m_physicsSystem.SetGravity(JPH::Vec3(0.0f, -9.81f, 0.0f));
+
+        m_contactListener.Owner = this;
+        m_physicsSystem.SetContactListener(&m_contactListener);
     }
 
     void PhysicsSystem::Update(flecs::world &world, float deltaTime) {
         m_physicsSystem.Update(deltaTime, m_collisionSteps, m_tempAllocator.get(), m_jobSystem.get());
+
+        std::vector<PendingContact> contacts = {};
+        {
+            std::lock_guard<std::mutex> lock(m_contactMutex);
+            contacts.swap(m_pendingContacts);
+        }
+
+        for (auto &c: contacts) {
+            DispatchContact(world, c);
+        }
 
         world.query<PhysicsComponent, TransformComponent>().each(
             [&](PhysicsComponent &physics, TransformComponent &transform) {

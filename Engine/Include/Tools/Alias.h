@@ -16,6 +16,7 @@ using Quaternion = Diligent::QuaternionF;
 
 using ActionID = gainput::UserButtonId;
 using Entity = flecs::entity;
+using World = flecs::world;
 
 constexpr Quaternion QuaternionIdentity() {
     return {0.0f, 0.0f, 0.0f, 1.0f};

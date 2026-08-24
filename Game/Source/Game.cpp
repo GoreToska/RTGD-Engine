@@ -63,6 +63,28 @@ void Game::OnStart() {
                       ESystemGroup::Game);
     GEngine.AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
                       ESystemGroup::Game);
+
+    auto fallingBox = GScene.GetActiveScene()->Find("Falling Box");
+    if (auto phys = fallingBox.get_ref<PhysicsComponent>()) {
+        phys->OnCollisionEnter += [](const Events::CollisionEnterEvent &e) {
+            LogInfo("[component] CollisionEnter: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
+        };
+        phys->OnCollisionStay += [](const Events::CollisionStayEvent &e) {
+            LogInfo("[component] CollisionStay: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
+        };
+        phys->OnCollisionExit += [](const Events::CollisionExitEvent &e) {
+            LogInfo("[component] CollisionExit: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
+        };
+        phys->OnTriggerEnter += [](const Events::TriggerEnterEvent &e) {
+            LogInfo("[component] TriggerEnter: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
+        };
+        phys->OnTriggerStay += [](const Events::TriggerStayEvent &e) {
+            LogInfo("[component] TriggerStay: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
+        };
+        phys->OnTriggerExit += [](const Events::TriggerExitEvent &e) {
+            LogInfo("[component] TriggerExit: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
+        };
+    }
 }
 
 void Game::OnStop() {

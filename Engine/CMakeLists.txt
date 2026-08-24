@@ -133,6 +133,7 @@ add_library(Engine SHARED
         Include/Components/PhysicsComponent.h
         Include/Systems/Physics/PhysicsLayer.h
         Include/Tools/JoltConversions.h
+        Include/Event/Delegate.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

@@ -4,12 +4,15 @@
 
 #pragma once
 #include "EventBus.h"
+#include "Tools/Alias.h"
 
 namespace RTGDEngine {
     class SceneManager;
     class Engine;
     class AssetManager;
     class RenderResourceManager;
+    class PhysicsSystem;
+
     enum class EAssetType : uint8_t;
 
 
@@ -100,6 +103,44 @@ namespace RTGDEngine {
             // TODO: EGizmoMode?
         };
 
+        struct CollisionEnterEvent {
+            Entity Target;
+            Entity Other;
+            Float3 Point;
+            Float3 Normal;
+        };
+
+        struct CollisionStayEvent {
+            Entity Target;
+            Entity Other;
+            Float3 Point;
+            Float3 Normal;
+        };
+
+        struct CollisionExitEvent {
+            Entity Target;
+            Entity Other;
+        };
+
+        struct TriggerEnterEvent {
+            Entity Target;
+            Entity Other;
+            Float3 Point;
+            Float3 Normal;
+        };
+
+        struct TriggerStayEvent {
+            Entity Target;
+            Entity Other;
+            Float3 Point;
+            Float3 Normal;
+        };
+
+        struct TriggerExitEvent {
+            Entity Target;
+            Entity Other;
+        };
+
         inline constexpr EventKey<EntityCreatedEvent, SceneManager> OnEntityCreated{"entity.created"};
         inline constexpr EventKey<EntityDestroyedEvent, SceneManager> OnEntityDestroyed{"entity.destroyed"};
         inline constexpr EventKey<EntityReparentedEvent, SceneManager> OnEntityReparented{"entity.reparented"};
@@ -123,5 +164,12 @@ namespace RTGDEngine {
 
         inline constexpr EventKey<SelectionChangedEvent> OnSelectionChanged{"editor.selection_changed"};
         inline constexpr EventKey<GizmoModeChangedEvent> OnGizmoChanged{"editor.gizmo_changed"};
+
+        inline constexpr EventKey<CollisionEnterEvent, PhysicsSystem> OnCollisionEnter{"physics.collision_enter"};
+        inline constexpr EventKey<CollisionStayEvent, PhysicsSystem> OnCollisionStay{"physics.collision_stay"};
+        inline constexpr EventKey<CollisionExitEvent, PhysicsSystem> OnCollisionExit{"physics.collision_exit"};
+        inline constexpr EventKey<TriggerEnterEvent, PhysicsSystem> OnTriggerEnter{"physics.trigger_enter"};
+        inline constexpr EventKey<TriggerStayEvent, PhysicsSystem> OnTriggerStay{"physics.trigger_stay"};
+        inline constexpr EventKey<TriggerExitEvent, PhysicsSystem> OnTriggerExit{"physics.trigger_exit"};
     }
 }
