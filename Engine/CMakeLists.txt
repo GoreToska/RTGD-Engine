@@ -130,10 +130,11 @@ add_library(Engine SHARED
         Include/Components/GameRootTag.h
         Source/Systems/Physics/PhysicsSystem.cpp
         Include/Systems/Physics/PhysicsSystem.h
-        Include/Components/PhysicsComponent.h
+        Include/Components/RigidbodyComponent.h
         Include/Systems/Physics/PhysicsLayer.h
         Include/Tools/JoltConversions.h
         Include/Event/Delegate.h
+        Include/Components/ColliderComponent.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

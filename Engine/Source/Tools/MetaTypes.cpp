@@ -8,7 +8,7 @@
 #include "Components/GameRootTag.h"
 #include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
-#include "Components/PhysicsComponent.h"
+#include "Components/RigidbodyComponent.h"
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/UUIDComponent.h"
@@ -72,7 +72,8 @@ namespace RTGDEngine {
         RenderComponent::RegisterMeta(world);
         UUIDComponent::RegisterMeta(world);
         VelocityComponent::RegisterMeta(world);
-        PhysicsComponent::RegisterMeta(world);
+        ColliderComponent::RegisterMeta(world);
+        RigidbodyComponent::RegisterMeta(world);
 
         LogInfo("Meta types registered");
     }

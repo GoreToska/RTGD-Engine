@@ -5,7 +5,7 @@
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/MeshComponent.h"
-#include "Components/PhysicsComponent.h"
+#include "Components/RigidbodyComponent.h"
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/VelocityComponent.h"
@@ -52,8 +52,11 @@ void Game::OnStart() {
     m_player.set<MeshComponent>({{"Assets/BoxTextured.gltf"}, {"Assets/Materials/Cube.mat"}})
             .set<RenderComponent>({true, true})
             .set<TransformComponent>({{0.0f, 1.0f, 0.0f}})
-            .set<VelocityComponent>({})
-            .set<PhysicsComponent>({});
+            .set<VelocityComponent>({}).set<ColliderComponent>({})
+            .set<RigidbodyComponent>({
+                .AllowedDOFs = EPhysicsDOF::TranslationX | EPhysicsDOF::TranslationY | EPhysicsDOF::TranslationZ |
+                               EPhysicsDOF::RotationY
+            });
 
     m_playerCam = GScene.CreateEntity(
         "PlayerCamera", GScene.GetGameRoot());
@@ -66,7 +69,7 @@ void Game::OnStart() {
                       ESystemGroup::Game);
 
     auto fallingBox = GScene.GetActiveScene()->Find("Falling Box");
-    if (auto phys = fallingBox.get_ref<PhysicsComponent>()) {
+    if (auto phys = fallingBox.get_ref<RigidbodyComponent>()) {
         phys->OnCollisionEnter += [](const Events::CollisionEnterEvent &e) {
             LogInfo("[component] CollisionEnter: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
         };
@@ -84,6 +87,13 @@ void Game::OnStart() {
         };
         phys->OnTriggerExit += [](const Events::TriggerExitEvent &e) {
             LogInfo("[component] TriggerExit: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
+        };
+    }
+
+
+    if (auto rb = m_player.get_ref<RigidbodyComponent>()) {
+        rb->OnCollisionEnter += [](const Events::CollisionEnterEvent &e) {
+            LogInfo("[player] CollisionEnter: {} <-> {}", e.Target.name().c_str(), e.Other.name().c_str());
         };
     }
 }
@@ -114,7 +124,7 @@ void Game::PlayerMovementSystem(flecs::world &world, float deltaTime) {
         dir = Diligent::normalize(dir);
 
 
-    auto &comp = m_player.get_mut<PhysicsComponent>();
+    auto &comp = m_player.get_mut<RigidbodyComponent>();
     comp.Velocity = Diligent::clamp(dir * m_speed + comp.Velocity, {-2.0f, -100.0f, -2.0f}, {2.0f, 100.0f, 2.0f});
 }
 

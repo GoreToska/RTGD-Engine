@@ -7,7 +7,7 @@
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
 #include "Components/GameRootTag.h"
-#include "Components/PhysicsComponent.h"
+#include "Components/RigidbodyComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/UUIDComponent.h"
 #include "Components/VelocityComponent.h"

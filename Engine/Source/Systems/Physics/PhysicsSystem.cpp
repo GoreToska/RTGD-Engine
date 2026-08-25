@@ -6,7 +6,7 @@
 
 #include <flecs.h>
 
-#include "Components/PhysicsComponent.h"
+#include "Components/RigidbodyComponent.h"
 #include "Components/TransformComponent.h"
 #include "Jolt/RegisterTypes.h"
 #include "Jolt/Core/Factory.h"
@@ -67,13 +67,13 @@ namespace RTGDEngine {
         if (isTrigger) {
             Events::TriggerStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
             GEventBus.Emit(Events::OnTriggerStay, evt1, EmitBadge<PhysicsSystem>{});
-            if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerStay.Broadcast({}, evt1);
-            if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerStay.Broadcast({}, evt2);
+            if (auto p1 = e1.get_ref<RigidbodyComponent>()) p1->OnTriggerStay.Broadcast({}, evt1);
+            if (auto p2 = e2.get_ref<RigidbodyComponent>()) p2->OnTriggerStay.Broadcast({}, evt2);
         } else {
             Events::CollisionStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
             GEventBus.Emit(Events::OnCollisionStay, evt1, EmitBadge<PhysicsSystem>{});
-            if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionStay.Broadcast({}, evt1);
-            if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionStay.Broadcast({}, evt2);
+            if (auto p1 = e1.get_ref<RigidbodyComponent>()) p1->OnCollisionStay.Broadcast({}, evt1);
+            if (auto p2 = e2.get_ref<RigidbodyComponent>()) p2->OnCollisionStay.Broadcast({}, evt2);
         }
     }
 
@@ -93,13 +93,13 @@ namespace RTGDEngine {
                 if (isTrigger) {
                     Events::TriggerEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
                     GEventBus.Emit(Events::OnTriggerEnter, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerEnter.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerEnter.Broadcast({}, evt2);
+                    if (auto p1 = e1.get_ref<RigidbodyComponent>()) p1->OnTriggerEnter.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<RigidbodyComponent>()) p2->OnTriggerEnter.Broadcast({}, evt2);
                 } else {
                     Events::CollisionEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
                     GEventBus.Emit(Events::OnCollisionEnter, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionEnter.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionEnter.Broadcast({}, evt2);
+                    if (auto p1 = e1.get_ref<RigidbodyComponent>()) p1->OnCollisionEnter.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<RigidbodyComponent>()) p2->OnCollisionEnter.Broadcast({}, evt2);
                 }
                 m_activeContacts[MakeContactKey(contact.Body1, contact.Body2)] = contact;
                 break;
@@ -120,13 +120,13 @@ namespace RTGDEngine {
                 if (isTrigger) {
                     Events::TriggerExitEvent evt1{e1, e2}, evt2{e2, e1};
                     GEventBus.Emit(Events::OnTriggerExit, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerExit.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerExit.Broadcast({}, evt2);
+                    if (auto p1 = e1.get_ref<RigidbodyComponent>()) p1->OnTriggerExit.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<RigidbodyComponent>()) p2->OnTriggerExit.Broadcast({}, evt2);
                 } else {
                     Events::CollisionExitEvent evt1{e1, e2}, evt2{e2, e1};
                     GEventBus.Emit(Events::OnCollisionExit, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionExit.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionExit.Broadcast({}, evt2);
+                    if (auto p1 = e1.get_ref<RigidbodyComponent>()) p1->OnCollisionExit.Broadcast({}, evt1);
+                    if (auto p2 = e2.get_ref<RigidbodyComponent>()) p2->OnCollisionExit.Broadcast({}, evt2);
                 }
                 break;
             }
@@ -156,8 +156,8 @@ namespace RTGDEngine {
     }
 
     void PhysicsSystem::Update(flecs::world &world, float deltaTime) {
-        world.query<PhysicsComponent, TransformComponent>().each(
-            [&](PhysicsComponent &physics, TransformComponent &transform) {
+        world.query<RigidbodyComponent, TransformComponent>().each(
+            [&](RigidbodyComponent &physics, TransformComponent &transform) {
                 if (physics.MotionType == EMotionType::Static || physics.BodyID.IsInvalid()) {
                     return;
                 }
@@ -183,8 +183,8 @@ namespace RTGDEngine {
             EmitStay(world, c);
         }
 
-        world.query<PhysicsComponent, TransformComponent>().each(
-            [&](PhysicsComponent &physics, TransformComponent &transform) {
+        world.query<RigidbodyComponent, TransformComponent>().each(
+            [&](RigidbodyComponent &physics, TransformComponent &transform) {
                 if (physics.MotionType == EMotionType::Static || physics.BodyID.IsInvalid()) {
                     return;
                 }

@@ -15,6 +15,15 @@ target_link_libraries(Game PRIVATE
 
 target_compile_definitions(Game PRIVATE GAME_EXPORTS)
 
+add_custom_command(TARGET Game POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Shaders" "$<TARGET_FILE_DIR:Game>/Shaders"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+        "${CMAKE_SOURCE_DIR}/Assets" "$<TARGET_FILE_DIR:Game>/Assets"
+        COMMENT "Syncing shaders and assets (Game)"
+        VERBATIM
+)
+
 # TODO: make copy for new editor
 #[[
 add_custom_command(TARGET Game POST_BUILD
