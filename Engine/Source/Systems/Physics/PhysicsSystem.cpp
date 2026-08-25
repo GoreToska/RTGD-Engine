@@ -156,6 +156,17 @@ namespace RTGDEngine {
     }
 
     void PhysicsSystem::Update(flecs::world &world, float deltaTime) {
+        world.query<PhysicsComponent, TransformComponent>().each(
+            [&](PhysicsComponent &physics, TransformComponent &transform) {
+                if (physics.MotionType == EMotionType::Static || physics.BodyID.IsInvalid()) {
+                    return;
+                }
+
+                auto &bi = m_physicsSystem.GetBodyInterface();
+                bi.SetLinearVelocity(physics.BodyID, ToVec3(physics.Velocity));
+                bi.SetAngularVelocity(physics.BodyID, ToVec3(physics.AngularVelocity));
+            });
+
         m_physicsSystem.Update(deltaTime, m_collisionSteps, m_tempAllocator.get(), m_jobSystem.get());
 
         std::vector<PendingContact> contacts = {};
@@ -181,6 +192,8 @@ namespace RTGDEngine {
                 auto &bi = m_physicsSystem.GetBodyInterface();
                 transform.Position = ToFloat3(bi.GetPosition(physics.BodyID));
                 transform.Rotation = ToQuaternion(bi.GetRotation(physics.BodyID));
+                physics.Velocity = ToFloat3(bi.GetLinearVelocity(physics.BodyID));
+                physics.AngularVelocity = ToFloat3(bi.GetAngularVelocity(physics.BodyID));
             });
     }
 

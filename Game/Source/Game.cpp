@@ -52,14 +52,15 @@ void Game::OnStart() {
     m_player.set<MeshComponent>({{"Assets/BoxTextured.gltf"}, {"Assets/Materials/Cube.mat"}})
             .set<RenderComponent>({true, true})
             .set<TransformComponent>({{0.0f, 1.0f, 0.0f}})
-            .set<VelocityComponent>({});
+            .set<VelocityComponent>({})
+            .set<PhysicsComponent>({});
 
     m_playerCam = GScene.CreateEntity(
         "PlayerCamera", GScene.GetGameRoot());
 
     m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({});
 
-    GEngine.AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::PreUpdate, 0,
+    GEngine.AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::FixedUpdate, 0,
                       ESystemGroup::Game);
     GEngine.AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
                       ESystemGroup::Game);
@@ -112,7 +113,9 @@ void Game::PlayerMovementSystem(flecs::world &world, float deltaTime) {
     if (Diligent::length(dir) > 0.000001f)
         dir = Diligent::normalize(dir);
 
-    m_player.set<VelocityComponent>({dir * m_speed, {}});
+
+    auto &comp = m_player.get_mut<PhysicsComponent>();
+    comp.Velocity = Diligent::clamp(dir * m_speed + comp.Velocity, {-2.0f, -100.0f, -2.0f}, {2.0f, 100.0f, 2.0f});
 }
 
 void Game::CameraUpdate(flecs::world &world, float deltaTime) {

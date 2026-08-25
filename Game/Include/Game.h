@@ -35,7 +35,7 @@ private:
     Entity m_playerCam;
 
     Float3 m_cameraOffset = {0.0f, 2.0f, -2.0f};
-    float m_speed = 5.0f;
+    float m_speed = 0.1f;
 };
 
 DECLARE_GLOBAL_SINGLETON(Game, GGame)
