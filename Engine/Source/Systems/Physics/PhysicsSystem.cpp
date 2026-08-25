@@ -37,12 +37,44 @@ namespace RTGDEngine {
 
     void PhysicsSystem::UnregisterBody(JPH::BodyID id) {
         m_bodyInfo.erase(id);
+        std::erase_if(m_activeContacts, [id](const auto &kv) {
+            return kv.second.Body1 == id || kv.second.Body2 == id;
+        });
     }
 
     void PhysicsSystem::QueueContact(JPH::BodyID id1, JPH::BodyID id2, JPH::RVec3 point, JPH::Vec3 normal,
                                      EContactPhase phase) {
         std::lock_guard lock(m_contactMutex);
         m_pendingContacts.push_back({id1, id2, point, normal, phase});
+    }
+
+    uint64_t PhysicsSystem::MakeContactKey(JPH::BodyID id1, JPH::BodyID id2) {
+        uint32_t a = id1.GetIndexAndSequenceNumber(), b = id2.GetIndexAndSequenceNumber();
+        if (a > b) std::swap(a, b);
+        return (uint64_t(a) << 32) | b;
+    }
+
+    void PhysicsSystem::EmitStay(::World &world, const PendingContact &contact) {
+        auto it1 = m_bodyInfo.find(contact.Body1);
+        auto it2 = m_bodyInfo.find(contact.Body2);
+        if (it1 == m_bodyInfo.end() || it2 == m_bodyInfo.end()) return;
+
+        bool isTrigger = it1->second.IsTrigger || it2->second.IsTrigger;
+        Entity e1 = world.entity(it1->second.Entity);
+        Entity e2 = world.entity(it2->second.Entity);
+        Float3 point = ToFloat3(contact.Point), normal = ToFloat3(contact.Normal);
+
+        if (isTrigger) {
+            Events::TriggerStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
+            GEventBus.Emit(Events::OnTriggerStay, evt1, EmitBadge<PhysicsSystem>{});
+            if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerStay.Broadcast({}, evt1);
+            if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerStay.Broadcast({}, evt2);
+        } else {
+            Events::CollisionStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
+            GEventBus.Emit(Events::OnCollisionStay, evt1, EmitBadge<PhysicsSystem>{});
+            if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionStay.Broadcast({}, evt1);
+            if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionStay.Broadcast({}, evt2);
+        }
     }
 
     void PhysicsSystem::DispatchContact(::World &world, const PendingContact &contact) {
@@ -69,26 +101,21 @@ namespace RTGDEngine {
                     if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionEnter.Broadcast({}, evt1);
                     if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionEnter.Broadcast({}, evt2);
                 }
+                m_activeContacts[MakeContactKey(contact.Body1, contact.Body2)] = contact;
                 break;
             }
             case EContactPhase::Stay: {
-                Float3 point = ToFloat3(contact.Point), normal = ToFloat3(contact.Normal);
-                if (isTrigger) {
-                    Events::TriggerStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
-                    GEventBus.Emit(Events::OnTriggerStay, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnTriggerStay.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnTriggerStay.Broadcast({}, evt2);
-                } else {
-                    Events::CollisionStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
-                    GEventBus.Emit(Events::OnCollisionStay, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<PhysicsComponent>()) p1->OnCollisionStay.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<PhysicsComponent>()) p2->OnCollisionStay.Broadcast({}, evt2);
-                }
+                // Jolt stops calling OnContactPersisted once a touching pair sleeps; the
+                // Stay event itself is re-emitted every tick from m_activeContacts in
+                // Update(), so this just refreshes the cached point/normal while awake.
+                m_activeContacts[MakeContactKey(contact.Body1, contact.Body2)] = contact;
                 break;
             }
             case EContactPhase::Exit: {
                 auto &bi = GetBodyInterface();
                 if (!bi.IsActive(contact.Body1) && !bi.IsActive(contact.Body2)) break;
+
+                m_activeContacts.erase(MakeContactKey(contact.Body1, contact.Body2));
 
                 if (isTrigger) {
                     Events::TriggerExitEvent evt1{e1, e2}, evt2{e2, e1};
@@ -139,6 +166,10 @@ namespace RTGDEngine {
 
         for (auto &c: contacts) {
             DispatchContact(world, c);
+        }
+
+        for (auto &[key, c]: m_activeContacts) {
+            EmitStay(world, c);
         }
 
         world.query<PhysicsComponent, TransformComponent>().each(

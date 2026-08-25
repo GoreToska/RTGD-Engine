@@ -73,6 +73,10 @@ namespace RTGDEngine {
 
         void DispatchContact(World &world, const PendingContact &contact);
 
+        void EmitStay(World &world, const PendingContact &contact);
+
+        static uint64_t MakeContactKey(JPH::BodyID id1, JPH::BodyID id2);
+
         BPLayerInterfaceImpl m_broadPhaseLayerInterface;
         ObjectVsBroadPhaseLayerFilterImpl m_objectVsBroadPhaseLayerFilter;
         ObjectLayerPairFilterImpl m_objectLayerPairFilter;
@@ -83,6 +87,7 @@ namespace RTGDEngine {
         std::unordered_map<JPH::BodyID, BodyInfo> m_bodyInfo = {};
         std::mutex m_contactMutex = {};
         std::vector<PendingContact> m_pendingContacts = {};
+        std::unordered_map<uint64_t, PendingContact> m_activeContacts = {};
         ContactListenerImpl m_contactListener = {};
 
         int m_collisionSteps = 1;
