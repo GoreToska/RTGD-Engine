@@ -10,7 +10,38 @@
 #include "Components/TransformComponent.h"
 #include "Jolt/RegisterTypes.h"
 #include "Jolt/Core/Factory.h"
+#include "Jolt/Physics/Collision/CastResult.h"
+#include "Jolt/Physics/Collision/CollisionCollectorImpl.h"
+#include "Jolt/Physics/Collision/RayCast.h"
+#include "Scene/SceneManager.h"
 #include "Tools/JoltConversions.h"
+
+namespace {
+    class RaycastBodyFilter final : public JPH::BodyFilter {
+    public:
+        JPH::IgnoreMultipleBodiesFilter Ignore;
+        bool HitTriggers = false;
+
+        bool ShouldCollide(const JPH::BodyID &inBodyID) const override {
+            return Ignore.ShouldCollide(inBodyID);
+        }
+
+        bool ShouldCollideLocked(const JPH::Body &inBody) const override {
+            return HitTriggers || !inBody.IsSensor();
+        }
+    };
+
+    std::vector<JPH::BodyID> ResolveIgnoreList(std::span<const Entity> entities) {
+        std::vector<JPH::BodyID> ids;
+        ids.reserve(entities.size());
+        for (auto &e: entities) {
+            if (auto rb = e.get_ref<RTGDEngine::RigidbodyComponent>())
+                ids.push_back(rb->BodyID);
+        }
+
+        return ids;
+    }
+}
 
 namespace RTGDEngine {
     void ContactListenerImpl::OnContactAdded(const JPH::Body &b1, const JPH::Body &b2, const JPH::ContactManifold &m,
@@ -40,6 +71,98 @@ namespace RTGDEngine {
         std::erase_if(m_activeContacts, [id](const auto &kv) {
             return kv.second.Body1 == id || kv.second.Body2 == id;
         });
+    }
+
+    RaycastHit PhysicsSystem::Raycast(World &world, const Float3 &origin, const Float3 &direction, float distance,
+                                      bool hitTriggers, std::span<const JPH::BodyID> ignore) {
+        JPH::RRayCast ray(ToRVec3(origin), ToVec3(direction).Normalized() * distance);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore) {
+            filter.Ignore.IgnoreBody(id);
+        }
+
+        JPH::RayCastResult result;
+        if (!m_physicsSystem.GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, filter))
+            return {};
+
+        return MakeHit(world, result.mBodyID, result.mFraction, ray, result.mSubShapeID2);
+    }
+
+    RaycastHit PhysicsSystem::Raycast(World &world, const Float3 &origin, const Float3 &direction, float distance,
+                                      bool hitTriggers, std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return Raycast(world, origin, direction, distance, hitTriggers, ids);
+    }
+
+    RaycastHit PhysicsSystem::Raycast(const Float3 &origin, const Float3 &direction, float distance, bool hitTriggers,
+                                      std::span<const JPH::BodyID> ignore) {
+        return Raycast(GScene.GetWorld(), origin, direction, distance, hitTriggers, ignore);
+    }
+
+    RaycastHit PhysicsSystem::Raycast(const Float3 &origin, const Float3 &direction, float distance, bool hitTriggers,
+                                      std::span<const Entity> ignore) {
+        return Raycast(GScene.GetWorld(), origin, direction, distance, hitTriggers, ignore);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::RaycastAll(World &world, const Float3 &origin, const Float3 &direction,
+                                                      float distance, bool hitTriggers,
+                                                      std::span<const JPH::BodyID> ignore) {
+        JPH::RRayCast ray(ToRVec3(origin), ToVec3(direction).Normalized() * distance);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore) filter.Ignore.IgnoreBody(id);
+
+        JPH::AllHitCollisionCollector<JPH::CastRayCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().CastRay(ray, {}, collector, {}, {}, filter);
+
+        std::vector<RaycastHit> hits;
+        hits.reserve(collector.mHits.size());
+        for (auto &h: collector.mHits)
+            hits.push_back(MakeHit(world, h.mBodyID, h.mFraction, ray, h.mSubShapeID2));
+
+        return hits;
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::RaycastAll(const Float3 &origin, const Float3 &direction, float distance,
+                                                      bool hitTriggers, std::span<const JPH::BodyID> ignore) {
+        return RaycastAll(GScene.GetWorld(), origin, direction, distance, hitTriggers, ignore);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::RaycastAll(World &world, const Float3 &origin, const Float3 &direction,
+                                                      float distance, bool hitTriggers,
+                                                      std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return RaycastAll(world, origin, direction, distance, hitTriggers, ids);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::RaycastAll(const Float3 &origin, const Float3 &direction, float distance,
+                                                      bool hitTriggers, std::span<const Entity> ignore) {
+        return RaycastAll(GScene.GetWorld(), origin, direction, distance, hitTriggers, ignore);
+    }
+
+    RaycastHit PhysicsSystem::MakeHit(World &world, JPH::BodyID id, float fraction, const JPH::RRayCast &ray,
+                                      JPH::SubShapeID subShape) {
+        auto it = m_bodyInfo.find(id);
+        if (it == m_bodyInfo.end()) return {};
+
+        JPH::RVec3 point = ray.GetPointOnRay(fraction);
+
+        JPH::BodyLockRead lock(m_physicsSystem.GetBodyLockInterface(), id);
+        JPH::Vec3 normal = lock.Succeeded()
+                               ? lock.GetBody().GetWorldSpaceSurfaceNormal(subShape, point)
+                               : JPH::Vec3::sZero();
+
+        RaycastHit hit;
+        hit.Hit = true;
+        hit.BodyID = id;
+        hit.Target = world.entity(it->second.Entity);
+        hit.Point = ToFloat3(point);
+        hit.Normal = ToFloat3(normal);
+        hit.Distance = fraction * ray.mDirection.Length();
+        return hit;
     }
 
     void PhysicsSystem::QueueContact(JPH::BodyID id1, JPH::BodyID id2, JPH::RVec3 point, JPH::Vec3 normal,
@@ -165,6 +288,7 @@ namespace RTGDEngine {
                 auto &bi = m_physicsSystem.GetBodyInterface();
                 bi.SetLinearVelocity(physics.BodyID, ToVec3(physics.Velocity));
                 bi.SetAngularVelocity(physics.BodyID, ToVec3(physics.AngularVelocity));
+                bi.SetRotation(physics.BodyID, ToQuat(transform.Rotation), JPH::EActivation::DontActivate);
             });
 
         m_physicsSystem.Update(deltaTime, m_collisionSteps, m_tempAllocator.get(), m_jobSystem.get());

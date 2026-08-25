@@ -15,11 +15,14 @@ public:
 
     void Shutdown() override;
 
+
     void OnStart() override;
 
     void OnStop() override;
 
 private:
+    void SetupInput();
+
     void PlayerMovementSystem(flecs::world &world, float deltaTime);
 
     void CameraUpdate(flecs::world &world, float deltaTime);
@@ -30,12 +33,17 @@ private:
     ActionID m_moveBackward;
     ActionID m_moveLeft;
     ActionID m_moveRight;
+    ActionID m_interact;
 
     Entity m_player;
     Entity m_playerCam;
 
-    Float3 m_cameraOffset = {0.0f, 2.0f, -2.0f};
-    float m_speed = 0.1f;
+    float m_eyeHeight = 0.8f;
+    float m_currentPitch = 0.0f;
+    float m_pitchLimit = 89.0f;
+    float m_mouseSensitivity = 0.15f;
+    float m_speed = 2.f;
+    float m_interactionDistance = 100.f;
 };
 
 DECLARE_GLOBAL_SINGLETON(Game, GGame)

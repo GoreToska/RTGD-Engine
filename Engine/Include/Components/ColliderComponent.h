@@ -6,6 +6,7 @@
 #include <Jolt/Jolt.h>
 
 #include "Jolt/Physics/Collision/Shape/BoxShape.h"
+#include "Jolt/Physics/Collision/Shape/CapsuleShape.h"
 #include "Jolt/Physics/Collision/Shape/Shape.h"
 #include "Jolt/Physics/Collision/Shape/SphereShape.h"
 #include "Tools/Alias.h"
@@ -14,7 +15,8 @@
 namespace RTGDEngine {
     enum class EPhysicsShape {
         Box,
-        Sphere
+        Sphere,
+        Capsule,
     };
 
     struct ColliderComponent {
@@ -28,26 +30,15 @@ namespace RTGDEngine {
                     return JPH::BoxShapeSettings(ToVec3(extents)).Create().Get();
                 case EPhysicsShape::Sphere:
                     return JPH::SphereShapeSettings(extents.x).Create().Get();
+                case EPhysicsShape::Capsule:
+                    return JPH::CapsuleShapeSettings(extents.x, extents.y).Create().Get();
             }
 
             return nullptr;
         }
 
         static JPH::MassProperties ComputeMassProperties(EPhysicsShape shape, const Float3 &extents, float mass) {
-            JPH::MassProperties props;
-            switch (shape) {
-                case EPhysicsShape::Box:
-                    props.SetMassAndInertiaOfSolidBox(2.0f * ToVec3(extents), 1.0f);
-                    break;
-                case EPhysicsShape::Sphere: {
-                    float radius = extents.x;
-                    float inertia = 0.4f * radius * radius;
-                    props.mMass = 1.0f;
-                    props.mInertia = JPH::Mat44::sScale(JPH::Vec3(inertia, inertia, inertia));
-                    break;
-                }
-            }
-
+            JPH::MassProperties props = MakeShape(shape, extents)->GetMassProperties();
             props.ScaleToMass(mass);
             return props;
         }
@@ -55,7 +46,8 @@ namespace RTGDEngine {
         static void RegisterMeta(const World &world) {
             world.component<EPhysicsShape>("PhysicsShape")
                     .constant("Box", EPhysicsShape::Box)
-                    .constant("Sphere", EPhysicsShape::Sphere);
+                    .constant("Sphere", EPhysicsShape::Sphere)
+                    .constant("Capsule", EPhysicsShape::Capsule);
 
             world.component<ColliderComponent>("ColliderComponent")
                     .member<EPhysicsShape>("Shape")

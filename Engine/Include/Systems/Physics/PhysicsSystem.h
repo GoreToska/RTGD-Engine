@@ -6,6 +6,7 @@
 #include <flecs.h>
 
 #include <mutex>
+#include <span>
 #include <unordered_map>
 #include <vector>
 #include "Event/Events.h"
@@ -30,6 +31,15 @@ namespace RTGDEngine {
         JPH::RVec3 Point;
         JPH::Vec3 Normal;
         EContactPhase Phase;
+    };
+
+    struct RaycastHit {
+        bool Hit = false;
+        Entity Target;
+        Float3 Point;
+        Float3 Normal;
+        float Distance = 0.0f;
+        JPH::BodyID BodyID; // may be accessed through rigid body component from Target entity
     };
 
     class ContactListenerImpl final : public JPH::ContactListener {
@@ -61,6 +71,30 @@ namespace RTGDEngine {
 
         void UnregisterBody(JPH::BodyID id);
 
+        RaycastHit Raycast(World &world, const Float3 &origin, const Float3 &direction, float distance,
+                           bool hitTriggers = false, std::span<const JPH::BodyID> ignore = {});
+
+        RaycastHit Raycast(World &world, const Float3 &origin, const Float3 &direction, float distance,
+                           bool hitTriggers = false, std::span<const Entity> ignore = {});
+
+        RaycastHit Raycast(const Float3 &origin, const Float3 &direction, float distance,
+                           bool hitTriggers = false, std::span<const JPH::BodyID> ignore = {});
+
+        RaycastHit Raycast(const Float3 &origin, const Float3 &direction, float distance,
+                           bool hitTriggers = false, std::span<const Entity> ignore = {});
+
+        std::vector<RaycastHit> RaycastAll(World &world, const Float3 &origin, const Float3 &direction, float distance,
+                                           bool hitTriggers = false, std::span<const JPH::BodyID> ignore = {});
+
+        std::vector<RaycastHit> RaycastAll(const Float3 &origin, const Float3 &direction, float distance,
+                                           bool hitTriggers = false, std::span<const JPH::BodyID> ignore = {});
+
+        std::vector<RaycastHit> RaycastAll(World &world, const Float3 &origin, const Float3 &direction, float distance,
+                                           bool hitTriggers = false, std::span<const Entity> ignore = {});
+
+        std::vector<RaycastHit> RaycastAll(const Float3 &origin, const Float3 &direction, float distance,
+                                           bool hitTriggers = false, std::span<const Entity> ignore = {});
+
     private:
         friend class ContactListenerImpl;
 
@@ -68,6 +102,10 @@ namespace RTGDEngine {
             uint64_t Entity;
             bool IsTrigger;
         };
+
+        RaycastHit MakeHit(World &world, JPH::BodyID id, float fraction, const JPH::RRayCast &ray,
+                           JPH::SubShapeID subShape);
+
 
         void QueueContact(JPH::BodyID id1, JPH::BodyID id2, JPH::RVec3 point, JPH::Vec3 normal, EContactPhase phase);
 

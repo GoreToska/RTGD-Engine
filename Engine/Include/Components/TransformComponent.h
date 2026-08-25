@@ -4,8 +4,8 @@
 
 namespace RTGDEngine {
     enum ECoordinateSpace {
-        Local,
-        World
+        LocalSpace,
+        WorldSpace
     };
 
 
@@ -39,10 +39,10 @@ namespace RTGDEngine {
                        * Quaternion::RotationFromAxisAngle({0, 0, 1}, roll);
         }
 
-        void Rotate(const Float3 axis, const float angleDeg, ECoordinateSpace coordinateSpace = Local) {
-            if (coordinateSpace == Local)
+        void Rotate(const Float3 axis, const float angleDeg, ECoordinateSpace coordinateSpace = LocalSpace) {
+            if (coordinateSpace == LocalSpace)
                 RotateLocal(axis, angleDeg);
-            else if (coordinateSpace == World)
+            else if (coordinateSpace == WorldSpace)
                 RotateWorld(axis, angleDeg);
         }
 

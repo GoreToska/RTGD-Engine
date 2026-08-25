@@ -28,7 +28,7 @@ namespace RTGDEngine {
             float dy = input.GetMouseDeltaY() * editorCam.RotationSpeed;
 
             if (dx != 0.0f)
-                transform.Rotate(TransformComponent::GlobalUp, dx, World);
+                transform.Rotate(TransformComponent::GlobalUp, dx, WorldSpace);
 
             if (dy != 0.0f) {
                 float desired = editorCam.CurrentPitch + dy;
@@ -37,7 +37,7 @@ namespace RTGDEngine {
                 editorCam.CurrentPitch = clamped;
 
                 if (applied != 0.0f)
-                    transform.Rotate(TransformComponent::GlobalRight, applied, Local);
+                    transform.Rotate(TransformComponent::GlobalRight, applied, LocalSpace);
             }
 
             float speed = editorCam.MovementSpeed;
