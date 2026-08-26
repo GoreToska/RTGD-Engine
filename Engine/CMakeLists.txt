@@ -135,6 +135,7 @@ add_library(Engine SHARED
         Include/Tools/JoltConversions.h
         Include/Event/Delegate.h
         Include/Components/ColliderComponent.h
+        Source/Systems/Physics/PhysicsLayers.cpp
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

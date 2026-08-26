@@ -92,7 +92,8 @@ namespace RTGDEngine {
                                               : rb->MotionType == EMotionType::Kinematic
                                                     ? JPH::EMotionType::Kinematic
                                                     : JPH::EMotionType::Dynamic;
-                JPH::ObjectLayer layer = rb->MotionType == EMotionType::Static ? Layers::NON_MOVING : Layers::MOVING;
+                bool isMoving = rb->MotionType != EMotionType::Static;
+                JPH::ObjectLayer layer = Layers::Encode(collider->Layer, isMoving);
 
                 JPH::BodyCreationSettings settings(shape, ToRVec3(xf->Position), ToQuat(xf->Rotation), motion, layer);
                 settings.mIsSensor = collider->IsTrigger;

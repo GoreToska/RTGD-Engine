@@ -23,6 +23,7 @@ namespace RTGDEngine {
         EPhysicsShape Shape = EPhysicsShape::Box;
         Float3 Extents = {0.5f, 0.5f, 0.5f};
         bool IsTrigger = false;
+        uint8_t Layer = 0;
 
         static JPH::ShapeRefC MakeShape(EPhysicsShape shape, const Float3 &extents) {
             switch (shape) {
@@ -52,7 +53,8 @@ namespace RTGDEngine {
             world.component<ColliderComponent>("ColliderComponent")
                     .member<EPhysicsShape>("Shape")
                     .member<Float3>("Extents")
-                    .member<bool>("IsTrigger");
+                    .member<bool>("IsTrigger")
+                    .member<uint8_t>("Layer");
         }
     };
 }

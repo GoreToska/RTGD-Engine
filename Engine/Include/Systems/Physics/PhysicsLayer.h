@@ -8,12 +8,10 @@
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 
+#include "Jolt/Physics/Collision/ObjectLayerPairFilterTable.h"
+#include "Jolt/Physics/Collision/BroadPhase/BroadPhaseLayerInterfaceTable.h"
+#include "Jolt/Physics/Collision/BroadPhase/ObjectVsBroadPhaseLayerFilterTable.h"
 
-namespace RTGDEngine::Layers {
-    static constexpr JPH::ObjectLayer NON_MOVING = 0;
-    static constexpr JPH::ObjectLayer MOVING = 1;
-    static constexpr JPH::ObjectLayer NUM_LAYERS = 2;
-}
 
 namespace RTGDEngine::BroadPhaseLayers {
     static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
@@ -21,60 +19,48 @@ namespace RTGDEngine::BroadPhaseLayers {
     static constexpr JPH::uint NUM_LAYERS(2);
 }
 
-namespace RTGDEngine {
-    class BPLayerInterfaceImpl final : public JPH::BroadPhaseLayerInterface {
+namespace RTGDEngine::Layers {
+    inline constexpr uint32_t kMaxGameplayLayers = 32;
+
+    inline constexpr JPH::ObjectLayer Encode(uint32_t layerIndex, bool isMoving) {
+        return static_cast<JPH::ObjectLayer>(layerIndex * 2 + (isMoving ? 1 : 0));
+    }
+
+    inline constexpr uint32_t DecodeGameplayLayer(JPH::ObjectLayer layer) {
+        return layer / 2;
+    }
+
+    struct LayerConfig {
+        std::vector<std::string> Names = {};
+        std::unique_ptr<JPH::ObjectLayerPairFilterTable> Matrix;
+    };
+
+    LayerConfig LoadLayerConfig(const std::string &fullPath);
+
+    class LayerRegistry {
     public:
-        BPLayerInterfaceImpl() {
-            m_objectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
-            m_objectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
+        void Build(const std::string &fullPath);
+
+        [[nodiscard]] const std::vector<std::string> &GetNames() const { return m_names; }
+
+        [[nodiscard]] int GetIndex(std::string_view name) const;
+
+        [[nodiscard]] uint32_t GetNumLayers() const { return m_names.size() * 2; }
+
+        [[nodiscard]] JPH::ObjectLayerPairFilterTable &GetPairFilter() const { return *m_objectLayerPairFilter; }
+
+        [[nodiscard]] JPH::BroadPhaseLayerInterfaceTable &GetBroadPhaseLayerInterface() const {
+            return *m_broadPhaseLayerInterface;
         }
 
-        JPH::uint GetNumBroadPhaseLayers() const override {
-            return BroadPhaseLayers::NUM_LAYERS;
+        [[nodiscard]] JPH::ObjectVsBroadPhaseLayerFilterTable &GetObjectVsBroadPhaseLayerFilter() const {
+            return *m_objectVsBroadPhaseLayerFilter;
         }
-
-        JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override {
-            JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
-            return m_objectToBroadPhase[inLayer];
-        }
-
-#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-        const char *GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override {
-            switch ((JPH::BroadPhaseLayer::Type) inLayer) {
-                case (JPH::BroadPhaseLayer::Type) BroadPhaseLayers::NON_MOVING: return "NON_MOVING";
-                case (JPH::BroadPhaseLayer::Type) BroadPhaseLayers::MOVING: return "MOVING";
-                default: JPH_ASSERT(false);
-            }
-            return "INVALID";
-        }
-#endif
 
     private:
-        JPH::BroadPhaseLayer m_objectToBroadPhase[Layers::NUM_LAYERS] = {};
-    };
-
-    class ObjectVsBroadPhaseLayerFilterImpl : public JPH::ObjectVsBroadPhaseLayerFilter {
-    public:
-        bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override {
-            switch (inLayer1) {
-                case Layers::NON_MOVING: return inLayer2 == BroadPhaseLayers::MOVING;
-                case Layers::MOVING: return true;
-                default: JPH_ASSERT(false);
-            }
-
-            return false;
-        }
-    };
-
-    class ObjectLayerPairFilterImpl : public JPH::ObjectLayerPairFilter {
-    public:
-        bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::ObjectLayer inLayer2) const override {
-            switch (inLayer1) {
-                case Layers::NON_MOVING: return inLayer2 == Layers::MOVING;
-                case Layers::MOVING: return true;
-                default: JPH_ASSERT(false);
-                    return false;
-            }
-        }
+        std::vector<std::string> m_names = {};
+        std::unique_ptr<JPH::ObjectLayerPairFilterTable> m_objectLayerPairFilter;
+        std::unique_ptr<JPH::BroadPhaseLayerInterfaceTable> m_broadPhaseLayerInterface;
+        std::unique_ptr<JPH::ObjectVsBroadPhaseLayerFilterTable> m_objectVsBroadPhaseLayerFilter;
     };
 }
