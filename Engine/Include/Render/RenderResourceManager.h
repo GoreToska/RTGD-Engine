@@ -15,6 +15,7 @@
 #include "Texture.h"
 #include "Vertex.h"
 #include "AssetLoader/AssetType.h"
+#include "Engine/EngineExport.h"
 #include "Tools/Bounds.h"
 #include "Tools/RTGDMacros.h"
 
@@ -158,17 +159,17 @@ namespace RTGDEngine
 
         bool IsAlive(TextureHandle handle) const;
 
-        void AcquireAsset(MeshHandle handle);
+        ENGINE_API void AcquireAsset(MeshHandle handle);
 
-        void ReleaseAsset(MeshHandle handle);
+        ENGINE_API void ReleaseAsset(MeshHandle handle);
 
-        void AcquireAsset(MaterialHandle handle);
+        ENGINE_API void AcquireAsset(MaterialHandle handle);
 
-        void ReleaseAsset(MaterialHandle handle);
+        ENGINE_API void ReleaseAsset(MaterialHandle handle);
 
-        void AcquireAsset(TextureHandle handle);
+        ENGINE_API void AcquireAsset(TextureHandle handle);
 
-        void ReleaseAsset(TextureHandle handle);
+        ENGINE_API void ReleaseAsset(TextureHandle handle);
 
         void ProcessPendingDestroys();
 

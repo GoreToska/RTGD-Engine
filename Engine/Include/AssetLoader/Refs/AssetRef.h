@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 
+#include "Engine/EngineExport.h"
 #include "Render/RenderHandle.h"
 
 namespace RTGDEngine {
@@ -73,15 +74,15 @@ namespace RTGDEngine {
     using MaterialRef = AssetRef<MaterialHandle>;
     using TextureRef = AssetRef<TextureHandle>;
 
-    void AcquireAsset(MeshHandle h);
+    ENGINE_API void AcquireAsset(MeshHandle h);
 
-    void ReleaseAsset(MeshHandle h);
+    ENGINE_API void ReleaseAsset(MeshHandle h);
 
-    void AcquireAsset(MaterialHandle h);
+    ENGINE_API void AcquireAsset(MaterialHandle h);
 
-    void ReleaseAsset(MaterialHandle h);
+    ENGINE_API void ReleaseAsset(MaterialHandle h);
 
-    void AcquireAsset(TextureHandle h);
+    ENGINE_API void AcquireAsset(TextureHandle h);
 
-    void ReleaseAsset(TextureHandle h);
+    ENGINE_API void ReleaseAsset(TextureHandle h);
 }

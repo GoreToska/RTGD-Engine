@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <mutex>
 #include <atomic>
@@ -18,22 +19,26 @@
 #include "Platform/DynamicLibraryFactory.h"
 
 
-namespace RTGDEngine {
-    enum class ESystemPhase {
+namespace RTGDEngine
+{
+    enum class ESystemPhase
+    {
         PreUpdate,
         FixedUpdate,
         Update,
         PostUpdate,
     };
 
-    enum class ESystemGroup {
+    enum class ESystemGroup
+    {
         Engine,
         Game,
     };
 
     class IPlatformWindow;
 
-    class ENGINE_API Engine : public IEngineInterface {
+    class ENGINE_API Engine : public IEngineInterface
+    {
         DECLARE_SINGLETON(Engine);
 
     public:
@@ -54,7 +59,7 @@ namespace RTGDEngine {
 
         void Shutdown();
 
-        bool LoadGameModule(const std::string &dllPath);
+        bool LoadGameModule(const std::string& dllPath);
 
         bool PollEvents() const;
 
@@ -68,7 +73,7 @@ namespace RTGDEngine {
 
         void TogglePlayMode();
 
-        using SystemFunc = std::function<void(flecs::world &, float)>;
+        using SystemFunc = std::function<void(flecs::world&, float)>;
 
         void AddSystem(SystemFunc func, ESystemPhase phase = ESystemPhase::Update, int order = 0,
                        ESystemGroup group = ESystemGroup::Engine);
@@ -76,7 +81,8 @@ namespace RTGDEngine {
         void ClearSystems(ESystemGroup group);
 
     private:
-        struct PickRequest {
+        struct PickRequest
+        {
             int X = 0;
             int Y = 0;
             bool Pending = false;
@@ -84,13 +90,14 @@ namespace RTGDEngine {
             bool Done = false;
         };
 
-        struct SystemEntry {
+        struct SystemEntry
+        {
             SystemFunc Func;
             int Order = 0;
             ESystemGroup Group = ESystemGroup::Engine;
         };
 
-        void RunPhase(ESystemPhase phase, flecs::world &world, float deltaTime);
+        void RunPhase(ESystemPhase phase, flecs::world& world, float deltaTime);
 
         void RenderThreadMain(std::unique_ptr<IPlatformWindow> window, std::promise<bool> initPromise);
 
