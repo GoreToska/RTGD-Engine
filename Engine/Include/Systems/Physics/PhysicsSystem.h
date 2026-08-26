@@ -21,21 +21,25 @@
 #include "Jolt/Physics/Collision/BroadPhase/ObjectVsBroadPhaseLayerFilterTable.h"
 
 
-namespace RTGDEngine {
-    enum class EContactPhase {
+namespace RTGDEngine
+{
+    enum class EContactPhase
+    {
         Enter,
         Stay,
         Exit
     };
 
-    struct PendingContact {
+    struct PendingContact
+    {
         JPH::BodyID Body1, Body2;
         JPH::RVec3 Point;
         JPH::Vec3 Normal;
         EContactPhase Phase;
     };
 
-    struct RaycastHit {
+    struct RaycastHit
+    {
         bool Hit = false;
         Entity Target;
         Float3 Point;
@@ -44,145 +48,157 @@ namespace RTGDEngine {
         JPH::BodyID BodyID; // may be accessed through rigid body component from Target entity
     };
 
-    class ContactListenerImpl final : public JPH::ContactListener {
+    class ContactListenerImpl final : public JPH::ContactListener
+    {
     public:
-        PhysicsSystem *Owner = nullptr;
+        PhysicsSystem* Owner = nullptr;
 
-        void OnContactAdded(const JPH::Body &b1, const JPH::Body &b2, const JPH::ContactManifold &m,
-                            JPH::ContactSettings &) override;
+        ENGINE_API void OnContactAdded(const JPH::Body& b1, const JPH::Body& b2, const JPH::ContactManifold& m,
+                                       JPH::ContactSettings&) override;
 
-        void OnContactPersisted(const JPH::Body &b1, const JPH::Body &b2, const JPH::ContactManifold &m,
-                                JPH::ContactSettings &) override;
+        ENGINE_API void OnContactPersisted(const JPH::Body& b1, const JPH::Body& b2, const JPH::ContactManifold& m,
+                                           JPH::ContactSettings&) override;
 
-        void OnContactRemoved(const JPH::SubShapeIDPair &pair) override;
+        ENGINE_API void OnContactRemoved(const JPH::SubShapeIDPair& pair) override;
     };
 
-    class PhysicsSystem {
+    class ENGINE_API PhysicsSystem
+    {
         DECLARE_SINGLETON(PhysicsSystem);
 
     public:
         void Initialize();
 
-        void Update(flecs::world &world, float deltaTime);
+        void Update(flecs::world& world, float deltaTime);
 
         void Shutdown();
 
-        JPH::BodyInterface &GetBodyInterface();
+        JPH::BodyInterface& GetBodyInterface();
 
-        const std::vector<std::string> &GetLayerNames() const { return m_layers.GetNames(); }
+        const std::vector<std::string>& GetLayerNames() const { return m_layers.GetNames(); }
         int GetLayerIndex(std::string_view layerName) const { return m_layers.GetIndex(layerName); };
+        uint8_t GetLayerMask(std::string_view layerName) const { return 1 << GetLayerIndex(layerName); };
+        std::string GetLayerName(int index) const { return m_layers.GetName(index); };
 
         void RegisterBody(JPH::BodyID id, uint64_t entity, bool IsTrigger);
 
         void UnregisterBody(JPH::BodyID id);
 
-        RaycastHit Raycast(World &world, const Float3 &origin, const Float3 &direction, float distance,
-                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        RaycastHit Raycast(World& world, const Float3& origin, const Float3& direction, float distance,
+                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        RaycastHit Raycast(World &world, const Float3 &origin, const Float3 &direction, float distance,
+        RaycastHit Raycast(World& world, const Float3& origin, const Float3& direction, float distance,
                            bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
 
-        RaycastHit Raycast(const Float3 &origin, const Float3 &direction, float distance,
-                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        RaycastHit Raycast(const Float3& origin, const Float3& direction, float distance,
+                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        RaycastHit Raycast(const Float3 &origin, const Float3 &direction, float distance,
+        RaycastHit Raycast(const Float3& origin, const Float3& direction, float distance,
                            bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
 
-        std::vector<RaycastHit> RaycastAll(World &world, const Float3 &origin, const Float3 &direction, float distance,
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        std::vector<RaycastHit> RaycastAll(World& world, const Float3& origin, const Float3& direction, float distance,
+                                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID>);
 
-        std::vector<RaycastHit> RaycastAll(const Float3 &origin, const Float3 &direction, float distance,
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        std::vector<RaycastHit> RaycastAll(const Float3& origin, const Float3& direction, float distance,
+                                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        std::vector<RaycastHit> RaycastAll(World &world, const Float3 &origin, const Float3 &direction, float distance,
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
+        std::vector<RaycastHit> RaycastAll(World& world, const Float3& origin, const Float3& direction, float distance,
+                                           bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                           std::span<const Entity> ignore = {});
 
-        std::vector<RaycastHit> RaycastAll(const Float3 &origin, const Float3 &direction, float distance,
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
+        std::vector<RaycastHit> RaycastAll(const Float3& origin, const Float3& direction, float distance,
+                                           bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                           std::span<const Entity> ignore = {});
 
-        RaycastHit SphereCast(World &world, const Float3 &origin, const Float3 &direction, float radius, float distance,
-                              bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        RaycastHit SphereCast(World& world, const Float3& origin, const Float3& direction, float radius, float distance,
+                              bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        RaycastHit SphereCast(World &world, const Float3 &origin, const Float3 &direction, float radius, float distance,
+        RaycastHit SphereCast(World& world, const Float3& origin, const Float3& direction, float radius, float distance,
                               bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
 
-        RaycastHit SphereCast(const Float3 &origin, const Float3 &direction, float radius, float distance,
-                              bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        RaycastHit SphereCast(const Float3& origin, const Float3& direction, float radius, float distance,
+                              bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        RaycastHit SphereCast(const Float3 &origin, const Float3 &direction, float radius, float distance,
+        RaycastHit SphereCast(const Float3& origin, const Float3& direction, float radius, float distance,
                               bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
 
-        std::vector<RaycastHit> SphereCastAll(World &world, const Float3 &origin, const Float3 &direction, float radius,
+        std::vector<RaycastHit> SphereCastAll(World& world, const Float3& origin, const Float3& direction, float radius,
                                               float distance,
-                                              bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+                                              bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID>);
 
-        std::vector<RaycastHit> SphereCastAll(World &world, const Float3 &origin, const Float3 &direction, float radius,
+        std::vector<RaycastHit> SphereCastAll(World& world, const Float3& origin, const Float3& direction, float radius,
                                               float distance,
-                                              bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
+                                              bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                              std::span<const Entity> ignore = {});
 
-        std::vector<RaycastHit> SphereCastAll(const Float3 &origin, const Float3 &direction, float radius,
+        std::vector<RaycastHit> SphereCastAll(const Float3& origin, const Float3& direction, float radius,
                                               float distance,
-                                              bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+                                              bool hitTriggers, uint32_t layerMask,
+                                              std::span<const JPH::BodyID> ignore);
 
-        std::vector<RaycastHit> SphereCastAll(const Float3 &origin, const Float3 &direction, float radius,
+        std::vector<RaycastHit> SphereCastAll(const Float3& origin, const Float3& direction, float radius,
                                               float distance,
-                                              bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
+                                              bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                              std::span<const Entity> ignore = {});
 
-        RaycastHit BoxCast(World &world, const Float3 &origin, const Float3 &direction, const Float3 &halfExtent,
-                           float distance, const Quaternion &rotation = QuaternionIdentity(),
-                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        RaycastHit BoxCast(World& world, const Float3& origin, const Float3& direction, const Float3& halfExtent,
+                           float distance, const Quaternion& rotation,
+                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        RaycastHit BoxCast(World &world, const Float3 &origin, const Float3 &direction, const Float3 &halfExtent,
-                           float distance, const Quaternion &rotation = QuaternionIdentity(),
+        RaycastHit BoxCast(World& world, const Float3& origin, const Float3& direction, const Float3& halfExtent,
+                           float distance, const Quaternion& rotation = QuaternionIdentity(),
                            bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
 
-        RaycastHit BoxCast(const Float3 &origin, const Float3 &direction, const Float3 &halfExtent, float distance,
-                           const Quaternion &rotation = QuaternionIdentity(),
-                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        RaycastHit BoxCast(const Float3& origin, const Float3& direction, const Float3& halfExtent, float distance,
+                           const Quaternion& rotation,
+                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        RaycastHit BoxCast(const Float3 &origin, const Float3 &direction, const Float3 &halfExtent, float distance,
-                           const Quaternion &rotation = QuaternionIdentity(),
+        RaycastHit BoxCast(const Float3& origin, const Float3& direction, const Float3& halfExtent, float distance,
+                           const Quaternion& rotation = QuaternionIdentity(),
                            bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
 
-        std::vector<RaycastHit> BoxCastAll(World &world, const Float3 &origin, const Float3 &direction,
-                                           const Float3 &halfExtent,
-                                           float distance, const Quaternion &rotation = QuaternionIdentity(),
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+        std::vector<RaycastHit> BoxCastAll(World& world, const Float3& origin, const Float3& direction,
+                                           const Float3& halfExtent,
+                                           float distance, const Quaternion& rotation,
+                                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        std::vector<RaycastHit> BoxCastAll(World &world, const Float3 &origin, const Float3 &direction,
-                                           const Float3 &halfExtent,
-                                           float distance, const Quaternion &rotation = QuaternionIdentity(),
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
+        std::vector<RaycastHit> BoxCastAll(World& world, const Float3& origin, const Float3& direction,
+                                           const Float3& halfExtent,
+                                           float distance, const Quaternion& rotation = QuaternionIdentity(),
+                                           bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                           std::span<const Entity> ignore = {});
 
-        std::vector<RaycastHit> BoxCastAll(const Float3 &origin, const Float3 &direction, const Float3 &halfExtent,
+        std::vector<RaycastHit> BoxCastAll(const Float3& origin, const Float3& direction, const Float3& halfExtent,
                                            float distance,
-                                           const Quaternion &rotation = QuaternionIdentity(),
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const JPH::BodyID> ignore = {});
+                                           const Quaternion& rotation,
+                                           bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
-        std::vector<RaycastHit> BoxCastAll(const Float3 &origin, const Float3 &direction, const Float3 &halfExtent,
+        std::vector<RaycastHit> BoxCastAll(const Float3& origin, const Float3& direction, const Float3& halfExtent,
                                            float distance,
-                                           const Quaternion &rotation = QuaternionIdentity(),
-                                           bool hitTriggers = false, uint32_t layerMask = ~0u, std::span<const Entity> ignore = {});
+                                           const Quaternion& rotation = QuaternionIdentity(),
+                                           bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                           std::span<const Entity> ignore = {});
 
     private:
         friend class ContactListenerImpl;
 
-        struct BodyInfo {
+        struct BodyInfo
+        {
             uint64_t Entity;
             bool IsTrigger;
         };
 
-        RaycastHit MakeHit(World &world, JPH::BodyID id, float fraction, const JPH::RRayCast &ray,
+        RaycastHit MakeHit(World& world, JPH::BodyID id, float fraction, const JPH::RRayCast& ray,
                            JPH::SubShapeID subShape);
 
-        RaycastHit MakeHit(World &world, JPH::ShapeCastResult &result, JPH::RVec3Arg baseOffset, float castLength);
+        RaycastHit MakeHit(World& world, JPH::ShapeCastResult& result, JPH::RVec3Arg baseOffset, float castLength);
 
 
         void QueueContact(JPH::BodyID id1, JPH::BodyID id2, JPH::RVec3 point, JPH::Vec3 normal, EContactPhase phase);
 
-        void DispatchContact(World &world, const PendingContact &contact);
+        void DispatchContact(World& world, const PendingContact& contact);
 
-        void EmitStay(World &world, const PendingContact &contact);
+        void EmitStay(World& world, const PendingContact& contact);
 
         static uint64_t MakeContactKey(JPH::BodyID id1, JPH::BodyID id2);
 

@@ -13,7 +13,7 @@ target_link_libraries(Game PRIVATE
         flecs
 )
 
-target_compile_definitions(Game PRIVATE GAME_EXPORTS)
+target_compile_definitions(Game PRIVATE GAME_EXPORTS NOMINMAX WIN32_LEAN_AND_MEAN)
 
 add_custom_command(TARGET Game POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different

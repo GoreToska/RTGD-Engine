@@ -14,12 +14,14 @@
 #include "Scene/SceneManager.h"
 #include "Tools/Logger.h"
 
-Game &Game::Instance() {
+Game& Game::Instance()
+{
     static Game instance;
     return instance;
 }
 
-void Game::Initialize() {
+void Game::Initialize()
+{
     LogInfo("Initializing game.");
     GScene.GetActiveScene()->LoadFromFile(
         GetAbsolutePath("Assets/Scenes/Default.scene"));
@@ -29,13 +31,16 @@ void Game::Initialize() {
         RTGDEngine::GetAbsolutePath("Assets/Scenes/Stress10k.scene"));*/
 }
 
-void Game::Update(float deltaTime) {
+void Game::Update(float deltaTime)
+{
 }
 
-void Game::Shutdown() {
+void Game::Shutdown()
+{
 }
 
-void Game::SetupInput() {
+void Game::SetupInput()
+{
     m_moveForward = GInput.RegisterAction("PlayerMoveForward");
     m_moveBackward = GInput.RegisterAction("PlayerMoveBackward");
     m_moveLeft = GInput.RegisterAction("PlayerMoveLeft");
@@ -51,7 +56,8 @@ void Game::SetupInput() {
     GInput.SetRelativeMouseMode(true);
 }
 
-void Game::OnStart() {
+void Game::OnStart()
+{
     SetupInput();
 
     m_player = GScene.CreateEntity(
@@ -76,14 +82,19 @@ void Game::OnStart() {
                       ESystemGroup::Game);
     GEngine.AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
                       ESystemGroup::Game);
+
+    LogInfo("Layer number: {}", m_player.get<ColliderComponent>().Layer);
+    LogInfo("Layer name: {}", GPhysics.GetLayerName(m_player.get<ColliderComponent>().Layer));
 }
 
-void Game::OnStop() {
+void Game::OnStop()
+{
     GInput.SetRelativeMouseMode(false);
 }
 
-void Game::PlayerMovementSystem(flecs::world &world, float deltaTime) {
-    auto &transform = m_player.get_mut<TransformComponent>();
+void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
+{
+    auto& transform = m_player.get_mut<TransformComponent>();
 
     float dx = GInput.GetMouseDeltaX() * m_mouseSensitivity;
     float dy = GInput.GetMouseDeltaY() * m_mouseSensitivity;
@@ -95,14 +106,18 @@ void Game::PlayerMovementSystem(flecs::world &world, float deltaTime) {
         m_currentPitch = std::clamp(m_currentPitch + dy, -m_pitchLimit, +m_pitchLimit);
 
 
-    auto &rb = m_player.get_mut<RigidbodyComponent>();
+    auto& rb = m_player.get_mut<RigidbodyComponent>();
     transform.Rotate(TransformComponent::GlobalUp, dx, WorldSpace);
 
     Float3 dir{};
-    if (GInput.IsDown(m_moveForward)) dir += transform.GetForward();
-    if (GInput.IsDown(m_moveBackward)) dir -= transform.GetForward();
-    if (GInput.IsDown(m_moveRight)) dir += transform.GetRight();
-    if (GInput.IsDown(m_moveLeft)) dir -= transform.GetRight();
+    if (GInput.IsDown(m_moveForward))
+        dir += transform.GetForward();
+    if (GInput.IsDown(m_moveBackward))
+        dir -= transform.GetForward();
+    if (GInput.IsDown(m_moveRight))
+        dir += transform.GetRight();
+    if (GInput.IsDown(m_moveLeft))
+        dir -= transform.GetRight();
 
     if (Diligent::length(dir) > 0.000001f)
         dir = Diligent::normalize(dir);
@@ -111,17 +126,19 @@ void Game::PlayerMovementSystem(flecs::world &world, float deltaTime) {
     rb.Velocity = {horizontal.x, rb.Velocity.y, horizontal.z};
 }
 
-void Game::CameraUpdate(flecs::world &world, float deltaTime) {
-    auto &playerTransform = m_player.get_mut<TransformComponent>();
-    auto &camTransform = m_playerCam.get_mut<TransformComponent>();
+void Game::CameraUpdate(flecs::world& world, float deltaTime)
+{
+    auto& playerTransform = m_player.get_mut<TransformComponent>();
+    auto& camTransform = m_playerCam.get_mut<TransformComponent>();
 
     camTransform.Position = playerTransform.Position + Float3(0.0f, m_eyeHeight, 0.0f);
     camTransform.Rotation = playerTransform.Rotation;
     camTransform.Rotate(TransformComponent::GlobalRight, m_currentPitch, LocalSpace);
 
-    if (GInput.IsPressed(m_interact)) {
+    if (GInput.IsPressed(m_interact))
+    {
         auto hit = GPhysics.Raycast(camTransform.Position, camTransform.GetForward(), m_interactionDistance, false,
-                                    std::span(&m_player, 1));
+                                    GPhysics.GetLayerMask("Default"), std::span(&m_player, 1));
 
         if (hit.Hit)
             LogInfo("[interact] hit {} at {:.2f}m", hit.Target.name().c_str(), hit.Distance);
@@ -130,8 +147,10 @@ void Game::CameraUpdate(flecs::world &world, float deltaTime) {
     }
 }
 
-extern "C" {
-GAME_API IGameModule *GetGameModule() {
+extern "C"
+{
+GAME_API IGameModule* GetGameModule()
+{
     return &GGame;
 }
 }

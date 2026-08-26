@@ -45,6 +45,8 @@ namespace RTGDEngine::Layers {
 
         [[nodiscard]] int GetIndex(std::string_view name) const;
 
+        [[nodiscard]] std::string GetName(int index) const;
+
         [[nodiscard]] uint32_t GetNumLayers() const { return m_names.size() * 2; }
 
         [[nodiscard]] JPH::ObjectLayerPairFilterTable &GetPairFilter() const { return *m_objectLayerPairFilter; }

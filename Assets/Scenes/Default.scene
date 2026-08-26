@@ -72,7 +72,7 @@
       "RenderComponent": { "CastShadows": true, "IsVisible": true },
       "TransformComponent": { "Position": {"x":0,"y":4,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
       "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.5,"y":0.5,"z":0.5}, "IsTrigger": false },
-      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 500 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 1 },
       "UUIDComponent": { "ID": 0 }
     } }
   },
