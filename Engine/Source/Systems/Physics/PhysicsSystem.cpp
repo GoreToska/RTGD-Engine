@@ -5,14 +5,17 @@
 #include "Systems/Physics/PhysicsSystem.h"
 
 #include <flecs.h>
+#include "Jolt/Physics/Collision/CastResult.h"
+#include "Jolt/Physics/Collision/CollisionCollectorImpl.h"
+#include "Jolt/Physics/Collision/RayCast.h"
+#include "Jolt/Physics/Collision/ShapeCast.h"
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
 
 #include "Components/RigidbodyComponent.h"
 #include "Components/TransformComponent.h"
 #include "Jolt/RegisterTypes.h"
 #include "Jolt/Core/Factory.h"
-#include "Jolt/Physics/Collision/CastResult.h"
-#include "Jolt/Physics/Collision/CollisionCollectorImpl.h"
-#include "Jolt/Physics/Collision/RayCast.h"
+
 #include "Scene/SceneManager.h"
 #include "Tools/JoltConversions.h"
 
@@ -143,6 +146,182 @@ namespace RTGDEngine {
         return RaycastAll(GScene.GetWorld(), origin, direction, distance, hitTriggers, ignore);
     }
 
+    RaycastHit PhysicsSystem::SphereCast(World &world, const Float3 &origin, const Float3 &direction, float radius,
+                                         float distance, bool hitTriggers, std::span<const JPH::BodyID> ignore) {
+        JPH::SphereShape sphere(radius);
+        JPH::RShapeCast shapeCast = JPH::RShapeCast::sFromWorldTransform(
+            &sphere, JPH::Vec3::sOne(), JPH::RMat44::sTranslation(ToRVec3(origin)),
+            ToVec3(direction).Normalized() * distance);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore) filter.Ignore.IgnoreBody(id);
+
+        JPH::ShapeCastSettings settings;
+        JPH::ClosestHitCollisionCollector<JPH::CastShapeCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().
+                CastShape(shapeCast, settings, ToRVec3(origin), collector, {}, {}, filter);
+        if (!collector.HadHit()) return {};
+
+        return MakeHit(world, collector.mHit, ToRVec3(origin), distance);
+    }
+
+    RaycastHit PhysicsSystem::SphereCast(World &world, const Float3 &origin, const Float3 &direction, float radius,
+                                         float distance, bool hitTriggers, std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return SphereCast(world, origin, direction, radius, distance, hitTriggers, ids);
+    }
+
+    RaycastHit PhysicsSystem::SphereCast(const Float3 &origin, const Float3 &direction, float radius, float distance,
+                                         bool hitTriggers, std::span<const JPH::BodyID> ignore) {
+        return SphereCast(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, ignore);
+    }
+
+    RaycastHit PhysicsSystem::SphereCast(const Float3 &origin, const Float3 &direction, float radius, float distance,
+                                         bool hitTriggers, std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return SphereCast(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, ids);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::SphereCastAll(World &world, const Float3 &origin, const Float3 &direction,
+                                                         float radius, float distance, bool hitTriggers,
+                                                         std::span<const JPH::BodyID> ignore) {
+        JPH::SphereShape sphere(radius);
+        JPH::RShapeCast shapeCast = JPH::RShapeCast::sFromWorldTransform(
+            &sphere, JPH::Vec3::sOne(), JPH::RMat44::sTranslation(ToRVec3(origin)),
+            ToVec3(direction).Normalized() * distance);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore) filter.Ignore.IgnoreBody(id);
+
+        JPH::ShapeCastSettings settings;
+        JPH::AllHitCollisionCollector<JPH::CastShapeCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().
+                CastShape(shapeCast, settings, ToRVec3(origin), collector, {}, {}, filter);
+        if (!collector.HadHit()) return {};
+
+        std::vector<RaycastHit> hits;
+        hits.reserve(collector.mHits.size());
+        for (auto &h: collector.mHits)
+            hits.push_back(MakeHit(world, h, ToRVec3(origin), distance));
+
+        return hits;
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::SphereCastAll(World &world, const Float3 &origin, const Float3 &direction,
+                                                         float radius, float distance, bool hitTriggers,
+                                                         std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return SphereCastAll(world, origin, direction, radius, distance, hitTriggers, ids);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::SphereCastAll(const Float3 &origin, const Float3 &direction, float radius,
+                                                         float distance, bool hitTriggers,
+                                                         std::span<const JPH::BodyID> ignore) {
+        return SphereCastAll(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, ignore);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::SphereCastAll(const Float3 &origin, const Float3 &direction, float radius,
+                                                         float distance, bool hitTriggers,
+                                                         std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return SphereCastAll(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, ids);
+    }
+
+    RaycastHit PhysicsSystem::BoxCast(World &world, const Float3 &origin, const Float3 &direction,
+                                      const Float3 &halfExtent, float distance, const Quaternion &rotation,
+                                      bool hitTriggers,
+                                      std::span<const JPH::BodyID> ignore) {
+        JPH::BoxShape box(ToVec3(halfExtent));
+        JPH::RShapeCast boxCast = JPH::RShapeCast::sFromWorldTransform(
+            &box, JPH::Vec3::sOne(), JPH::RMat44::sRotationTranslation(ToQuat(rotation), ToRVec3(origin)),
+            ToVec3(direction).Normalized() * distance);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore) filter.Ignore.IgnoreBody(id);
+
+        JPH::ShapeCastSettings settings;
+        JPH::ClosestHitCollisionCollector<JPH::CastShapeCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().
+                CastShape(boxCast, settings, ToRVec3(origin), collector, {}, {}, filter);
+        if (!collector.HadHit()) return {};
+
+        return MakeHit(world, collector.mHit, ToRVec3(origin), distance);
+    }
+
+    RaycastHit PhysicsSystem::BoxCast(World &world, const Float3 &origin, const Float3 &direction,
+                                      const Float3 &halfExtent, float distance, const Quaternion &rotation,
+                                      bool hitTriggers,
+                                      std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return BoxCast(world, origin, direction, halfExtent, distance, rotation, hitTriggers, ids);
+    }
+
+    RaycastHit PhysicsSystem::BoxCast(const Float3 &origin, const Float3 &direction, const Float3 &halfExtent,
+                                      float distance, const Quaternion &rotation, bool hitTriggers,
+                                      std::span<const JPH::BodyID> ignore) {
+        return BoxCast(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, ignore);
+    }
+
+    RaycastHit PhysicsSystem::BoxCast(const Float3 &origin, const Float3 &direction, const Float3 &halfExtent,
+                                      float distance, const Quaternion &rotation, bool hitTriggers,
+                                      std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return BoxCast(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, ids);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::BoxCastAll(World &world, const Float3 &origin, const Float3 &direction,
+                                                      const Float3 &halfExtent, float distance,
+                                                      const Quaternion &rotation, bool hitTriggers,
+                                                      std::span<const JPH::BodyID> ignore) {
+        JPH::BoxShape box(ToVec3(halfExtent));
+        JPH::RShapeCast boxCast = JPH::RShapeCast::sFromWorldTransform(
+            &box, JPH::Vec3::sOne(), JPH::RMat44::sRotationTranslation(ToQuat(rotation), ToRVec3(origin)),
+            ToVec3(direction).Normalized() * distance);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore) filter.Ignore.IgnoreBody(id);
+
+        JPH::ShapeCastSettings settings;
+        JPH::AllHitCollisionCollector<JPH::CastShapeCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().
+                CastShape(boxCast, settings, ToRVec3(origin), collector, {}, {}, filter);
+        if (!collector.HadHit()) return {};
+
+        std::vector<RaycastHit> hits;
+        hits.reserve(collector.mHits.size());
+        for (auto &h: collector.mHits)
+            hits.push_back(MakeHit(world, h, ToRVec3(origin), distance));
+
+        return hits;
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::BoxCastAll(World &world, const Float3 &origin, const Float3 &direction,
+                                                      const Float3 &halfExtent, float distance,
+                                                      const Quaternion &rotation, bool hitTriggers,
+                                                      std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return BoxCastAll(world, origin, direction, halfExtent, distance, rotation, hitTriggers, ids);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::BoxCastAll(const Float3 &origin, const Float3 &direction,
+                                                      const Float3 &halfExtent, float distance,
+                                                      const Quaternion &rotation, bool hitTriggers,
+                                                      std::span<const JPH::BodyID> ignore) {
+        return BoxCastAll(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, ignore);
+    }
+
+    std::vector<RaycastHit> PhysicsSystem::BoxCastAll(const Float3 &origin, const Float3 &direction,
+                                                      const Float3 &halfExtent, float distance,
+                                                      const Quaternion &rotation, bool hitTriggers,
+                                                      std::span<const Entity> ignore) {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return BoxCastAll(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, ids);
+    }
+
     RaycastHit PhysicsSystem::MakeHit(World &world, JPH::BodyID id, float fraction, const JPH::RRayCast &ray,
                                       JPH::SubShapeID subShape) {
         auto it = m_bodyInfo.find(id);
@@ -162,6 +341,28 @@ namespace RTGDEngine {
         hit.Point = ToFloat3(point);
         hit.Normal = ToFloat3(normal);
         hit.Distance = fraction * ray.mDirection.Length();
+        return hit;
+    }
+
+    RaycastHit PhysicsSystem::MakeHit(World &world, JPH::ShapeCastResult &result, JPH::RVec3Arg baseOffset,
+                                      float castLength) {
+        auto it = m_bodyInfo.find(result.mBodyID2);
+        if (it == m_bodyInfo.end()) return {};
+
+        JPH::RVec3 point = baseOffset + JPH::RVec3(result.mContactPointOn2);
+
+        JPH::BodyLockRead lock(m_physicsSystem.GetBodyLockInterface(), result.mBodyID2);
+        JPH::Vec3 normal = lock.Succeeded()
+                               ? lock.GetBody().GetWorldSpaceSurfaceNormal(result.mSubShapeID2, point)
+                               : JPH::Vec3::sZero();
+
+        RaycastHit hit;
+        hit.Hit = true;
+        hit.BodyID = result.mBodyID2;
+        hit.Target = world.entity(it->second.Entity);
+        hit.Point = ToFloat3(point);
+        hit.Normal = ToFloat3(normal);
+        hit.Distance = result.mFraction * castLength;
         return hit;
     }
 
