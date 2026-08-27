@@ -44,6 +44,9 @@ namespace RTGDEngine
     {
         EMotionType MotionType = EMotionType::Dynamic;
         float Mass = 1.0f;
+        float LinearDamping = 0.05f;
+        float AngularDamping = 0.05f;
+        float GravityFactor = 1.0f;
         EPhysicsDOF AllowedDOFs = EPhysicsDOF::All;
 
         // transient
@@ -106,6 +109,9 @@ namespace RTGDEngine
             flecs::component<RigidbodyComponent>(world, "RigidbodyComponent")
                     .member<EMotionType>("MotionType")
                     .member<float>("Mass")
+                    .member<float>("LinearDamping")
+                    .member<float>("AngularFactor")
+                    .member<float>("GravityFactor")
                     .member<EPhysicsDOF>("Allowed DOFs");
 
             auto createBody = [](flecs::entity e)
@@ -136,6 +142,9 @@ namespace RTGDEngine
                 JPH::BodyCreationSettings settings(shape, ToRVec3(xf->Position), ToQuat(xf->Rotation), motion, layer);
                 settings.mIsSensor = collider->IsTrigger;
                 settings.mAllowedDOFs = static_cast<JPH::EAllowedDOFs>(rb->AllowedDOFs);
+                settings.mLinearDamping = rb->LinearDamping;
+                settings.mAngularDamping = rb->AngularDamping;
+                settings.mGravityFactor = rb->GravityFactor;
 
                 if (rb->MotionType != EMotionType::Static)
                 {

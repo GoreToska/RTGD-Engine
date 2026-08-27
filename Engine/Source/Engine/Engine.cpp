@@ -168,6 +168,9 @@ namespace RTGDEngine
 
     bool Engine::ReloadGameModule()
     {
+        if (!m_gameLib)
+            return false;
+
         auto path = m_gameLib->GetPath();
         UnloadGameModule();
         return LoadGameModule(path);
