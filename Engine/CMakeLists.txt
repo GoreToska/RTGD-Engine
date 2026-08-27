@@ -139,6 +139,10 @@ add_library(Engine SHARED
         Include/Systems/GroundCheckSystem.h
         Include/Components/GroundCheckComponent.h
         Source/Systems/GroundCheckSystem.cpp
+        Source/Render/DebugDraw.cpp
+        Include/Render/DebugDraw.h
+        Source/Render/Graph/Pass/DebugLinesPass.cpp
+        Include/Render/Graph/Pass/DebugLinesPass.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

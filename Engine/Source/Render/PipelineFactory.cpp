@@ -622,6 +622,83 @@ namespace RTGDEngine
             "lighting", std::move(data));
     }
 
+    MaterialHandle PipelineFactory::CreateDebugLinesPipeline(Diligent::IRenderDevice& device,
+                                                             Diligent::ISwapChain& swapChain,
+                                                             const std::string& absolutePath)
+    {
+        using namespace Diligent;
+
+        RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
+        GRenderSystem.GetFactory().CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
+
+        ShaderCreateInfo shaderCI;
+        shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
+        shaderCI.pShaderSourceStreamFactory = pShaderFactory;
+        shaderCI.Desc.UseCombinedTextureSamplers = false;
+
+        RefCntAutoPtr<IShader> pVS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_VERTEX;
+        shaderCI.Desc.Name = "DebugLines VS";
+        shaderCI.FilePath = "DebugLinesVS.hlsl";
+        device.CreateShader(shaderCI, &pVS);
+        if (!pVS)
+        {
+            LogError("Failed to create DebugLines VS");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        RefCntAutoPtr<IShader> pPS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_PIXEL;
+        shaderCI.Desc.Name = "DebugLines PS";
+        shaderCI.FilePath = "DebugLinesPS.hlsl";
+        device.CreateShader(shaderCI, &pPS);
+        if (!pPS)
+        {
+            LogError("Failed to create DebugLines PS");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        GraphicsPipelineStateCreateInfo psoCI;
+        psoCI.PSODesc.Name = "DebugLines PSO";
+        psoCI.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
+        psoCI.pVS = pVS;
+        psoCI.pPS = pPS;
+
+        auto layout = VertexLayout::Line();
+        psoCI.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
+        psoCI.GraphicsPipeline.InputLayout.NumElements = static_cast<uint32_t>(layout.size());
+
+        psoCI.GraphicsPipeline.NumRenderTargets = 1;
+        psoCI.GraphicsPipeline.RTVFormats[0] = swapChain.GetDesc().ColorBufferFormat;
+        psoCI.GraphicsPipeline.DSVFormat = TEX_FORMAT_D32_FLOAT;
+
+        psoCI.GraphicsPipeline.PrimitiveTopology = PRIMITIVE_TOPOLOGY_LINE_LIST;
+        psoCI.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_NONE;
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthEnable = True;
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthWriteEnable = False;
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthFunc = COMPARISON_FUNC_LESS_EQUAL;
+
+        ShaderResourceVariableDesc vars[] =
+        {
+            {SHADER_TYPE_VERTEX, "CameraConstants", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE},
+        };
+        psoCI.PSODesc.ResourceLayout.Variables = vars;
+        psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
+
+        MaterialData data;
+        device.CreateGraphicsPipelineState(psoCI, &data.PSO);
+        if (!data.PSO)
+        {
+            LogError("Failed to create DebugLines PSO");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        data.PSO->CreateShaderResourceBinding(&data.SRB, true);
+        BindStandardConstantBuffers(*data.SRB);
+
+        return GRenderResources.RegisterMaterial("debug_lines", std::move(data));
+    }
+
     void PipelineFactory::BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb)
     {
         using namespace Diligent;

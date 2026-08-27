@@ -110,7 +110,7 @@ namespace RTGDEngine
                     .member<EMotionType>("MotionType")
                     .member<float>("Mass")
                     .member<float>("LinearDamping")
-                    .member<float>("AngularFactor")
+                    .member<float>("AngularDamping")
                     .member<float>("GravityFactor")
                     .member<EPhysicsDOF>("Allowed DOFs");
 
@@ -145,6 +145,8 @@ namespace RTGDEngine
                 settings.mLinearDamping = rb->LinearDamping;
                 settings.mAngularDamping = rb->AngularDamping;
                 settings.mGravityFactor = rb->GravityFactor;
+                settings.mFriction = collider->Friction;
+                settings.mRestitution = collider->Restitution;
 
                 if (rb->MotionType != EMotionType::Static)
                 {

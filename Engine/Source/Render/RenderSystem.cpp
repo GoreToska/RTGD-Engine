@@ -17,6 +17,7 @@
 #include "Render/Graph/RGResources.h"
 #include "Render/Graph/Pass/CameraPass.h"
 #include "Render/Graph/Pass/CompositePass.h"
+#include "Render/Graph/Pass/DebugLinesPass.h"
 #include "Render/Graph/Pass/DebugViewPass.h"
 #include "Render/Graph/Pass/GBufferPass.h"
 #include "Render/Graph/Pass/LightPass.h"
@@ -25,8 +26,10 @@
 #include "Systems/CameraSystem.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine {
-    bool RTGDRenderSystem::Initialize(const NativeWindowHandle &handle, int width, int height) {
+namespace RTGDEngine
+{
+    bool RTGDRenderSystem::Initialize(const NativeWindowHandle& handle, int width, int height)
+    {
         using namespace Diligent;
 
         m_width = width;
@@ -40,12 +43,13 @@ namespace RTGDEngine {
 
 #ifdef _WIN32
         //-------- D3D12 --------
-        auto *GetEngineFactoryD3D12 = LoadGraphicsEngineD3D12();
-        if (!GetEngineFactoryD3D12) {
+        auto* GetEngineFactoryD3D12 = LoadGraphicsEngineD3D12();
+        if (!GetEngineFactoryD3D12)
+        {
             LogError("Failed to load GraphicsEngineD3D12.dll");
             return false;
         }
-        auto *pFactory = GetEngineFactoryD3D12();
+        auto* pFactory = GetEngineFactoryD3D12();
 
         EngineD3D12CreateInfo engineCI;
         engineCI.GraphicsAPIVersion = {12, 0};
@@ -63,8 +67,9 @@ namespace RTGDEngine {
         m_pFactory = pFactory;
 
 #elif defined(__linux__)
-        auto *pFactory = GetEngineFactoryVk();
-        if (!pFactory) {
+        auto* pFactory = GetEngineFactoryVk();
+        if (!pFactory)
+        {
             LogError("Failed to load GraphicsEngineVk");
             return false;
         }
@@ -86,7 +91,8 @@ namespace RTGDEngine {
         m_pFactory = pFactory;
 #endif
 
-        if (!m_device || !m_pImmediateContext || !m_swapChain) {
+        if (!m_device || !m_pImmediateContext || !m_swapChain)
+        {
             LogError("Failed to create Diligent device/swapchain");
             return false;
         }
@@ -104,6 +110,7 @@ namespace RTGDEngine {
 
         m_graph.AddPass(std::move(debug));
         m_graph.AddPass(std::make_unique<CompositePass>());
+        m_graph.AddPass(std::make_unique<DebugLinesPass>());
 
         m_graph.Initialize(*m_device, *m_swapChain);
 
@@ -111,15 +118,17 @@ namespace RTGDEngine {
         return true;
     }
 
-    void RTGDRenderSystem::BuildMainView(flecs::world &world) {
+    void RTGDRenderSystem::BuildMainView(flecs::world& world)
+    {
         const uint32_t count = m_renderScene.Count();
         m_mainView.Mask.Resize(count);
 
         flecs::entity cameraEntity = CameraSystem::GetActiveCamera(world);
-        const auto *camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
-        const auto *transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
+        const auto* camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
+        const auto* transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
 
-        if (!camera || !transform || !m_cullingEnabled) {
+        if (!camera || !transform || !m_cullingEnabled)
+        {
             m_mainView.Mask.SetAll(count);
             return;
         }
@@ -130,21 +139,23 @@ namespace RTGDEngine {
         m_cullFrustums.push_back(FrustumSIMD::From(m_mainView.Frustum));
     }
 
-    void RTGDRenderSystem::BuildShadowViews(flecs::world &world) {
+    void RTGDRenderSystem::BuildShadowViews(flecs::world& world)
+    {
         const uint32_t count = m_renderScene.Count();
         const uint32_t cascadeCount = std::clamp(m_shadowSettings.CascadeCount, 1u, MAX_SHADOW_CASCADES);
 
         flecs::entity cameraEntity = CameraSystem::GetActiveCamera(world);
-        const auto *camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
-        const auto *transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
+        const auto* camera = cameraEntity.is_valid() ? cameraEntity.try_get<CameraComponent>() : nullptr;
+        const auto* transform = cameraEntity.is_valid() ? cameraEntity.try_get<TransformComponent>() : nullptr;
 
-        if (!camera || !transform) {
+        if (!camera || !transform)
+        {
             m_shadowViews.clear();
             return;
         }
 
         DirectionalLightComponent light;
-        world.each([&](const DirectionalLightComponent &l) { light = l; });
+        world.each([&](const DirectionalLightComponent& l) { light = l; });
 
         m_shadowViews.resize(cascadeCount);
 
@@ -152,12 +163,13 @@ namespace RTGDEngine {
         const float farZ = std::min(camera->FarPlane, m_shadowSettings.ShadowDistance);
         float sliceNear = nearZ;
 
-        for (uint32_t i = 0; i < cascadeCount; ++i) {
+        for (uint32_t i = 0; i < cascadeCount; ++i)
+        {
             const float sliceFar = GetCascadeSplitFar(nearZ, farZ, i, m_shadowSettings.SplitLambda, cascadeCount);
             const CascadeFit fit = BuildCascadeMatrix(*camera, *transform, light.Direction,
                                                       sliceNear, sliceFar, m_shadowSettings.Resolution);
 
-            RenderView &view = m_shadowViews[i];
+            RenderView& view = m_shadowViews[i];
             view.ViewProjection = fit.ViewProjection;
             view.DepthRange = fit.DepthRange;
             view.TexelWorldSize = fit.TexelWorldSize;
@@ -165,9 +177,12 @@ namespace RTGDEngine {
 
             view.Mask.Resize(count);
 
-            if (!m_cullingEnabled) {
+            if (!m_cullingEnabled)
+            {
                 view.Mask.SetAll(count);
-            } else {
+            }
+            else
+            {
                 view.Frustum = CameraFrustum::FromViewProjection(fit.ViewProjection);
                 m_cullViews.push_back(&m_shadowViews[i]);
                 m_cullFrustums.push_back(FrustumSIMD::From(view.Frustum));
@@ -177,7 +192,8 @@ namespace RTGDEngine {
         }
     }
 
-    void RTGDRenderSystem::ExecuteFrame(flecs::world &world) {
+    void RTGDRenderSystem::ExecuteFrame(flecs::world& world)
+    {
         RGResources resources(*m_swapChain);
         resources.ImportBackbuffer();
         resources.ImportSwapchainDepth();
@@ -190,10 +206,10 @@ namespace RTGDEngine {
         BuildShadowViews(world);
         CullViews();
 
-        for (RenderView *view: m_cullViews)
+        for (RenderView* view: m_cullViews)
             view->Mask.OrWith(m_renderScene.AlwaysVisible());
 
-        for (RenderView &view: m_shadowViews)
+        for (RenderView& view: m_shadowViews)
             view.Mask.AndWith(m_renderScene.ShadowCasters());
 
         RenderContext renderCtx = {
@@ -206,7 +222,8 @@ namespace RTGDEngine {
         m_graph.Execute(renderCtx);
     }
 
-    void RTGDRenderSystem::ApplyPendingResize(flecs::world &world) {
+    void RTGDRenderSystem::ApplyPendingResize(flecs::world& world)
+    {
         std::lock_guard<std::mutex> lock(m_resizeMutex);
         if (!m_resizePending)
             return;
@@ -226,7 +243,8 @@ namespace RTGDEngine {
         m_graph.InvalidateTransientResources();
 
         auto cameraEntity = CameraSystem::GetActiveCamera(world);
-        if (cameraEntity.is_valid()) {
+        if (cameraEntity.is_valid())
+        {
             auto cam = cameraEntity.get_ref<CameraComponent>();
             cam->AspectRatio = static_cast<float>(width) / static_cast<float>(height);
         }
@@ -234,9 +252,11 @@ namespace RTGDEngine {
 
 
 #ifdef RTGD_EDITOR
-    flecs::entity RTGDRenderSystem::PickEntity(uint32_t x, uint32_t y) {
+    flecs::entity RTGDRenderSystem::PickEntity(uint32_t x, uint32_t y)
+    {
         using namespace Diligent;
-        if (!m_idReadbackTexture) {
+        if (!m_idReadbackTexture)
+        {
             TextureDesc d;
             d.Name = "GBuffer ID Readback";
             d.Type = RESOURCE_DIM_TEX_2D;
@@ -250,12 +270,14 @@ namespace RTGDEngine {
             m_device->CreateTexture(d, nullptr, &m_idReadbackTexture);
         }
 
-        auto *idTex = m_graph.FindTexture("GBuffer.ID");
-        if (!idTex) {
+        auto* idTex = m_graph.FindTexture("GBuffer.ID");
+        if (!idTex)
+        {
             return flecs::entity::null();
         }
 
-        if (x >= m_width || y >= m_height) {
+        if (x >= m_width || y >= m_height)
+        {
             return flecs::entity::null();
         }
 
@@ -278,7 +300,8 @@ namespace RTGDEngine {
         copy.DstTextureTransitionMode = RESOURCE_STATE_TRANSITION_MODE_TRANSITION;
         m_pImmediateContext->CopyTexture(copy);
 
-        if (!m_pickFence) {
+        if (!m_pickFence)
+        {
             FenceDesc fd;
             fd.Name = "Pick Fence";
             m_device->CreateFence(fd, &m_pickFence);
@@ -295,7 +318,7 @@ namespace RTGDEngine {
             m_idReadbackTexture, 0, 0,
             MAP_READ, MAP_FLAG_DO_NOT_WAIT, nullptr, mapped);
 
-        const uint32_t id = mapped.pData ? *static_cast<const uint32_t *>(mapped.pData) : 0;
+        const uint32_t id = mapped.pData ? *static_cast<const uint32_t*>(mapped.pData) : 0;
 
         m_pImmediateContext->UnmapTextureSubresource(m_idReadbackTexture, 0, 0);
 
@@ -306,7 +329,8 @@ namespace RTGDEngine {
     }
 #endif
 
-    void RTGDRenderSystem::CullViews() {
+    void RTGDRenderSystem::CullViews()
+    {
         constexpr uint32_t WORD_BITS = 64;
         constexpr uint32_t CHUNKS_PER_JOB = 32;
         constexpr uint32_t MIN_PARALLEL_ITEMS = 4096;
@@ -319,39 +343,47 @@ namespace RTGDEngine {
         const BoundsView bounds = m_renderScene.Bounds();
         const uint32_t chunkCount = (count + WORD_BITS - 1) / WORD_BITS;
 
-        if (count * viewCount < MIN_PARALLEL_ITEMS) {
+        if (count * viewCount < MIN_PARALLEL_ITEMS)
+        {
             for (uint32_t v = 0; v < viewCount; ++v)
                 CullFrustum(bounds, m_cullFrustums[v], 0, count, m_cullViews[v]->Mask.Words());
-        } else {
+        }
+        else
+        {
             m_cullJobs.clear();
             for (uint32_t v = 0; v < viewCount; ++v)
                 for (uint32_t c = 0; c < chunkCount; c += CHUNKS_PER_JOB)
                     m_cullJobs.push_back({v, c, std::min(c + CHUNKS_PER_JOB, chunkCount)});
 
             GJobSystem.ParallelFor(static_cast<uint32_t>(m_cullJobs.size()), 1,
-                                              [&](uint32_t begin, uint32_t end, uint32_t) {
-                                                  for (uint32_t j = begin; j < end; ++j) {
-                                                      const CullJob &job = m_cullJobs[j];
-                                                      CullFrustum(bounds, m_cullFrustums[job.ViewIndex],
-                                                                  job.ChunkBegin * WORD_BITS,
-                                                                  std::min(job.ChunkEnd * WORD_BITS, count),
-                                                                  m_cullViews[job.ViewIndex]->Mask.Words());
-                                                  }
-                                              });
+                                   [&](uint32_t begin, uint32_t end, uint32_t)
+                                   {
+                                       for (uint32_t j = begin; j < end; ++j)
+                                       {
+                                           const CullJob& job = m_cullJobs[j];
+                                           CullFrustum(bounds, m_cullFrustums[job.ViewIndex],
+                                                       job.ChunkBegin * WORD_BITS,
+                                                       std::min(job.ChunkEnd * WORD_BITS, count),
+                                                       m_cullViews[job.ViewIndex]->Mask.Words());
+                                       }
+                                   });
         }
     }
 
-    void RTGDRenderSystem::Shutdown() {
+    void RTGDRenderSystem::Shutdown()
+    {
         LogInfo("Render System Shutdown");
 
         m_pImmediateContext->Flush();
     }
 
-    void RTGDRenderSystem::Present() {
+    void RTGDRenderSystem::Present()
+    {
         m_swapChain->Present();
     }
 
-    void RTGDRenderSystem::Resize(int width, int height) {
+    void RTGDRenderSystem::Resize(int width, int height)
+    {
         if (!m_swapChain)
             return;
 

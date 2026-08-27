@@ -12,21 +12,28 @@
 #include "Tools/Alias.h"
 #include "Tools/JoltConversions.h"
 
-namespace RTGDEngine {
-    enum class EPhysicsShape {
+namespace RTGDEngine
+{
+    enum class EPhysicsShape
+    {
         Box,
         Sphere,
         Capsule,
     };
 
-    struct ColliderComponent {
+    struct ColliderComponent
+    {
         EPhysicsShape Shape = EPhysicsShape::Box;
         Float3 Extents = {0.5f, 0.5f, 0.5f};
+        float Friction = 0.2f;
+        float Restitution = 0.0f;
         bool IsTrigger = false;
         uint8_t Layer = 0;
 
-        static JPH::ShapeRefC MakeShape(EPhysicsShape shape, const Float3 &extents) {
-            switch (shape) {
+        static JPH::ShapeRefC MakeShape(EPhysicsShape shape, const Float3& extents)
+        {
+            switch (shape)
+            {
                 case EPhysicsShape::Box:
                     return JPH::BoxShapeSettings(ToVec3(extents)).Create().Get();
                 case EPhysicsShape::Sphere:
@@ -38,13 +45,15 @@ namespace RTGDEngine {
             return nullptr;
         }
 
-        static JPH::MassProperties ComputeMassProperties(EPhysicsShape shape, const Float3 &extents, float mass) {
+        static JPH::MassProperties ComputeMassProperties(EPhysicsShape shape, const Float3& extents, float mass)
+        {
             JPH::MassProperties props = MakeShape(shape, extents)->GetMassProperties();
             props.ScaleToMass(mass);
             return props;
         }
 
-        static void RegisterMeta(const World &world) {
+        static void RegisterMeta(const World& world)
+        {
             world.component<EPhysicsShape>("PhysicsShape")
                     .constant("Box", EPhysicsShape::Box)
                     .constant("Sphere", EPhysicsShape::Sphere)
@@ -53,6 +62,8 @@ namespace RTGDEngine {
             world.component<ColliderComponent>("ColliderComponent")
                     .member<EPhysicsShape>("Shape")
                     .member<Float3>("Extents")
+                    .member<Float3>("Friction")
+                    .member<Float3>("Restitution")
                     .member<bool>("IsTrigger")
                     .member<uint8_t>("Layer");
         }
