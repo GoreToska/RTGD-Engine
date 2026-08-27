@@ -16,13 +16,15 @@
 #include "TransformComponent.h"
 #include "Event/Events.h"
 #include "Tools/Alias.h"
-#include "../Event/Delegate.h"
+#include "Event/Delegate.h"
 #include "Tools/JoltConversions.h"
 
-namespace RTGDEngine {
+namespace RTGDEngine
+{
     enum class EMotionType { Static, Dynamic, Kinematic };
 
-    enum class EPhysicsDOF : uint8_t {
+    enum class EPhysicsDOF : uint8_t
+    {
         None = 0,
         TranslationX = 1 << 0,
         TranslationY = 1 << 1,
@@ -33,11 +35,13 @@ namespace RTGDEngine {
         All = TranslationX | TranslationY | TranslationZ | RotationX | RotationY | RotationZ,
     };
 
-    constexpr EPhysicsDOF operator|(EPhysicsDOF a, EPhysicsDOF b) {
+    constexpr EPhysicsDOF operator|(EPhysicsDOF a, EPhysicsDOF b)
+    {
         return static_cast<EPhysicsDOF>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
     }
 
-    struct RigidbodyComponent {
+    struct RigidbodyComponent
+    {
         EMotionType MotionType = EMotionType::Dynamic;
         float Mass = 1.0f;
         EPhysicsDOF AllowedDOFs = EPhysicsDOF::All;
@@ -53,7 +57,38 @@ namespace RTGDEngine {
         Delegate<PhysicsSystem, const Events::TriggerStayEvent &> OnTriggerStay;
         Delegate<PhysicsSystem, const Events::TriggerExitEvent &> OnTriggerExit;
 
-        static void RegisterMeta(const flecs::world &world) {
+        void AddForce(const Float3& force) const
+        {
+            GPhysics.AddForce(BodyID, force);
+        }
+
+        void AddForceAtPosition(const Float3& force, const Float3& position) const
+        {
+            GPhysics.AddForceAtPosition(BodyID, force, position);
+        }
+
+        void AddTorque(const Float3& torque) const
+        {
+            GPhysics.AddTorque(BodyID, torque);
+        }
+
+        void AddImpulse(const Float3& impulse) const
+        {
+            GPhysics.AddImpulse(BodyID, impulse);
+        }
+
+        void AddImpulseAtPosition(const Float3& impulse, const Float3& position) const
+        {
+            GPhysics.AddImpulseAtPosition(BodyID, impulse, position);
+        }
+
+        void AddAngularImpulse(const Float3& impulse) const
+        {
+            GPhysics.AddAngularImpulse(BodyID, impulse);
+        }
+
+        static void RegisterMeta(const flecs::world& world)
+        {
             world.component<EPhysicsDOF>()
                     .constant("TranslationX", EPhysicsDOF::TranslationX)
                     .constant("TranslationY", EPhysicsDOF::TranslationY)
@@ -73,14 +108,17 @@ namespace RTGDEngine {
                     .member<float>("Mass")
                     .member<EPhysicsDOF>("Allowed DOFs");
 
-            auto createBody = [](flecs::entity e) {
+            auto createBody = [](flecs::entity e)
+            {
                 auto collider = e.get_ref<ColliderComponent>();
                 auto rb = e.get_ref<RigidbodyComponent>();
                 auto xf = e.get_ref<TransformComponent>();
-                if (!rb || !xf || !collider) return;
+                if (!rb || !xf || !collider)
+                    return;
 
-                auto &bi = GPhysics.GetBodyInterface();
-                if (!rb->BodyID.IsInvalid()) {
+                auto& bi = GPhysics.GetBodyInterface();
+                if (!rb->BodyID.IsInvalid())
+                {
                     GPhysics.UnregisterBody(rb->BodyID);
                     bi.RemoveBody(rb->BodyID);
                     bi.DestroyBody(rb->BodyID);
@@ -99,7 +137,8 @@ namespace RTGDEngine {
                 settings.mIsSensor = collider->IsTrigger;
                 settings.mAllowedDOFs = static_cast<JPH::EAllowedDOFs>(rb->AllowedDOFs);
 
-                if (rb->MotionType != EMotionType::Static) {
+                if (rb->MotionType != EMotionType::Static)
+                {
                     settings.mOverrideMassProperties = JPH::EOverrideMassProperties::MassAndInertiaProvided;
                     settings.mMassPropertiesOverride = ColliderComponent::ComputeMassProperties(
                         collider->Shape, collider->Extents, rb->Mass);
@@ -113,21 +152,25 @@ namespace RTGDEngine {
             };
 
             world.observer<RigidbodyComponent>().event(flecs::OnSet).each(
-                [createBody](flecs::entity e, RigidbodyComponent &) { createBody(e); });
+                [createBody](flecs::entity e, RigidbodyComponent&) { createBody(e); });
 
             world.observer<TransformComponent>().event(flecs::OnSet).each(
-                [createBody](flecs::entity e, TransformComponent &) {
+                [createBody](flecs::entity e, TransformComponent&)
+                {
                     auto phys = e.get_ref<RigidbodyComponent>();
-                    if (phys && phys->BodyID.IsInvalid()) {
+                    if (phys && phys->BodyID.IsInvalid())
+                    {
                         createBody(e);
                     }
                 });
 
             world.observer<RigidbodyComponent>().event(flecs::OnRemove).each(
-                [](flecs::entity e, RigidbodyComponent &c) {
-                    if (c.BodyID.IsInvalid()) return;
+                [](flecs::entity e, RigidbodyComponent& c)
+                {
+                    if (c.BodyID.IsInvalid())
+                        return;
                     GPhysics.UnregisterBody(c.BodyID);
-                    auto &bi = GPhysics.GetBodyInterface();
+                    auto& bi = GPhysics.GetBodyInterface();
                     bi.RemoveBody(c.BodyID);
                     bi.DestroyBody(c.BodyID);
                 });

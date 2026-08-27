@@ -93,6 +93,18 @@ namespace RTGDEngine
 
         void UnregisterBody(JPH::BodyID id);
 
+        void AddForce(JPH::BodyID id, const Float3& force);
+
+        void AddForceAtPosition(JPH::BodyID id, const Float3& force, const Float3& position);
+
+        void AddTorque(JPH::BodyID id, const Float3& torque);
+
+        void AddImpulse(JPH::BodyID id, const Float3& impulse);
+
+        void AddImpulseAtPosition(JPH::BodyID id, const Float3& impulse, const Float3& position);
+
+        void AddAngularImpulse(JPH::BodyID id, const Float3& impulse);
+
         RaycastHit Raycast(World& world, const Float3& origin, const Float3& direction, float distance,
                            bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore);
 
@@ -249,6 +261,24 @@ namespace RTGDEngine
             bool IsTrigger;
         };
 
+        enum class EForceCommand
+        {
+            Force,
+            ForceAtPosition,
+            Torque,
+            Impulse,
+            ImpulseAtPosition,
+            AngularImpulse,
+        };
+
+        struct PendingForceCommand
+        {
+            JPH::BodyID BodyID;
+            JPH::Vec3 Value;
+            JPH::RVec3 Position;
+            EForceCommand Type;
+        };
+
         RaycastHit MakeHit(World& world, JPH::BodyID id, float fraction, const JPH::RRayCast& ray,
                            JPH::SubShapeID subShape);
 
@@ -257,6 +287,8 @@ namespace RTGDEngine
         OverlapHit MakeOverlapHit(World& world, const JPH::CollideShapeResult& result);
 
         void QueueContact(JPH::BodyID id1, JPH::BodyID id2, JPH::RVec3 point, JPH::Vec3 normal, EContactPhase phase);
+
+        void ApplyPendingForces();
 
         void DispatchContact(World& world, const PendingContact& contact);
 
@@ -275,6 +307,8 @@ namespace RTGDEngine
         std::vector<PendingContact> m_pendingContacts = {};
         std::unordered_map<uint64_t, PendingContact> m_activeContacts = {};
         ContactListenerImpl m_contactListener = {};
+
+        std::vector<PendingForceCommand> m_pendingForceCommands = {};
 
         int m_collisionSteps = 1;
     };

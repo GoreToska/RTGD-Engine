@@ -104,6 +104,48 @@ namespace RTGDEngine
         });
     }
 
+    void PhysicsSystem::AddForce(JPH::BodyID id, const Float3& force)
+    {
+        if (id.IsInvalid())
+            return;
+        m_pendingForceCommands.push_back({id, ToVec3(force), {}, EForceCommand::Force});
+    }
+
+    void PhysicsSystem::AddForceAtPosition(JPH::BodyID id, const Float3& force, const Float3& position)
+    {
+        if (id.IsInvalid())
+            return;
+        m_pendingForceCommands.push_back({id, ToVec3(force), ToRVec3(position), EForceCommand::ForceAtPosition});
+    }
+
+    void PhysicsSystem::AddTorque(JPH::BodyID id, const Float3& torque)
+    {
+        if (id.IsInvalid())
+            return;
+        m_pendingForceCommands.push_back({id, ToVec3(torque), {}, EForceCommand::Torque});
+    }
+
+    void PhysicsSystem::AddImpulse(JPH::BodyID id, const Float3& impulse)
+    {
+        if (id.IsInvalid())
+            return;
+        m_pendingForceCommands.push_back({id, ToVec3(impulse), {}, EForceCommand::Impulse});
+    }
+
+    void PhysicsSystem::AddImpulseAtPosition(JPH::BodyID id, const Float3& impulse, const Float3& position)
+    {
+        if (id.IsInvalid())
+            return;
+        m_pendingForceCommands.push_back({id, ToVec3(impulse), ToRVec3(position), EForceCommand::ImpulseAtPosition});
+    }
+
+    void PhysicsSystem::AddAngularImpulse(JPH::BodyID id, const Float3& impulse)
+    {
+        if (id.IsInvalid())
+            return;
+        m_pendingForceCommands.push_back({id, ToVec3(impulse), {}, EForceCommand::AngularImpulse});
+    }
+
     RaycastHit PhysicsSystem::Raycast(World& world, const Float3& origin, const Float3& direction, float distance,
                                       bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
@@ -636,6 +678,37 @@ namespace RTGDEngine
         m_pendingContacts.push_back({id1, id2, point, normal, phase});
     }
 
+    void PhysicsSystem::ApplyPendingForces()
+    {
+        auto& bi = GetBodyInterface();
+        for (auto& cmd: m_pendingForceCommands)
+        {
+            switch (cmd.Type)
+            {
+                case EForceCommand::Force:
+                    bi.AddForce(cmd.BodyID, cmd.Value);
+                    break;
+                case EForceCommand::ForceAtPosition:
+                    bi.AddForce(cmd.BodyID, cmd.Value, cmd.Position);
+                    break;
+                case EForceCommand::Torque:
+                    bi.AddTorque(cmd.BodyID, cmd.Value);
+                    break;
+                case EForceCommand::Impulse:
+                    bi.AddImpulse(cmd.BodyID, cmd.Value);
+                    break;
+                case EForceCommand::ImpulseAtPosition:
+                    bi.AddImpulse(cmd.BodyID, cmd.Value, cmd.Position);
+                    break;
+                case EForceCommand::AngularImpulse:
+                    bi.AddAngularImpulse(cmd.BodyID, cmd.Value);
+                    break;
+            }
+        }
+
+        m_pendingForceCommands.clear();
+    }
+
     uint64_t PhysicsSystem::MakeContactKey(JPH::BodyID id1, JPH::BodyID id2)
     {
         uint32_t a = id1.GetIndexAndSequenceNumber(), b = id2.GetIndexAndSequenceNumber();
@@ -795,6 +868,8 @@ namespace RTGDEngine
                 bi.SetAngularVelocity(physics.BodyID, ToVec3(physics.AngularVelocity));
                 bi.SetRotation(physics.BodyID, ToQuat(transform.Rotation), JPH::EActivation::DontActivate);
             });
+
+        ApplyPendingForces();
 
         m_physicsSystem.Update(deltaTime, m_collisionSteps, m_tempAllocator.get(), m_jobSystem.get());
 

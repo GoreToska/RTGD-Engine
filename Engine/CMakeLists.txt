@@ -136,6 +136,9 @@ add_library(Engine SHARED
         Include/Event/Delegate.h
         Include/Components/ColliderComponent.h
         Source/Systems/Physics/PhysicsLayers.cpp
+        Include/Systems/GroundCheckSystem.h
+        Include/Components/GroundCheckComponent.h
+        Source/Systems/GroundCheckSystem.cpp
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

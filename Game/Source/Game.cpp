@@ -4,6 +4,7 @@
 #include "GameExpoty.h"
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
+#include "Components/GroundCheckComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RigidbodyComponent.h"
 #include "Components/RenderComponent.h"
@@ -46,12 +47,14 @@ void Game::SetupInput()
     m_moveLeft = GInput.RegisterAction("PlayerMoveLeft");
     m_moveRight = GInput.RegisterAction("PlayerMoveRight");
     m_interact = GInput.RegisterAction("Interact");
+    m_jump = GInput.RegisterAction("Jump");
 
     GInput.BindKey(m_moveForward, gainput::KeyW);
     GInput.BindKey(m_moveBackward, gainput::KeyS);
     GInput.BindKey(m_moveLeft, gainput::KeyA);
     GInput.BindKey(m_moveRight, gainput::KeyD);
     GInput.BindKey(m_interact, gainput::KeyE);
+    GInput.BindKey(m_jump, gainput::KeySpace);
 
     GInput.SetRelativeMouseMode(true);
 }
@@ -71,10 +74,10 @@ void Game::OnStart()
             })
             .set<RigidbodyComponent>({
                 .AllowedDOFs = EPhysicsDOF::TranslationX | EPhysicsDOF::TranslationY | EPhysicsDOF::TranslationZ
-            });
+            })
+            .set<GroundCheckComponent>({});
 
-    m_playerCam = GScene.CreateEntity(
-        "PlayerCamera", GScene.GetGameRoot());
+    m_playerCam = GScene.CreateEntity("PlayerCamera", GScene.GetGameRoot());
 
     m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({});
 
@@ -105,7 +108,6 @@ void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
     if (dy != 0)
         m_currentPitch = std::clamp(m_currentPitch + dy, -m_pitchLimit, +m_pitchLimit);
 
-
     auto& rb = m_player.get_mut<RigidbodyComponent>();
     transform.Rotate(TransformComponent::GlobalUp, dx, WorldSpace);
 
@@ -118,6 +120,8 @@ void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
         dir += transform.GetRight();
     if (GInput.IsDown(m_moveLeft))
         dir -= transform.GetRight();
+    if (GInput.IsPressed(m_jump) && m_player.get<GroundCheckComponent>().IsGrounded)
+        rb.AddImpulse({0, rb.Mass * (m_jumpSpeed - rb.Velocity.y), 0});
 
     if (Diligent::length(dir) > 0.000001f)
         dir = Diligent::normalize(dir);

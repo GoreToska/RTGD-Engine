@@ -27,22 +27,30 @@
 #include "Tools/Logger.h"
 #include "Event/Events.h"
 #include "Event/EventBus.h"
+#include "Systems/GroundCheckSystem.h"
 #include "Systems/Physics/PhysicsSystem.h"
 
-namespace RTGDEngine {
+namespace RTGDEngine
+{
     constexpr uint32_t MAX_JOBS_TO_REMOVE = 32;
 
-    void Engine::RegisterBaseSystems() {
-        AddSystem([](flecs::world &, float dt) {
+    void Engine::RegisterBaseSystems()
+    {
+        AddSystem([](flecs::world&, float dt)
+        {
             GTimer.Update(dt);
         }, ESystemPhase::PreUpdate);
 
-        AddSystem([&](flecs::world &world, float dt) {
+        AddSystem([&](flecs::world& world, float dt)
+        {
             if (m_isPlayMode)
                 GPhysics.Update(world, dt);
         }, ESystemPhase::FixedUpdate, 0);
 
-        AddSystem([this](flecs::world &world, float dt) {
+        AddSystem(GroundCheckSystem::Update, ESystemPhase::FixedUpdate, 1);
+
+        AddSystem([this](flecs::world& world, float dt)
+        {
             if (!m_isPlayMode)
                 EditorCameraSystem::Update(world, dt);
         }, ESystemPhase::Update, 0);
@@ -50,12 +58,14 @@ namespace RTGDEngine {
         AddSystem(MovementSystem::Update, ESystemPhase::Update, 0);
         AddSystem(CameraSystem::Update, ESystemPhase::Update, 20);
 
-        AddSystem([](flecs::world &world, float) {
+        AddSystem([](flecs::world& world, float)
+        {
             LightSystem::Update(world);
         }, ESystemPhase::Update, 30);
     }
 
-    bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window) {
+    bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window)
+    {
         m_platformWindow = std::move(window);
 
         GLogger.Initialize();
@@ -95,22 +105,23 @@ namespace RTGDEngine {
         return true;
     }
 
-    bool Engine::Start(std::unique_ptr<IPlatformWindow> window) {
+    bool Engine::Start(std::unique_ptr<IPlatformWindow> window)
+    {
         std::promise<bool> initPromise;
         auto initFuture = initPromise.get_future();
         m_isRunning = true;
         m_renderThread = std::thread(
-            [this, w = std::move(window), promise = std::move(initPromise)]() mutable {
+            [this, w = std::move(window), promise = std::move(initPromise)]() mutable
+            {
                 RenderThreadMain(std::move(w), std::move(promise));
             });
 
         return initFuture.get();
     }
 
-    void Engine::Stop() {
-        m_isRunning = false;
-
-        {
+    void Engine::Stop()
+    {
+        m_isRunning = false; {
             std::lock_guard<std::mutex> lock(m_pickMutex);
             m_pickRequest.Result = 0;
             m_pickRequest.Done = true;
@@ -118,15 +129,18 @@ namespace RTGDEngine {
 
         m_pickCV.notify_all();
 
-        if (m_renderThread.joinable()) {
+        if (m_renderThread.joinable())
+        {
             m_renderThread.join();
         }
     }
 
 #ifdef RTGD_EDITOR
-    uint64_t Engine::RequestPick(int x, int y) {
+    uint64_t Engine::RequestPick(int x, int y)
+    {
         std::unique_lock<std::mutex> lock(m_pickMutex);
-        if (!m_isRunning) return 0;
+        if (!m_isRunning)
+            return 0;
 
         m_pickRequest = {x, y, true, 0, false};
         m_pickCV.wait(lock, [this] { return m_pickRequest.Done; });
@@ -134,12 +148,15 @@ namespace RTGDEngine {
     }
 #endif
 
-    void Engine::DestroyGameContent() {
+    void Engine::DestroyGameContent()
+    {
         GScene.GetWorld().delete_with<GameRootTag>();
     }
 
-    void Engine::UnloadGameModule() {
-        if (m_gameLib && m_gameModule) {
+    void Engine::UnloadGameModule()
+    {
+        if (m_gameLib && m_gameModule)
+        {
             m_gameModule->Shutdown();
             ClearSystems(ESystemGroup::Game);
             DestroyGameContent();
@@ -149,23 +166,27 @@ namespace RTGDEngine {
         }
     }
 
-    bool Engine::ReloadGameModule() {
+    bool Engine::ReloadGameModule()
+    {
         auto path = m_gameLib->GetPath();
         UnloadGameModule();
         return LoadGameModule(path);
     }
 
-    void Engine::Shutdown() {
+    void Engine::Shutdown()
+    {
         GEventBus.Process();
         UnloadGameModule();
         GRenderSystem.Shutdown();
         GPhysics.Shutdown();
     }
 
-    bool Engine::LoadGameModule(const std::string &dllPath) {
+    bool Engine::LoadGameModule(const std::string& dllPath)
+    {
         m_gameLib = CreateDynamicLibrary();
 
-        if (!m_gameLib->Load(dllPath)) {
+        if (!m_gameLib->Load(dllPath))
+        {
             LogError("Failed to load game module: {}.", dllPath);
             m_gameLib.reset();
             return false;
@@ -173,7 +194,8 @@ namespace RTGDEngine {
 
         m_getGameModuleFunc = reinterpret_cast<GetGameModuleFunc>(m_gameLib->GetSymbol("GetGameModule"));
 
-        if (!m_getGameModuleFunc) {
+        if (!m_getGameModuleFunc)
+        {
             LogError("Failed to get game module symbol: {}.", dllPath);
             m_gameLib.reset();
             return false;
@@ -188,11 +210,13 @@ namespace RTGDEngine {
         return true;
     }
 
-    bool Engine::PollEvents() const {
+    bool Engine::PollEvents() const
+    {
         return m_platformWindow->PollEvents();
     }
 
-    void Engine::Update(const float deltaTime) {
+    void Engine::Update(const float deltaTime)
+    {
         GJobSystem.Flush(MAX_JOBS_TO_REMOVE);
         GScene.ApplyPendingSceneChanges();
         GScene.ApplyPendingEntityCommands();
@@ -201,20 +225,23 @@ namespace RTGDEngine {
         GInput.Update();
 
         if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
-                EInputAction::ReloadGameModule)) {
+                EInputAction::ReloadGameModule))
+        {
             ReloadGameModule();
         }
 
         if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
-                EInputAction::TogglePlayMode)) {
+                EInputAction::TogglePlayMode))
+        {
             TogglePlayMode();
         }
 
-        auto &world = GScene.GetWorld();
+        auto& world = GScene.GetWorld();
         RunPhase(ESystemPhase::PreUpdate, world, deltaTime);
 
         m_fixedAccumulator += deltaTime;
-        while (m_fixedAccumulator >= m_fixedTimeStep) {
+        while (m_fixedAccumulator >= m_fixedTimeStep)
+        {
             RunPhase(ESystemPhase::FixedUpdate, world, m_fixedTimeStep);
             m_fixedAccumulator -= m_fixedTimeStep;
         }
@@ -231,13 +258,14 @@ namespace RTGDEngine {
         Render();
     }
 
-    void Engine::Render() {
+    void Engine::Render()
+    {
         GRenderSystem.ApplyPendingResize(GScene.GetWorld());
 
-        auto &rs = GRenderSystem;
-        auto &device = rs.GetDevice();
-        auto &context = rs.GetContext();
-        auto &rm = GRenderResources;
+        auto& rs = GRenderSystem;
+        auto& device = rs.GetDevice();
+        auto& context = rs.GetContext();
+        auto& rm = GRenderResources;
 
         rm.FlushMeshUploads(device);
         rm.FlushTextureUploads(device, context);
@@ -247,29 +275,35 @@ namespace RTGDEngine {
         GRenderSystem.Present();
     }
 
-    void Engine::CreateConsole() {
+    void Engine::CreateConsole()
+    {
 #ifdef _WIN32
         AllocConsole();
-        FILE *f;
+        FILE* f;
         freopen_s(&f, "CONOUT$", "w", stdout);
         freopen_s(&f, "CONOUT$", "w", stderr);
 #endif
     }
 
-    void Engine::Resize(int w, int h) {
+    void Engine::Resize(int w, int h)
+    {
         std::lock_guard lk(m_resizeMutex);
         m_resizePending = true;
         m_pendingW = w;
         m_pendingH = h;
     }
 
-    void Engine::TogglePlayMode() {
+    void Engine::TogglePlayMode()
+    {
         m_isPlayMode = !m_isPlayMode;
 
-        if (m_isPlayMode) {
+        if (m_isPlayMode)
+        {
             LogInfo("Entering play mode.");
             m_gameModule->OnStart();
-        } else {
+        }
+        else
+        {
             LogInfo("Exiting play mode.");
             m_gameModule->OnStop();
             ClearSystems(ESystemGroup::Game);
@@ -278,41 +312,51 @@ namespace RTGDEngine {
         }
     }
 
-    void Engine::AddSystem(SystemFunc func, ESystemPhase phase, int order, ESystemGroup group) {
-        auto &list = m_systems[static_cast<int>(phase)];
+    void Engine::AddSystem(SystemFunc func, ESystemPhase phase, int order, ESystemGroup group)
+    {
+        auto& list = m_systems[static_cast<int>(phase)];
         list.push_back({std::move(func), order, group});
-        std::stable_sort(list.begin(), list.end(), [](const SystemEntry &a, const SystemEntry &b) {
+        std::stable_sort(list.begin(), list.end(), [](const SystemEntry& a, const SystemEntry& b)
+        {
             return a.Order < b.Order;
         });
     }
 
-    void Engine::ClearSystems(ESystemGroup group) {
-        for (auto &list: m_systems) {
-            std::erase_if(list, [group](const SystemEntry &entry) {
+    void Engine::ClearSystems(ESystemGroup group)
+    {
+        for (auto& list: m_systems)
+        {
+            std::erase_if(list, [group](const SystemEntry& entry)
+            {
                 return group == entry.Group;
             });
         }
     }
 
-    void Engine::RunPhase(ESystemPhase phase, flecs::world &world, float deltaTime) {
-        for (auto &entry: m_systems[static_cast<size_t>(phase)]) {
+    void Engine::RunPhase(ESystemPhase phase, flecs::world& world, float deltaTime)
+    {
+        for (auto& entry: m_systems[static_cast<size_t>(phase)])
+        {
             entry.Func(world, deltaTime);
         }
     }
 
-    void Engine::RenderThreadMain(std::unique_ptr<IPlatformWindow> window, std::promise<bool> initPromise) {
+    void Engine::RenderThreadMain(std::unique_ptr<IPlatformWindow> window, std::promise<bool> initPromise)
+    {
         using clock = std::chrono::steady_clock;
 
         const bool ok = Initialize(std::move(window));
         initPromise.set_value(ok);
 
-        if (!ok) {
+        if (!ok)
+        {
             m_isRunning = false;
             return;
         }
 
         auto prev = clock::now();
-        while (m_isRunning.load(std::memory_order_relaxed)) {
+        while (m_isRunning.load(std::memory_order_relaxed))
+        {
             ApplyPendingResize();
 
             const auto now = clock::now();
@@ -330,12 +374,13 @@ namespace RTGDEngine {
         Shutdown();
     }
 
-    void Engine::ApplyPendingResize() {
+    void Engine::ApplyPendingResize()
+    {
         int w;
-        int h;
-        {
+        int h; {
             std::lock_guard<std::mutex> lock(m_resizeMutex);
-            if (!m_resizePending) return;
+            if (!m_resizePending)
+                return;
             m_resizePending = false;
             w = m_pendingW;
             h = m_pendingH;
@@ -348,20 +393,19 @@ namespace RTGDEngine {
     }
 
 #ifdef RTGD_EDITOR
-    void Engine::ServicePick() {
+    void Engine::ServicePick()
+    {
         int x;
-        int y;
-
-        {
+        int y; {
             std::lock_guard<std::mutex> lock(m_pickMutex);
-            if (!m_pickRequest.Pending) return;
+            if (!m_pickRequest.Pending)
+                return;
             x = m_pickRequest.X;
             y = m_pickRequest.Y;
             m_pickRequest.Pending = false;
         }
 
-        const flecs::entity e = GRenderSystem.PickEntity(x, y);
-        {
+        const flecs::entity e = GRenderSystem.PickEntity(x, y); {
             std::lock_guard<std::mutex> lock(m_pickMutex);
             m_pickRequest.Result = e.id();
             m_pickRequest.Done = true;
@@ -371,7 +415,8 @@ namespace RTGDEngine {
     }
 #endif
 
-    void Engine::OnClose() {
+    void Engine::OnClose()
+    {
         GEventBus.Emit(Events::OnWindowClosed, {}, {});
     }
 }
