@@ -48,6 +48,15 @@ namespace RTGDEngine
         JPH::BodyID BodyID; // may be accessed through rigid body component from Target entity
     };
 
+    struct OverlapHit
+    {
+        Entity Target;
+        Float3 Point;
+        Float3 Normal;
+        float PenetrationDepth = 0.0f;
+        JPH::BodyID BodyID;
+    };
+
     class ContactListenerImpl final : public JPH::ContactListener
     {
     public:
@@ -179,6 +188,58 @@ namespace RTGDEngine
                                            bool hitTriggers = false, uint32_t layerMask = ~0u,
                                            std::span<const Entity> ignore = {});
 
+        std::vector<OverlapHit> OverlapSphere(World& world, const Float3& center, float radius,
+                                              bool hitTriggers, uint32_t layerMask,
+                                              std::span<const JPH::BodyID> ignore);
+
+        std::vector<OverlapHit> OverlapSphere(World& world, const Float3& center, float radius,
+                                              bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                              std::span<const Entity> ignore = {});
+
+        std::vector<OverlapHit> OverlapSphere(const Float3& center, float radius,
+                                              bool hitTriggers, uint32_t layerMask,
+                                              std::span<const JPH::BodyID> ignore);
+
+        std::vector<OverlapHit> OverlapSphere(const Float3& center, float radius,
+                                              bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                              std::span<const Entity> ignore = {});
+
+        std::vector<OverlapHit> OverlapBox(World& world, const Float3& center, const Float3& halfExtent,
+                                           const Quaternion& rotation, bool hitTriggers, uint32_t layerMask,
+                                           std::span<const JPH::BodyID> ignore);
+
+        std::vector<OverlapHit> OverlapBox(World& world, const Float3& center, const Float3& halfExtent,
+                                           const Quaternion& rotation = QuaternionIdentity(),
+                                           bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                           std::span<const Entity> ignore = {});
+
+        std::vector<OverlapHit> OverlapBox(const Float3& center, const Float3& halfExtent,
+                                           const Quaternion& rotation, bool hitTriggers, uint32_t layerMask,
+                                           std::span<const JPH::BodyID> ignore);
+
+        std::vector<OverlapHit> OverlapBox(const Float3& center, const Float3& halfExtent,
+                                           const Quaternion& rotation = QuaternionIdentity(),
+                                           bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                           std::span<const Entity> ignore = {});
+
+        std::vector<OverlapHit> OverlapCapsule(World& world, const Float3& center, float radius, float halfHeight,
+                                               const Quaternion& rotation, bool hitTriggers, uint32_t layerMask,
+                                               std::span<const JPH::BodyID> ignore);
+
+        std::vector<OverlapHit> OverlapCapsule(World& world, const Float3& center, float radius, float halfHeight,
+                                               const Quaternion& rotation = QuaternionIdentity(),
+                                               bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                               std::span<const Entity> ignore = {});
+
+        std::vector<OverlapHit> OverlapCapsule(const Float3& center, float radius, float halfHeight,
+                                               const Quaternion& rotation, bool hitTriggers, uint32_t layerMask,
+                                               std::span<const JPH::BodyID> ignore);
+
+        std::vector<OverlapHit> OverlapCapsule(const Float3& center, float radius, float halfHeight,
+                                               const Quaternion& rotation = QuaternionIdentity(),
+                                               bool hitTriggers = false, uint32_t layerMask = ~0u,
+                                               std::span<const Entity> ignore = {});
+
     private:
         friend class ContactListenerImpl;
 
@@ -193,6 +254,7 @@ namespace RTGDEngine
 
         RaycastHit MakeHit(World& world, JPH::ShapeCastResult& result, JPH::RVec3Arg baseOffset, float castLength);
 
+        OverlapHit MakeOverlapHit(World& world, const JPH::CollideShapeResult& result);
 
         void QueueContact(JPH::BodyID id1, JPH::BodyID id2, JPH::RVec3 point, JPH::Vec3 normal, EContactPhase phase);
 

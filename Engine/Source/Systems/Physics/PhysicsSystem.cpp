@@ -10,6 +10,9 @@
 #include "Jolt/Physics/Collision/RayCast.h"
 #include "Jolt/Physics/Collision/ShapeCast.h"
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/CollideShape.h>
 
 #include "AssetLoader/PathResolve.h"
 #include "Components/RigidbodyComponent.h"
@@ -19,7 +22,6 @@
 
 #include "Scene/SceneManager.h"
 #include "Tools/JoltConversions.h"
-#include "Tools/Logger.h"
 
 namespace
 {
@@ -118,11 +120,7 @@ namespace RTGDEngine
         layerFilter.Mask = layerMask;
 
         JPH::RayCastResult result;
-        bool ok = m_physicsSystem.GetNarrowPhaseQuery().CastRay(ray, result, {}, layerFilter, filter);
-        LogInfo("Raycast: casthit={} bodyIdx={} bodyInfoSize={}",
-                ok, result.mBodyID.GetIndex(), m_bodyInfo.size());
-
-        if (!ok)
+        if (!m_physicsSystem.GetNarrowPhaseQuery().CastRay(ray, result, {}, layerFilter, filter))
             return {};
 
         return MakeHit(world, result.mBodyID, result.mFraction, ray, result.mSubShapeID2);
@@ -144,8 +142,7 @@ namespace RTGDEngine
     RaycastHit PhysicsSystem::Raycast(const Float3& origin, const Float3& direction, float distance, bool hitTriggers,
                                       uint32_t layerMask, std::span<const Entity> ignore)
     {
-        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return Raycast(GScene.GetWorld(), origin, direction, distance, hitTriggers, layerMask, ids);
+        return Raycast(GScene.GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
     }
 
     std::vector<RaycastHit> PhysicsSystem::RaycastAll(World& world, const Float3& origin, const Float3& direction,
@@ -411,6 +408,177 @@ namespace RTGDEngine
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
         return BoxCastAll(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers,
                           layerMask, ids);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapSphere(World& world, const Float3& center, float radius,
+                                                         bool hitTriggers, uint32_t layerMask,
+                                                         std::span<const JPH::BodyID> ignore)
+    {
+        JPH::SphereShape sphere(radius);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore)
+            filter.Ignore.IgnoreBody(id);
+
+        GameplayLayerMaskFilter layerFilter;
+        layerFilter.Mask = layerMask;
+
+        JPH::CollideShapeSettings settings;
+        JPH::AllHitCollisionCollector<JPH::CollideShapeCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().
+                CollideShape(&sphere, JPH::Vec3::sOne(), JPH::RMat44::sTranslation(ToRVec3(center)), settings,
+                             ToRVec3(center), collector, {}, layerFilter, filter);
+
+        std::vector<OverlapHit> hits;
+        hits.reserve(collector.mHits.size());
+        for (auto& h: collector.mHits)
+            hits.push_back(MakeOverlapHit(world, h));
+
+        return hits;
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapSphere(World& world, const Float3& center, float radius,
+                                                         bool hitTriggers, uint32_t layerMask,
+                                                         std::span<const Entity> ignore)
+    {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return OverlapSphere(world, center, radius, hitTriggers, layerMask, ids);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapSphere(const Float3& center, float radius, bool hitTriggers,
+                                                         uint32_t layerMask, std::span<const JPH::BodyID> ignore)
+    {
+        return OverlapSphere(GScene.GetWorld(), center, radius, hitTriggers, layerMask, ignore);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapSphere(const Float3& center, float radius, bool hitTriggers,
+                                                         uint32_t layerMask, std::span<const Entity> ignore)
+    {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return OverlapSphere(GScene.GetWorld(), center, radius, hitTriggers, layerMask, ids);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapBox(World& world, const Float3& center, const Float3& halfExtent,
+                                                      const Quaternion& rotation, bool hitTriggers,
+                                                      uint32_t layerMask, std::span<const JPH::BodyID> ignore)
+    {
+        JPH::BoxShape box(ToVec3(halfExtent));
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore)
+            filter.Ignore.IgnoreBody(id);
+
+        GameplayLayerMaskFilter layerFilter;
+        layerFilter.Mask = layerMask;
+
+        JPH::CollideShapeSettings settings;
+        JPH::AllHitCollisionCollector<JPH::CollideShapeCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().
+                CollideShape(&box, JPH::Vec3::sOne(),
+                             JPH::RMat44::sRotationTranslation(ToQuat(rotation), ToRVec3(center)),
+                             settings, ToRVec3(center), collector, {}, layerFilter, filter);
+
+        std::vector<OverlapHit> hits;
+        hits.reserve(collector.mHits.size());
+        for (auto& h: collector.mHits)
+            hits.push_back(MakeOverlapHit(world, h));
+
+        return hits;
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapBox(World& world, const Float3& center, const Float3& halfExtent,
+                                                      const Quaternion& rotation, bool hitTriggers,
+                                                      uint32_t layerMask, std::span<const Entity> ignore)
+    {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return OverlapBox(world, center, halfExtent, rotation, hitTriggers, layerMask, ids);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapBox(const Float3& center, const Float3& halfExtent,
+                                                      const Quaternion& rotation, bool hitTriggers,
+                                                      uint32_t layerMask, std::span<const JPH::BodyID> ignore)
+    {
+        return OverlapBox(GScene.GetWorld(), center, halfExtent, rotation, hitTriggers, layerMask, ignore);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapBox(const Float3& center, const Float3& halfExtent,
+                                                      const Quaternion& rotation, bool hitTriggers,
+                                                      uint32_t layerMask, std::span<const Entity> ignore)
+    {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return OverlapBox(GScene.GetWorld(), center, halfExtent, rotation, hitTriggers, layerMask, ids);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapCapsule(World& world, const Float3& center, float radius,
+                                                          float halfHeight, const Quaternion& rotation,
+                                                          bool hitTriggers, uint32_t layerMask,
+                                                          std::span<const JPH::BodyID> ignore)
+    {
+        JPH::CapsuleShape capsule(halfHeight, radius);
+
+        RaycastBodyFilter filter;
+        filter.HitTriggers = hitTriggers;
+        for (auto id: ignore)
+            filter.Ignore.IgnoreBody(id);
+
+        GameplayLayerMaskFilter layerFilter;
+        layerFilter.Mask = layerMask;
+
+        JPH::CollideShapeSettings settings;
+        JPH::AllHitCollisionCollector<JPH::CollideShapeCollector> collector;
+        m_physicsSystem.GetNarrowPhaseQuery().
+                CollideShape(&capsule, JPH::Vec3::sOne(),
+                             JPH::RMat44::sRotationTranslation(ToQuat(rotation), ToRVec3(center)),
+                             settings, ToRVec3(center), collector, {}, layerFilter, filter);
+
+        std::vector<OverlapHit> hits;
+        hits.reserve(collector.mHits.size());
+        for (auto& h: collector.mHits)
+            hits.push_back(MakeOverlapHit(world, h));
+
+        return hits;
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapCapsule(World& world, const Float3& center, float radius,
+                                                          float halfHeight, const Quaternion& rotation,
+                                                          bool hitTriggers, uint32_t layerMask,
+                                                          std::span<const Entity> ignore)
+    {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return OverlapCapsule(world, center, radius, halfHeight, rotation, hitTriggers, layerMask, ids);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapCapsule(const Float3& center, float radius, float halfHeight,
+                                                          const Quaternion& rotation, bool hitTriggers,
+                                                          uint32_t layerMask, std::span<const JPH::BodyID> ignore)
+    {
+        return OverlapCapsule(GScene.GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask,
+                              ignore);
+    }
+
+    std::vector<OverlapHit> PhysicsSystem::OverlapCapsule(const Float3& center, float radius, float halfHeight,
+                                                          const Quaternion& rotation, bool hitTriggers,
+                                                          uint32_t layerMask, std::span<const Entity> ignore)
+    {
+        std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
+        return OverlapCapsule(GScene.GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask, ids);
+    }
+
+    OverlapHit PhysicsSystem::MakeOverlapHit(World& world, const JPH::CollideShapeResult& result)
+    {
+        auto it = m_bodyInfo.find(result.mBodyID2);
+        if (it == m_bodyInfo.end())
+            return {};
+
+        OverlapHit hit;
+        hit.BodyID = result.mBodyID2;
+        hit.Target = world.entity(it->second.Entity);
+        hit.Point = ToFloat3(result.mContactPointOn2);
+        hit.Normal = ToFloat3(result.mPenetrationAxis.Normalized());
+        hit.PenetrationDepth = result.mPenetrationDepth;
+        return hit;
     }
 
     RaycastHit PhysicsSystem::MakeHit(World& world, JPH::BodyID id, float fraction, const JPH::RRayCast& ray,
