@@ -28,7 +28,7 @@ namespace RTGDEngine
                     GDebugDraw.DrawSphere(transform.Position, collider.Extents.x, color);
                     break;
                 case EPhysicsShape::Capsule:
-                    GDebugDraw.DrawCapsule(transform.Position, collider.Extents.x, collider.Extents.y, color);
+                    GDebugDraw.DrawCapsule(transform.Position, collider.Extents.y, collider.Extents.x, color);
                     break;
             }
         });

@@ -67,18 +67,17 @@ namespace RTGDEngine
         Float3 top = center + up * halfHeight;
         Float3 bottom = center - up * halfHeight;
 
-        DrawArc(top, right, fwd, radius, 2 * Diligent::PI, 24, color);
-        DrawArc(bottom, right, fwd, radius, 2 * Diligent::PI, 24, color);
+        DrawArc(top, right, fwd, radius, 2 * Diligent::PI, 12, color);
+        DrawArc(bottom, right, fwd, radius, 2 * Diligent::PI, 12, color);
+        DrawArc(top, right, up, radius, Diligent::PI, 12, color);
+        DrawArc(top, fwd, up, radius, Diligent::PI, 12, color);
+        DrawArc(bottom, right, -up, radius, Diligent::PI, 12, color);
+        DrawArc(bottom, fwd, -up, radius, Diligent::PI, 12, color);
 
-        for (int i = 0; i < 4; ++i)
-        {
-            float a = i * (Diligent::PI * 0.5f);
-            Float3 dir = right * cosf(a) + fwd * sinf(a);
-            DrawArc(top, right, up, radius, Diligent::PI, 12, color);
-            DrawArc(top, fwd, up, radius, Diligent::PI, 12, color);
-            DrawArc(bottom, right, up, radius, Diligent::PI, 12, color);
-            DrawArc(bottom, fwd, up, radius, Diligent::PI, 12, color);
-        }
+        DrawLine(top + right * radius, bottom + right * radius, color);
+        DrawLine(top - right * radius, bottom - right * radius, color);
+        DrawLine(top + fwd * radius, bottom + fwd * radius, color);
+        DrawLine(top - fwd * radius, bottom - fwd * radius, color);
     }
 
     std::vector<LineVertex> DebugDraw::TakeLines()

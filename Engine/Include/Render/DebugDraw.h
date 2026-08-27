@@ -30,6 +30,7 @@ namespace RTGDEngine
                          const Quaternion& rotation = QuaternionIdentity(), const Float4& color = {0, 1, 0, 1});
 
         std::vector<LineVertex> TakeLines();
+
     private:
         std::vector<LineVertex> m_lines = {};
     };

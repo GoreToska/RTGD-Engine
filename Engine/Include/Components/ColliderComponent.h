@@ -62,8 +62,8 @@ namespace RTGDEngine
             world.component<ColliderComponent>("ColliderComponent")
                     .member<EPhysicsShape>("Shape")
                     .member<Float3>("Extents")
-                    .member<Float3>("Friction")
-                    .member<Float3>("Restitution")
+                    .member<float>("Friction")
+                    .member<float>("Restitution")
                     .member<bool>("IsTrigger")
                     .member<uint8_t>("Layer");
         }

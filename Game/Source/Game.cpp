@@ -63,12 +63,9 @@ void Game::OnStart()
 {
     SetupInput();
 
-    m_player = GScene.CreateEntity(
-        "Player", GScene.GetGameRoot());
+    m_player = GScene.CreateEntity("Player", GScene.GetGameRoot());
 
-    m_player.set<MeshComponent>({{"Assets/BoxTextured.gltf"}, {"Assets/Materials/Cube.mat"}})
-            .set<RenderComponent>({true, true})
-            .set<TransformComponent>({{0.0f, 1.0f, 0.0f}})
+    m_player.set<TransformComponent>({{0.0f, 1.0f, 0.0f}})
             .set<VelocityComponent>({}).set<ColliderComponent>({
                 .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}
             })
@@ -80,6 +77,15 @@ void Game::OnStart()
     m_playerCam = GScene.CreateEntity("PlayerCamera", GScene.GetGameRoot());
 
     m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({});
+
+    GScene.CreateEntity("Enemy", GScene.GetGameRoot()).set<TransformComponent>({{-2.0f, 1.0f, 0.0f}})
+            .set<VelocityComponent>({}).set<ColliderComponent>({
+                .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}
+            })
+            .set<RigidbodyComponent>({
+                .AllowedDOFs = EPhysicsDOF::TranslationX | EPhysicsDOF::TranslationY | EPhysicsDOF::TranslationZ
+            })
+            .set<GroundCheckComponent>({});;
 
     GEngine.AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::FixedUpdate, 0,
                       ESystemGroup::Game);
