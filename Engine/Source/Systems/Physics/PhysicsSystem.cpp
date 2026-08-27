@@ -866,7 +866,16 @@ namespace RTGDEngine
                 auto& bi = m_physicsSystem.GetBodyInterface();
                 bi.SetLinearVelocity(physics.BodyID, ToVec3(physics.Velocity));
                 bi.SetAngularVelocity(physics.BodyID, ToVec3(physics.AngularVelocity));
-                bi.SetRotation(physics.BodyID, ToQuat(transform.Rotation), JPH::EActivation::DontActivate);
+
+                constexpr EPhysicsDOF RotationDOFs =
+                        EPhysicsDOF::RotationX | EPhysicsDOF::RotationY | EPhysicsDOF::RotationZ;
+
+                bool physicsOwnsRotation = physics.MotionType == EMotionType::Dynamic
+                                           && (static_cast<uint8_t>(physics.AllowedDOFs) & static_cast<uint8_t>(
+                                                   RotationDOFs)) == static_cast<uint8_t>(RotationDOFs);
+
+                if (!physicsOwnsRotation)
+                    bi.SetRotation(physics.BodyID, ToQuat(transform.Rotation), JPH::EActivation::DontActivate);
             });
 
         ApplyPendingForces();
