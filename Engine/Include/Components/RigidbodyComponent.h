@@ -106,7 +106,7 @@ namespace RTGDEngine
                     .constant("Dynamic", EMotionType::Dynamic)
                     .constant("Kinematic", EMotionType::Kinematic);
 
-            flecs::component<RigidbodyComponent>(world, "RigidbodyComponent")
+            world.component<RigidbodyComponent>("RigidbodyComponent")
                     .member<EMotionType>("MotionType")
                     .member<float>("Mass")
                     .member<float>("LinearDamping")

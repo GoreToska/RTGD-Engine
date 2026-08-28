@@ -5,6 +5,7 @@
 #include "Tools/MetaTypes.h"
 
 #include "Components/CameraComponent.h"
+#include "Components/CharacterControllerComponent.h"
 #include "Components/GameRootTag.h"
 #include "Components/GroundCheckComponent.h"
 #include "Components/LightComponent.h"
@@ -80,6 +81,7 @@ namespace RTGDEngine
         ColliderComponent::RegisterMeta(world);
         GroundCheckComponent::RegisterMeta(world);
         RigidbodyComponent::RegisterMeta(world);
+        CharacterControllerComponent::RegisterMeta(world);
 
         LogInfo("Meta types registered");
     }

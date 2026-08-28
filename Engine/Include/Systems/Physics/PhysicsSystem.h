@@ -84,6 +84,9 @@ namespace RTGDEngine
 
         JPH::BodyInterface& GetBodyInterface();
 
+        JPH::PhysicsSystem& GetJoltSystem() { return m_physicsSystem; }
+        JPH::TempAllocator& GetTempAllocator() { return *m_tempAllocator; }
+
         const std::vector<std::string>& GetLayerNames() const { return m_layers.GetNames(); }
         int GetLayerIndex(std::string_view layerName) const { return m_layers.GetIndex(layerName); };
         uint8_t GetLayerMask(std::string_view layerName) const { return 1 << GetLayerIndex(layerName); };

@@ -6,6 +6,7 @@
 #include "Vertex.h"
 #include "Components/TransformComponent.h"
 #include "Tools/Alias.h"
+#include "Engine/Math.h"
 #include "Engine/EngineExport.h"
 #include "Tools/RTGDMacros.h"
 

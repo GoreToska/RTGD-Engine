@@ -143,6 +143,13 @@ add_library(Engine SHARED
         Include/Render/DebugDraw.h
         Source/Render/Graph/Pass/DebugLinesPass.cpp
         Include/Render/Graph/Pass/DebugLinesPass.h
+        Include/Engine/Math.h
+        Include/Components/CharacterControllerComponent.h
+        Include/Systems/Physics/ICharacterController.h
+        Source/Systems/Physics/PhysicalCharacterController.cpp
+        Include/Systems/Physics/PhysicalCharacterController.h
+        Source/Systems/Physics/VirtualCharacterController.cpp
+        Include/Systems/Physics/VirtualCharacterController.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

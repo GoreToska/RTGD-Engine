@@ -126,7 +126,7 @@ void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
         dir += transform.GetRight();
     if (GInput.IsDown(m_moveLeft))
         dir -= transform.GetRight();
-    if (GInput.IsPressed(m_jump) && m_player.get<GroundCheckComponent>().IsGrounded)
+    if (GInput.IsDown(m_jump) && m_player.get<GroundCheckComponent>().IsGrounded)
         rb.AddImpulse({0, rb.Mass * (m_jumpSpeed - rb.Velocity.y), 0});
 
     if (Diligent::length(dir) > 0.000001f)
