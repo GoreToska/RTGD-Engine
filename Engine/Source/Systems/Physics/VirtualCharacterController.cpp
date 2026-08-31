@@ -14,7 +14,7 @@ namespace RTGDEngine
 {
     VirtualCharacterController::VirtualCharacterController(const Float3& position, const Quaternion& rotation,
                                                            JPH::ShapeRefC shape, float mass, float maxStrength,
-                                                           float maxSlopeAngleDeg, uint8_t layer)
+                                                           float maxSlopeAngleDeg, uint8_t layer, Entity entity)
         : m_objectLayer(Layers::Encode(layer, true))
     {
         JPH::CharacterVirtualSettings settings;
@@ -22,16 +22,23 @@ namespace RTGDEngine
         settings.mMass = mass;
         settings.mMaxSlopeAngle = JPH::DegreesToRadians(maxSlopeAngleDeg);
         settings.mMaxStrength = maxStrength;
+        settings.mInnerBodyShape = shape;
+        settings.mInnerBodyLayer = layer;
 
         m_character = new JPH::CharacterVirtual(&settings, ToRVec3(position), ToQuat(rotation), 0,
                                                 &GPhysics.GetJoltSystem());
+
+        GPhysics.RegisterBody(m_character->GetInnerBodyID(), entity.id(), false);
     }
 
-    VirtualCharacterController::~VirtualCharacterController() = default;
+    VirtualCharacterController::~VirtualCharacterController()
+    {
+        GPhysics.UnregisterBody(m_character->GetInnerBodyID());
+    }
 
     JPH::BodyID VirtualCharacterController::GetBodyID() const
     {
-        return JPH::BodyID();
+        return m_character->GetInnerBodyID();
     }
 
     Float3 VirtualCharacterController::GetGroundNormal() const
@@ -95,6 +102,20 @@ namespace RTGDEngine
     {
         JPH::PhysicsSystem& system = GPhysics.GetJoltSystem();
         JPH::Vec3 gravity = system.GetGravity();
+        JPH::Vec3 up = m_character->GetUp();
+
+        JPH::Vec3 velocity = m_character->GetLinearVelocity();
+        JPH::Vec3 verticalVelocity = up * velocity.Dot(up);
+        JPH::Vec3 horizontalVelocity = velocity - verticalVelocity;
+
+        if (m_character->GetGroundState() == JPH::CharacterVirtual::EGroundState::OnGround
+            && verticalVelocity.Dot(up) < 0.1f)
+        {
+            verticalVelocity = up * m_character->GetGroundVelocity().Dot(up);
+        }
+
+        verticalVelocity += gravity * deltaTime;
+        m_character->SetLinearVelocity(horizontalVelocity + verticalVelocity);
 
         m_character->UpdateGroundVelocity();
         m_character->Update(deltaTime, gravity, system.GetDefaultBroadPhaseLayerFilter(m_objectLayer),

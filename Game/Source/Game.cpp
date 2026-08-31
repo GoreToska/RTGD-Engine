@@ -85,6 +85,13 @@ void Game::OnStart()
             })
             .set<GroundCheckComponent>({});;
 
+    GScene.CreateEntity("VirtualTest", GScene.GetGameRoot())
+            .set<TransformComponent>({{2.0f, 3.0f, 0.0f}})
+            .set<ColliderComponent>({
+                .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}
+            })
+            .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Virtual});
+
     GEngine.AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::FixedUpdate, 0,
                       ESystemGroup::Game);
     GEngine.AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,

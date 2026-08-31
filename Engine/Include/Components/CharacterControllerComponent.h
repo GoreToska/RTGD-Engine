@@ -62,7 +62,7 @@ namespace RTGDEngine
                 {
                     charComp->Controller = std::make_unique<VirtualCharacterController>(
                         transform->Position, transform->Rotation, shape, charComp->Mass, charComp->MaxStrength,
-                        charComp->MaxSlopeAngle, collider->Layer);
+                        charComp->MaxSlopeAngle, collider->Layer, e);
                 }
             };
 

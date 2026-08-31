@@ -22,7 +22,8 @@ namespace RTGDEngine
     {
     public:
         VirtualCharacterController(const Float3& position, const Quaternion& rotation, JPH::ShapeRefC shape,
-                                   float mass, float maxStrength, float maxSlopeAngleDeg, uint8_t layer);
+                                   float mass, float maxStrength, float maxSlopeAngleDeg, uint8_t layer,
+                                   Entity entity);
 
         ~VirtualCharacterController() override;
 
