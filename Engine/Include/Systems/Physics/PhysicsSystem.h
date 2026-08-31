@@ -76,6 +76,8 @@ namespace RTGDEngine
         DECLARE_SINGLETON(PhysicsSystem);
 
     public:
+        static constexpr float kCharacterGroundTolerance = 0.02f;
+
         void Initialize();
 
         void Update(flecs::world& world, float deltaTime);

@@ -15,6 +15,7 @@
 #include <Jolt/Physics/Collision/CollideShape.h>
 
 #include "AssetLoader/PathResolve.h"
+#include "Components/CharacterControllerComponent.h"
 #include "Components/RigidbodyComponent.h"
 #include "Components/TransformComponent.h"
 #include "Jolt/RegisterTypes.h"
@@ -910,6 +911,18 @@ namespace RTGDEngine
                 transform.Rotation = ToQuaternion(bi.GetRotation(physics.BodyID));
                 physics.Velocity = ToFloat3(bi.GetLinearVelocity(physics.BodyID));
                 physics.AngularVelocity = ToFloat3(bi.GetAngularVelocity(physics.BodyID));
+            });
+
+        world.query<CharacterControllerComponent, TransformComponent>().each(
+            [&](CharacterControllerComponent& controller, TransformComponent& transform)
+            {
+                if (!controller.Controller)
+                    return;
+
+                controller.Controller->SetRotation(transform.Rotation);
+                controller.Controller->Update(deltaTime);
+                transform.Position = controller.Controller->GetPosition();
+                transform.Rotation = controller.Controller->GetRotation();
             });
     }
 

@@ -4,6 +4,7 @@
 #include "GameExpoty.h"
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
+#include "Components/CharacterControllerComponent.h"
 #include "Components/GroundCheckComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/RigidbodyComponent.h"
@@ -66,13 +67,10 @@ void Game::OnStart()
     m_player = GScene.CreateEntity("Player", GScene.GetGameRoot());
 
     m_player.set<TransformComponent>({{0.0f, 1.0f, 0.0f}})
-            .set<VelocityComponent>({}).set<ColliderComponent>({
+            .set<ColliderComponent>({
                 .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}
             })
-            .set<RigidbodyComponent>({
-                .AllowedDOFs = EPhysicsDOF::TranslationX | EPhysicsDOF::TranslationY | EPhysicsDOF::TranslationZ
-            })
-            .set<GroundCheckComponent>({});
+            .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Physical});
 
     m_playerCam = GScene.CreateEntity("PlayerCamera", GScene.GetGameRoot());
 
@@ -114,8 +112,9 @@ void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
     if (dy != 0)
         m_currentPitch = std::clamp(m_currentPitch + dy, -m_pitchLimit, +m_pitchLimit);
 
-    auto& rb = m_player.get_mut<RigidbodyComponent>();
-    transform.Rotate(TransformComponent::GlobalUp, dx, WorldSpace);
+    auto& cc = m_player.get_mut<CharacterControllerComponent>();
+    if (!cc.Controller)
+        return;
 
     Float3 dir{};
     if (GInput.IsDown(m_moveForward))
@@ -126,14 +125,16 @@ void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
         dir += transform.GetRight();
     if (GInput.IsDown(m_moveLeft))
         dir -= transform.GetRight();
-    if (GInput.IsDown(m_jump) && m_player.get<GroundCheckComponent>().IsGrounded)
-        rb.AddImpulse({0, rb.Mass * (m_jumpSpeed - rb.Velocity.y), 0});
 
     if (Diligent::length(dir) > 0.000001f)
         dir = Diligent::normalize(dir);
 
     Float3 horizontal = dir * m_speed;
-    rb.Velocity = {horizontal.x, rb.Velocity.y, horizontal.z};
+    Float3 vel = cc.Controller->GetLinearVelocity();
+    cc.Controller->SetLinearVelocity({horizontal.x, vel.y, horizontal.z});
+
+    if (GInput.IsDown(m_jump) && cc.Controller->IsGrounded())
+        cc.Controller->Jump(m_jumpSpeed);
 }
 
 void Game::CameraUpdate(flecs::world& world, float deltaTime)

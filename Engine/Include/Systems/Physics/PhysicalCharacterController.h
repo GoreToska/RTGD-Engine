@@ -4,8 +4,15 @@
 
 #pragma once
 #include "ICharacterController.h"
+
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Collision/Shape/Shape.h>
+#include <Jolt/Core/Reference.h>
+
+namespace JPH
+{
+    class Character;
+}
 
 namespace RTGDEngine
 {
@@ -13,7 +20,9 @@ namespace RTGDEngine
     {
     public:
         PhysicalCharacterController(const Float3& position, const Quaternion& rotation, JPH::ShapeRefC shape,
-                                    float mass, float friction, float maxSlopeAngleDeg, uint8_t layer);
+                                    float mass, float friction, float maxSlopeAngleDeg, uint8_t layer, Entity entity);
+
+        ~PhysicalCharacterController() override;
 
         Float3 GetGroundNormal() const override;
 
@@ -38,5 +47,9 @@ namespace RTGDEngine
         void SetRotation(const Quaternion rotation) override;
 
         void Update(float deltaTime) override;
+
+    private:
+        JPH::Ref<JPH::Character> m_character;
+        float m_mass = 1.0f;
     };
 }
