@@ -300,6 +300,18 @@ namespace RTGDEngine
 
         void EmitStay(World& world, const PendingContact& contact);
 
+        void BroadcastCollisionEnter(Entity e1, Entity e2, const Events::CollisionEnterEvent& evt1, const Events::CollisionEnterEvent& evt2);
+
+        void BroadcastCollisionStay(Entity e1, Entity e2, const Events::CollisionStayEvent& evt1, const Events::CollisionStayEvent& evt2);
+
+        void BroadcastCollisionExit(Entity e1, Entity e2, const Events::CollisionExitEvent& evt1, const Events::CollisionExitEvent& evt2);
+
+        void BroadcastTriggerEnter(Entity e1, Entity e2, const Events::TriggerEnterEvent& evt1, const Events::TriggerEnterEvent& evt2);
+
+        void BroadcastTriggerStay(Entity e1, Entity e2, const Events::TriggerStayEvent& evt1, const Events::TriggerStayEvent& evt2);
+
+        void BroadcastTriggerExit(Entity e1, Entity e2, const Events::TriggerExitEvent& evt1, const Events::TriggerExitEvent& evt2);
+
         static uint64_t MakeContactKey(JPH::BodyID id1, JPH::BodyID id2);
 
         nlohmann::json LoadPhysicsConfigJson(const std::string& fullPath);

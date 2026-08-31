@@ -6,8 +6,10 @@
 
 #include "ColliderComponent.h"
 #include "TransformComponent.h"
+#include "Event/Delegate.h"
 #include "Systems/Physics/ICharacterController.h"
 #include "Systems/Physics/PhysicalCharacterController.h"
+#include "Systems/Physics/PhysicsSystem.h"
 #include "Systems/Physics/VirtualCharacterController.h"
 #include "Tools/Alias.h"
 
@@ -28,6 +30,12 @@ namespace RTGDEngine
 
         // transient
         std::unique_ptr<ICharacterController> Controller;
+        Delegate<PhysicsSystem, const Events::CollisionEnterEvent &> OnCollisionEnter;
+        Delegate<PhysicsSystem, const Events::CollisionStayEvent &> OnCollisionStay;
+        Delegate<PhysicsSystem, const Events::CollisionExitEvent &> OnCollisionExit;
+        Delegate<PhysicsSystem, const Events::TriggerEnterEvent &> OnTriggerEnter;
+        Delegate<PhysicsSystem, const Events::TriggerStayEvent &> OnTriggerStay;
+        Delegate<PhysicsSystem, const Events::TriggerExitEvent &> OnTriggerExit;
 
         static void RegisterMeta(const World& world)
         {

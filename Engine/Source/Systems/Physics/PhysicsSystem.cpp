@@ -754,6 +754,84 @@ namespace RTGDEngine
         }
     }
 
+    void PhysicsSystem::BroadcastCollisionEnter(Entity e1, Entity e2,
+        const Events::CollisionEnterEvent& evt1, const Events::CollisionEnterEvent& evt2)
+    {
+        if (auto p1 = e1.get_ref<RigidbodyComponent>())
+            p1->OnCollisionEnter.Broadcast({}, evt1);
+        if (auto p2 = e2.get_ref<RigidbodyComponent>())
+            p2->OnCollisionEnter.Broadcast({}, evt2);
+        if (auto c1 = e1.get_ref<CharacterControllerComponent>())
+            c1->OnCollisionEnter.Broadcast({}, evt1);
+        if (auto c2 = e2.get_ref<CharacterControllerComponent>())
+            c2->OnCollisionEnter.Broadcast({}, evt2);
+    }
+
+    void PhysicsSystem::BroadcastCollisionStay(Entity e1, Entity e2,
+        const Events::CollisionStayEvent& evt1, const Events::CollisionStayEvent& evt2)
+    {
+        if (auto p1 = e1.get_ref<RigidbodyComponent>())
+            p1->OnCollisionStay.Broadcast({}, evt1);
+        if (auto p2 = e2.get_ref<RigidbodyComponent>())
+            p2->OnCollisionStay.Broadcast({}, evt2);
+        if (auto c1 = e1.get_ref<CharacterControllerComponent>())
+            c1->OnCollisionStay.Broadcast({}, evt1);
+        if (auto c2 = e2.get_ref<CharacterControllerComponent>())
+            c2->OnCollisionStay.Broadcast({}, evt2);
+    }
+
+    void PhysicsSystem::BroadcastCollisionExit(Entity e1, Entity e2,
+        const Events::CollisionExitEvent& evt1, const Events::CollisionExitEvent& evt2)
+    {
+        if (auto p1 = e1.get_ref<RigidbodyComponent>())
+            p1->OnCollisionExit.Broadcast({}, evt1);
+        if (auto p2 = e2.get_ref<RigidbodyComponent>())
+            p2->OnCollisionExit.Broadcast({}, evt2);
+        if (auto c1 = e1.get_ref<CharacterControllerComponent>())
+            c1->OnCollisionExit.Broadcast({}, evt1);
+        if (auto c2 = e2.get_ref<CharacterControllerComponent>())
+            c2->OnCollisionExit.Broadcast({}, evt2);
+    }
+
+    void PhysicsSystem::BroadcastTriggerEnter(Entity e1, Entity e2,
+        const Events::TriggerEnterEvent& evt1, const Events::TriggerEnterEvent& evt2)
+    {
+        if (auto p1 = e1.get_ref<RigidbodyComponent>())
+            p1->OnTriggerEnter.Broadcast({}, evt1);
+        if (auto p2 = e2.get_ref<RigidbodyComponent>())
+            p2->OnTriggerEnter.Broadcast({}, evt2);
+        if (auto c1 = e1.get_ref<CharacterControllerComponent>())
+            c1->OnTriggerEnter.Broadcast({}, evt1);
+        if (auto c2 = e2.get_ref<CharacterControllerComponent>())
+            c2->OnTriggerEnter.Broadcast({}, evt2);
+    }
+
+    void PhysicsSystem::BroadcastTriggerStay(Entity e1, Entity e2,
+        const Events::TriggerStayEvent& evt1, const Events::TriggerStayEvent& evt2)
+    {
+        if (auto p1 = e1.get_ref<RigidbodyComponent>())
+            p1->OnTriggerStay.Broadcast({}, evt1);
+        if (auto p2 = e2.get_ref<RigidbodyComponent>())
+            p2->OnTriggerStay.Broadcast({}, evt2);
+        if (auto c1 = e1.get_ref<CharacterControllerComponent>())
+            c1->OnTriggerStay.Broadcast({}, evt1);
+        if (auto c2 = e2.get_ref<CharacterControllerComponent>())
+            c2->OnTriggerStay.Broadcast({}, evt2);
+    }
+
+    void PhysicsSystem::BroadcastTriggerExit(Entity e1, Entity e2,
+        const Events::TriggerExitEvent& evt1, const Events::TriggerExitEvent& evt2)
+    {
+        if (auto p1 = e1.get_ref<RigidbodyComponent>())
+            p1->OnTriggerExit.Broadcast({}, evt1);
+        if (auto p2 = e2.get_ref<RigidbodyComponent>())
+            p2->OnTriggerExit.Broadcast({}, evt2);
+        if (auto c1 = e1.get_ref<CharacterControllerComponent>())
+            c1->OnTriggerExit.Broadcast({}, evt1);
+        if (auto c2 = e2.get_ref<CharacterControllerComponent>())
+            c2->OnTriggerExit.Broadcast({}, evt2);
+    }
+
     void PhysicsSystem::EmitStay(::World& world, const PendingContact& contact)
     {
         auto it1 = m_bodyInfo.find(contact.Body1);
@@ -770,19 +848,13 @@ namespace RTGDEngine
         {
             Events::TriggerStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
             GEventBus.Emit(Events::OnTriggerStay, evt1, EmitBadge<PhysicsSystem>{});
-            if (auto p1 = e1.get_ref<RigidbodyComponent>())
-                p1->OnTriggerStay.Broadcast({}, evt1);
-            if (auto p2 = e2.get_ref<RigidbodyComponent>())
-                p2->OnTriggerStay.Broadcast({}, evt2);
+            BroadcastTriggerStay(e1, e2, evt1, evt2);
         }
         else
         {
             Events::CollisionStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
             GEventBus.Emit(Events::OnCollisionStay, evt1, EmitBadge<PhysicsSystem>{});
-            if (auto p1 = e1.get_ref<RigidbodyComponent>())
-                p1->OnCollisionStay.Broadcast({}, evt1);
-            if (auto p2 = e2.get_ref<RigidbodyComponent>())
-                p2->OnCollisionStay.Broadcast({}, evt2);
+            BroadcastCollisionStay(e1, e2, evt1, evt2);
         }
     }
 
@@ -807,19 +879,13 @@ namespace RTGDEngine
                 {
                     Events::TriggerEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
                     GEventBus.Emit(Events::OnTriggerEnter, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<RigidbodyComponent>())
-                        p1->OnTriggerEnter.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<RigidbodyComponent>())
-                        p2->OnTriggerEnter.Broadcast({}, evt2);
+                    BroadcastTriggerEnter(e1, e2, evt1, evt2);
                 }
                 else
                 {
                     Events::CollisionEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
                     GEventBus.Emit(Events::OnCollisionEnter, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<RigidbodyComponent>())
-                        p1->OnCollisionEnter.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<RigidbodyComponent>())
-                        p2->OnCollisionEnter.Broadcast({}, evt2);
+                    BroadcastCollisionEnter(e1, e2, evt1, evt2);
                 }
                 m_activeContacts[MakeContactKey(contact.Body1, contact.Body2)] = contact;
                 break;
@@ -844,19 +910,13 @@ namespace RTGDEngine
                 {
                     Events::TriggerExitEvent evt1{e1, e2}, evt2{e2, e1};
                     GEventBus.Emit(Events::OnTriggerExit, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<RigidbodyComponent>())
-                        p1->OnTriggerExit.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<RigidbodyComponent>())
-                        p2->OnTriggerExit.Broadcast({}, evt2);
+                    BroadcastTriggerExit(e1, e2, evt1, evt2);
                 }
                 else
                 {
                     Events::CollisionExitEvent evt1{e1, e2}, evt2{e2, e1};
                     GEventBus.Emit(Events::OnCollisionExit, evt1, EmitBadge<PhysicsSystem>{});
-                    if (auto p1 = e1.get_ref<RigidbodyComponent>())
-                        p1->OnCollisionExit.Broadcast({}, evt1);
-                    if (auto p2 = e2.get_ref<RigidbodyComponent>())
-                        p2->OnCollisionExit.Broadcast({}, evt2);
+                    BroadcastCollisionExit(e1, e2, evt1, evt2);
                 }
                 break;
             }
