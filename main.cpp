@@ -36,6 +36,5 @@ int main() {
     }
 
     RTGDEngine::GEngine.Shutdown();
-    window->Destroy();
     return 0;
 }

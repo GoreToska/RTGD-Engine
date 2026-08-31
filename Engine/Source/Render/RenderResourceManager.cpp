@@ -96,6 +96,13 @@ namespace RTGDEngine
         LogInfo("Default normal texture created → handle {}", m_defaultNormalTexture);
     }
 
+    void RenderResourceManager::Shutdown()
+    {
+        m_meshes.Slots.clear();
+        m_materials.Slots.clear();
+        m_textures.Slots.clear();
+    }
+
     MeshHandle RenderResourceManager::RegisterMesh(const std::string& name, MeshData data, uint64_t assetID)
     {
         std::lock_guard lock(m_lifetimeMutex);
@@ -343,7 +350,7 @@ namespace RTGDEngine
 
             if (IsAlive(upload.Handle))
                 GEventBus.Emit(Events::OnAssetLoaded,
-                                          {m_textures[upload.Handle.Index()].assetID, EAssetType::Texture}, {});
+                               {m_textures[upload.Handle.Index()].assetID, EAssetType::Texture}, {});
 
             LogInfo("FlushTextureUploads: done → handle {}, {}x{}",
                     upload.Handle, upload.Width, upload.Height);
@@ -736,7 +743,7 @@ namespace RTGDEngine
 
             if (IsAlive(upload.Handle))
                 GEventBus.Emit(Events::OnAssetLoaded,
-                                          {m_meshes[upload.Handle.Index()].assetID, EAssetType::Mesh}, {});
+                               {m_meshes[upload.Handle.Index()].assetID, EAssetType::Mesh}, {});
 
             LogInfo("RenderResourceManager: GPU upload done → handle {}, {} vertices, {} indices",
                     upload.Handle,

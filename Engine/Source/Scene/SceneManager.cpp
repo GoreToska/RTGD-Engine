@@ -230,6 +230,14 @@ namespace RTGDEngine {
         m_commands.emplace_back(std::move(func));
     }
 
+    void SceneManager::Shutdown()
+    {
+        for (auto& [name, scene] : m_scenes)
+        {
+            scene->Clear();
+        }
+    }
+
     flecs::world &SceneManager::GetWorld() {
         return m_world;
     }

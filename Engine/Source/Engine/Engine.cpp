@@ -180,8 +180,11 @@ namespace RTGDEngine
     {
         GEventBus.Process();
         UnloadGameModule();
+        GRenderResources.Shutdown();
         GRenderSystem.Shutdown();
+        GScene.Shutdown();
         GPhysics.Shutdown();
+        m_platformWindow->Destroy();
     }
 
     bool Engine::LoadGameModule(const std::string& dllPath)

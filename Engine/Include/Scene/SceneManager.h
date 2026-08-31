@@ -83,6 +83,8 @@ namespace RTGDEngine {
 
         void EnqueueCommand(std::function<void(flecs::world &)> func);
 
+        void Shutdown();
+
     private:
         std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};
         std::shared_ptr<Scene> m_activeScene = nullptr;

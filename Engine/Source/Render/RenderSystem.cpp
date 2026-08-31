@@ -375,6 +375,11 @@ namespace RTGDEngine
         LogInfo("Render System Shutdown");
 
         m_pImmediateContext->Flush();
+        m_idReadbackTexture.Release();
+        m_pickFence.Release();
+        m_swapChain.Release();
+        m_pImmediateContext.Release();
+        m_device.Release();
     }
 
     void RTGDRenderSystem::Present()

@@ -100,6 +100,8 @@ namespace RTGDEngine
     public:
         void Initialize(Diligent::IRenderDevice& device, Diligent::IDeviceContext& context);
 
+        void Shutdown();
+
         MeshHandle RegisterMesh(const std::string& name, MeshData data, uint64_t assetID = 0);
 
         MaterialHandle RegisterMaterial(const std::string& name, MaterialData data, uint64_t assetID = 0);
