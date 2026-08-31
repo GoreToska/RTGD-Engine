@@ -5,6 +5,11 @@
 #pragma once
 #include "Tools/Alias.h"
 
+namespace JPH
+{
+    class BodyID;
+}
+
 namespace RTGDEngine
 {
     enum class ECharacterGroundState
@@ -21,6 +26,8 @@ namespace RTGDEngine
         virtual ~ICharacterController() = default;
 
         virtual void SetLinearVelocity(const Float3 velocity) = 0;
+
+        virtual JPH::BodyID GetBodyID() const = 0;
 
         virtual void Jump(float jumpSpeed) = 0;
 

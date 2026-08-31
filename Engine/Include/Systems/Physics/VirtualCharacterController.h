@@ -26,6 +26,8 @@ namespace RTGDEngine
 
         ~VirtualCharacterController() override;
 
+        JPH::BodyID GetBodyID() const override;
+
         Float3 GetGroundNormal() const override;
 
         ECharacterGroundState GetGroundState() const override;

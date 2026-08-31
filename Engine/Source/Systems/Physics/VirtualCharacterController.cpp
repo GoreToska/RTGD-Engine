@@ -29,6 +29,11 @@ namespace RTGDEngine
 
     VirtualCharacterController::~VirtualCharacterController() = default;
 
+    JPH::BodyID VirtualCharacterController::GetBodyID() const
+    {
+        return JPH::BodyID();
+    }
+
     Float3 VirtualCharacterController::GetGroundNormal() const
     {
         return ToFloat3(m_character->GetGroundNormal());

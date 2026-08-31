@@ -35,6 +35,11 @@ namespace RTGDEngine
         m_character->RemoveFromPhysicsSystem();
     }
 
+    JPH::BodyID PhysicalCharacterController::GetBodyID() const
+    {
+        return m_character->GetBodyID();
+    }
+
     Float3 PhysicalCharacterController::GetGroundNormal() const
     {
         return ToFloat3(m_character->GetGroundNormal());

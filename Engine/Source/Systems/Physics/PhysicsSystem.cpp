@@ -62,6 +62,15 @@ namespace
         {
             if (auto rb = e.get_ref<RTGDEngine::RigidbodyComponent>())
                 ids.push_back(rb->BodyID);
+            else if (auto cc = e.get_ref<RTGDEngine::CharacterControllerComponent>())
+            {
+                if (cc->Controller)
+                {
+                    JPH::BodyID id = cc->Controller->GetBodyID();
+                    if (!id.IsInvalid())
+                        ids.push_back(id);
+                }
+            }
         }
 
         return ids;
