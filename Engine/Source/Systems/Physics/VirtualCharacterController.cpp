@@ -73,7 +73,7 @@ namespace RTGDEngine
 
     bool VirtualCharacterController::IsGrounded() const
     {
-        return m_character->IsSupported();
+        return GetGroundState() == ECharacterGroundState::OnGround;
     }
 
     void VirtualCharacterController::Jump(float jumpSpeed)

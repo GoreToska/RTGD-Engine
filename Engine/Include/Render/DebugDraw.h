@@ -17,23 +17,35 @@ namespace RTGDEngine
         DECLARE_SINGLETON(DebugDraw);
 
     public:
-        void DrawLine(const Float3& a, const Float3& b, const Float4& color = {0, 1, 0, 1});
+        static constexpr float Persistent = -1.0f;
+
+        void DrawLine(const Float3& a, const Float3& b, const Float4& color = {0, 1, 0, 1}, float duration = 0.0f);
 
         void DrawArc(const Float3& center, const Float3& right, const Float3& up, float radius, float sweepRadians,
-                     int segments, const Float4& color);
+                     int segments, const Float4& color, float duration = 0.0f);
 
         void DrawBox(const Float3& center, const Float3& halfExtents, const Quaternion& rotation = QuaternionIdentity(),
-                     const Float4& color = {0, 1, 0, 1});
+                     const Float4& color = {0, 1, 0, 1}, float duration = 0.0f);
 
-        void DrawSphere(const Float3& center, float radius, const Float4& color = {0, 1, 0, 1});
+        void DrawSphere(const Float3& center, float radius, const Float4& color = {0, 1, 0, 1}, float duration = 0.0f);
 
         void DrawCapsule(const Float3& center, float radius, float halfHeight,
-                         const Quaternion& rotation = QuaternionIdentity(), const Float4& color = {0, 1, 0, 1});
+                         const Quaternion& rotation = QuaternionIdentity(), const Float4& color = {0, 1, 0, 1},
+                         float duration = 0.0f);
 
         std::vector<LineVertex> TakeLines();
 
+        void ClearPersistent();
+
     private:
+        struct TimedLine
+        {
+            LineVertex A, B;
+            std::chrono::steady_clock::time_point Expire;
+        };
+
         std::vector<LineVertex> m_lines = {};
+        std::vector<TimedLine> m_timedLines = {};
     };
 
     DECLARE_GLOBAL_SINGLETON(DebugDraw, GDebugDraw);

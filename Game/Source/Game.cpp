@@ -13,6 +13,7 @@
 #include "Components/VelocityComponent.h"
 #include "Engine/Engine.h"
 #include "Input/InputSystem.h"
+#include "Render/DebugDraw.h"
 #include "Scene/SceneManager.h"
 #include "Tools/Logger.h"
 
@@ -68,7 +69,7 @@ void Game::OnStart()
 
     m_player.set<TransformComponent>({{0.0f, 1.0f, 0.0f}})
             .set<ColliderComponent>({
-                .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}
+                .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}, .Friction = 0.0f
             })
             .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Physical});
 
@@ -155,6 +156,8 @@ void Game::CameraUpdate(flecs::world& world, float deltaTime)
 
     if (GInput.IsPressed(m_interact))
     {
+        GDebugDraw.DrawLine(camTransform.Position + camTransform.GetForward() * 0.15,
+                            camTransform.GetForward() * m_interactionDistance, {0, 1, 0, 1}, 5);
         auto hit = GPhysics.Raycast(camTransform.Position, camTransform.GetForward(), m_interactionDistance, false,
                                     GPhysics.GetLayerMask("Default"), std::span(&m_player, 1));
 

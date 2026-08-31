@@ -72,7 +72,7 @@ namespace RTGDEngine
 
     bool PhysicalCharacterController::IsGrounded() const
     {
-        return m_character->IsSupported();
+        return GetGroundState() == ECharacterGroundState::OnGround;
     }
 
     void PhysicalCharacterController::Jump(float jumpSpeed)
