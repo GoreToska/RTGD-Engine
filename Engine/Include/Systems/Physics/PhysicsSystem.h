@@ -19,6 +19,7 @@
 #include "PhysicsLayer.h"
 #include "Jolt/Physics/Collision/BroadPhase/BroadPhaseLayerInterfaceTable.h"
 #include "Jolt/Physics/Collision/BroadPhase/ObjectVsBroadPhaseLayerFilterTable.h"
+#include "nlohmann/json.hpp"
 
 
 namespace RTGDEngine
@@ -300,6 +301,8 @@ namespace RTGDEngine
         void EmitStay(World& world, const PendingContact& contact);
 
         static uint64_t MakeContactKey(JPH::BodyID id1, JPH::BodyID id2);
+
+        nlohmann::json LoadPhysicsConfigJson(const std::string& fullPath);
 
         Layers::LayerRegistry m_layers;
 

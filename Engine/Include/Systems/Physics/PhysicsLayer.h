@@ -12,6 +12,7 @@
 #include "Jolt/Physics/Collision/BroadPhase/BroadPhaseLayerInterfaceTable.h"
 #include "Jolt/Physics/Collision/BroadPhase/ObjectVsBroadPhaseLayerFilterTable.h"
 
+#include <nlohmann/json.hpp>
 
 namespace RTGDEngine::BroadPhaseLayers {
     static constexpr JPH::BroadPhaseLayer NON_MOVING(0);
@@ -35,11 +36,11 @@ namespace RTGDEngine::Layers {
         std::unique_ptr<JPH::ObjectLayerPairFilterTable> Matrix;
     };
 
-    LayerConfig LoadLayerConfig(const std::string &fullPath);
+    LayerConfig LoadLayerConfig(const nlohmann::json& j);
 
     class LayerRegistry {
     public:
-        void Build(const std::string &fullPath);
+        void Build(const nlohmann::json& j);
 
         [[nodiscard]] const std::vector<std::string> &GetNames() const { return m_names; }
 

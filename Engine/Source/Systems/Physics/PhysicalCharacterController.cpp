@@ -77,7 +77,9 @@ namespace RTGDEngine
 
     void PhysicalCharacterController::Jump(float jumpSpeed)
     {
-        m_character->AddImpulse(JPH::Vec3(0, jumpSpeed * m_mass, 0));
+        JPH::Vec3 v = m_character->GetLinearVelocity();
+        v.SetY(jumpSpeed);
+        m_character->SetLinearVelocity(v);
     }
 
     void PhysicalCharacterController::SetLinearVelocity(const Float3 velocity)

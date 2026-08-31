@@ -5,6 +5,8 @@
 #include "Systems/Physics/PhysicsSystem.h"
 
 #include <flecs.h>
+#include <fstream>
+
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/CollisionCollectorImpl.h"
 #include "Jolt/Physics/Collision/RayCast.h"
@@ -20,9 +22,12 @@
 #include "Components/TransformComponent.h"
 #include "Jolt/RegisterTypes.h"
 #include "Jolt/Core/Factory.h"
+#include "nlohmann/json.hpp"
+#include "nlohmann/json_fwd.hpp"
 
 #include "Scene/SceneManager.h"
 #include "Tools/JoltConversions.h"
+#include "Tools/Logger.h"
 
 namespace
 {
@@ -727,6 +732,28 @@ namespace RTGDEngine
         return (uint64_t(a) << 32) | b;
     }
 
+    nlohmann::json PhysicsSystem::LoadPhysicsConfigJson(const std::string& fullPath)
+    {
+        std::ifstream stream(fullPath);
+        if (!stream)
+        {
+            LogError("Physics config file not found: '{}'. Fall back to defaults.", fullPath);
+            return {};
+        }
+
+        try
+        {
+            nlohmann::json json;
+            stream >> json;
+            return json;
+        }
+        catch (const nlohmann::json::exception& e)
+        {
+            LogError("Physics config parse error '{}': {} - falling back to defaults", fullPath, e.what());
+            return {};
+        }
+    }
+
     void PhysicsSystem::EmitStay(::World& world, const PendingContact& contact)
     {
         auto it1 = m_bodyInfo.find(contact.Body1);
@@ -842,22 +869,41 @@ namespace RTGDEngine
         JPH::Factory::sInstance = new JPH::Factory();
         JPH::RegisterTypes();
 
-        m_tempAllocator = std::make_unique<JPH::TempAllocatorImpl>(10 * 1024 * 1024);
+        nlohmann::json config = LoadPhysicsConfigJson(GetAbsolutePath("Assets/Config/Physics.json"));
+
+        m_tempAllocator = std::make_unique<
+            JPH::TempAllocatorImpl>(config.value("TempAllocatorBytes", 10 * 1024 * 1024));
+
+        int jobThreads = config.value("JobThreads", -1);
+        if (jobThreads <= 0)
+            jobThreads = (int) std::thread::hardware_concurrency() - 1;
+
         m_jobSystem = std::make_unique<JPH::JobSystemThreadPool>(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers,
-                                                                 (int) std::thread::hardware_concurrency() - 1);
+                                                                 jobThreads);
 
-        const JPH::uint cMaxBodies = 1024;
-        const JPH::uint cNumBodyMutexes = 0;
-        const JPH::uint cMaxBodyPairs = 1024;
-        const JPH::uint cMaxContactConstraints = 1024;
+        m_collisionSteps = config.value("CollisionSteps", 1);
 
-        m_layers.Build(GetAbsolutePath("Assets/Config/PhysicsLayers.json"));
+        JPH::uint maxBodies = config.value("MaxBodies", 1024u);
+        JPH::uint numBodyMutexes = config.value("NumBodyMutexes", 0);
+        JPH::uint maxBodyPairs = config.value("MaxBodyPairs", 1024u);
+        JPH::uint maxContactConstraints = config.value("MaxContactConstraints", 1024u);
 
-        m_physicsSystem.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints,
+        m_layers.Build(config);
+
+        m_physicsSystem.Init(maxBodies, numBodyMutexes, maxBodyPairs, maxContactConstraints,
                              m_layers.GetBroadPhaseLayerInterface(), m_layers.GetObjectVsBroadPhaseLayerFilter(),
                              m_layers.GetPairFilter());
 
-        m_physicsSystem.SetGravity(JPH::Vec3(0.0f, -9.81f, 0.0f));
+        auto g = config.value("Gravity", std::vector<float>{0.0f, -9.81f, 0.0f});
+        m_physicsSystem.SetGravity(JPH::Vec3(g[0], g[1], g[2]));
+
+        JPH::PhysicsSettings settings = m_physicsSystem.GetPhysicsSettings();
+        settings.mBaumgarte = config.value("Baumgarte", 0.2f);
+        settings.mPenetrationSlop = config.value("PenetrationSlop", 0.02f);
+        settings.mSpeculativeContactDistance = config.value("SpeculativeContactDistance", 0.02f);
+        settings.mNumVelocitySteps = config.value("NumVelocitySteps", 10u);
+        settings.mNumPositionSteps = config.value("NumPositionSteps", 2u);
+        m_physicsSystem.SetPhysicsSettings(settings);
 
         m_contactListener.Owner = this;
         m_physicsSystem.SetContactListener(&m_contactListener);

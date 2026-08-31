@@ -1,4 +1,21 @@
 {
+  "Gravity": [
+    0.0,
+    -9.81,
+    0.0
+  ],
+  "MaxBodies": 1024,
+  "NumBodyMutexes": 0,
+  "MaxBodyPairs": 1024,
+  "MaxContactConstraints": 1024,
+  "CollisionSteps": 4,
+  "TempAllocatorBytes": 10485760,
+  "JobThreads": -1,
+  "Baumgarte": 0.2,
+  "PenetrationSlop": 0.02,
+  "SpeculativeContactDistance": 0.02,
+  "NumVelocitySteps": 10,
+  "NumPositionSteps": 2,
   "Layers": [
     "Default",
     "Static",

@@ -2,10 +2,6 @@
 // Created by ivan on 8/26/26.
 //
 
-#include <fstream>
-
-#include <nlohmann/json.hpp>
-
 #include "Systems/Physics/PhysicsLayer.h"
 #include "Tools/Logger.h"
 
@@ -27,77 +23,63 @@ namespace RTGDEngine::Layers
         }
     }
 
-    LayerConfig LoadLayerConfig(const std::string& fullPath)
+    LayerConfig LoadLayerConfig(const nlohmann::json& j)
     {
         LayerConfig cfg;
         cfg.Names = {"Default"};
 
-        std::ifstream f(fullPath);
-        if (!f)
+        try
         {
-            LogError("Layers config not found '{}', falling back to single Default layer", fullPath);
+            std::vector<std::string> names = j.at("Layers").get<std::vector<std::string>>();
+
+            if (names.empty())
+                throw nlohmann::json::other_error::create(501, "Layers list is empty", &j);
+
+            if (names.size() > kMaxGameplayLayers)
+            {
+                LogError("Layers config: {} exceeds max {}.", names.size(), kMaxGameplayLayers);
+                names.resize(kMaxGameplayLayers);
+            }
+
+            cfg.Names = std::move(names);
         }
-        else
-            try
-            {
-                nlohmann::json j;
-                f >> j;
-                std::vector<std::string> names = j.at("Layers").get<std::vector<std::string>>();
-
-                if (names.empty())
-                    throw nlohmann::json::other_error::create(501, "Layers list is empty", &j);
-
-                if (names.size() > kMaxGameplayLayers)
-                {
-                    LogError("Layers config: {} layers exceeds max {}.", names.size(), kMaxGameplayLayers);
-                    names.resize(kMaxGameplayLayers);
-                }
-                cfg.Names = std::move(names);
-            }
-            catch (const nlohmann::json::exception& e)
-            {
-                LogError("Layers config parse error '{}': {} — falling back to single Default layer", fullPath,
-                         e.what());
-            }
+        catch (const nlohmann::json::exception& e)
+        {
+            LogError("Layers config parse error: {}", e.what());
+        }
 
         uint32_t numObjectLayers = cfg.Names.size() * 2;
         cfg.Matrix = std::make_unique<JPH::ObjectLayerPairFilterTable>(numObjectLayers);
 
-        std::ifstream f2(fullPath);
-        if (f2)
+        try
         {
-            try
+            if (j.contains("Collide"))
             {
-                nlohmann::json j;
-                f2 >> j;
-                if (j.contains("Collide"))
+                for (auto& pair: j.at("Collide"))
                 {
-                    for (auto& pair: j.at("Collide"))
+                    int a = IndexOf(cfg.Names, pair.at(0).get<std::string>());
+                    int b = IndexOf(cfg.Names, pair.at(1).get<std::string>());
+                    if (a < 0 || b < 0)
                     {
-                        int a = IndexOf(cfg.Names, pair.at(0).get<std::string>());
-                        int b = IndexOf(cfg.Names, pair.at(1).get<std::string>());
-                        if (a < 0 || b < 0)
-                        {
-                            LogError("Layers config: unknown layer in Collide pair, skipping. Pair: {}, {}.", a, b);
-                            continue;
-                        }
-
-                        EnablePair(*cfg.Matrix, a, b);
+                        LogError("Layers config: unknown layer in Collide pair, skipping for {}, {}.", a, b);
+                        continue;
                     }
+
+                    EnablePair(*cfg.Matrix, a, b);
                 }
             }
-            catch (const nlohmann::json::exception& e)
-            {
-                LogError("Layers config Collide parse error: {}", e.what());
-            }
+        }
+        catch (const nlohmann::json::exception& e)
+        {
+            LogError("Layers config Collide parse error: {}", e.what());
         }
 
         return cfg;
     }
 
-    void LayerRegistry::Build(const std::string& fullPath)
+    void LayerRegistry::Build(const nlohmann::json& j)
     {
-        LayerConfig cfg = LoadLayerConfig(fullPath);
+        LayerConfig cfg = LoadLayerConfig(j);
         m_names = std::move(cfg.Names);
         m_objectLayerPairFilter = std::move(cfg.Matrix);
 
