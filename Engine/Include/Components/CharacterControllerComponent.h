@@ -12,6 +12,7 @@
 #include "Systems/Physics/PhysicsSystem.h"
 #include "Systems/Physics/VirtualCharacterController.h"
 #include "Tools/Alias.h"
+#include "AssetLoader/PathResolve.h"
 
 namespace RTGDEngine
 {
@@ -57,19 +58,31 @@ namespace RTGDEngine
                 if (!charComp || !transform || !collider)
                     return;
 
+                if (collider->Shape == EPhysicsShape::Mesh)
+                {
+                    LogError("Mesh collider is not allowed on character controller, entity: {}, id: {}",
+                             e.name().c_str(), e.id());
+                    return;
+                }
+
                 charComp->Controller.reset();
-                JPH::ShapeRefC shape = ColliderComponent::MakeShape(collider->Shape, collider->Extents);
+
+                if (!collider->NativeShape)
+                {
+                    LogError("Shape is not valid, entity: {}, id: {}", e.name().c_str(), e.id());
+                    return;
+                }
 
                 if (charComp->Mode == EMode::Physical)
                 {
                     charComp->Controller = std::make_unique<PhysicalCharacterController>(
-                        transform->Position, transform->Rotation, shape, charComp->Mass, collider->Friction,
+                        transform->Position, transform->Rotation, collider->NativeShape, charComp->Mass, collider->Friction,
                         charComp->MaxSlopeAngle, collider->Layer, e);
                 }
                 else
                 {
                     charComp->Controller = std::make_unique<VirtualCharacterController>(
-                        transform->Position, transform->Rotation, shape, charComp->Mass, charComp->MaxStrength,
+                        transform->Position, transform->Rotation, collider->NativeShape, charComp->Mass, charComp->MaxStrength,
                         charComp->MaxSlopeAngle, collider->Layer, e);
                 }
             };

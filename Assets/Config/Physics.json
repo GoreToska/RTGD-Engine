@@ -8,7 +8,7 @@
   "NumBodyMutexes": 0,
   "MaxBodyPairs": 1024,
   "MaxContactConstraints": 1024,
-  "CollisionSteps": 4,
+  "CollisionSteps": 1,
   "TempAllocatorBytes": 10485760,
   "JobThreads": -1,
   "Baumgarte": 0.2,
@@ -16,6 +16,7 @@
   "SpeculativeContactDistance": 0.02,
   "NumVelocitySteps": 10,
   "NumPositionSteps": 2,
+  "ContactNormalCosMaxDeltaRotation": 40,
   "Layers": [
     "Default",
     "Static",

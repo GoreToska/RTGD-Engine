@@ -755,7 +755,8 @@ namespace RTGDEngine
     }
 
     void PhysicsSystem::BroadcastCollisionEnter(Entity e1, Entity e2,
-        const Events::CollisionEnterEvent& evt1, const Events::CollisionEnterEvent& evt2)
+                                                const Events::CollisionEnterEvent& evt1,
+                                                const Events::CollisionEnterEvent& evt2)
     {
         if (auto p1 = e1.get_ref<RigidbodyComponent>())
             p1->OnCollisionEnter.Broadcast({}, evt1);
@@ -768,7 +769,8 @@ namespace RTGDEngine
     }
 
     void PhysicsSystem::BroadcastCollisionStay(Entity e1, Entity e2,
-        const Events::CollisionStayEvent& evt1, const Events::CollisionStayEvent& evt2)
+                                               const Events::CollisionStayEvent& evt1,
+                                               const Events::CollisionStayEvent& evt2)
     {
         if (auto p1 = e1.get_ref<RigidbodyComponent>())
             p1->OnCollisionStay.Broadcast({}, evt1);
@@ -781,7 +783,8 @@ namespace RTGDEngine
     }
 
     void PhysicsSystem::BroadcastCollisionExit(Entity e1, Entity e2,
-        const Events::CollisionExitEvent& evt1, const Events::CollisionExitEvent& evt2)
+                                               const Events::CollisionExitEvent& evt1,
+                                               const Events::CollisionExitEvent& evt2)
     {
         if (auto p1 = e1.get_ref<RigidbodyComponent>())
             p1->OnCollisionExit.Broadcast({}, evt1);
@@ -794,7 +797,8 @@ namespace RTGDEngine
     }
 
     void PhysicsSystem::BroadcastTriggerEnter(Entity e1, Entity e2,
-        const Events::TriggerEnterEvent& evt1, const Events::TriggerEnterEvent& evt2)
+                                              const Events::TriggerEnterEvent& evt1,
+                                              const Events::TriggerEnterEvent& evt2)
     {
         if (auto p1 = e1.get_ref<RigidbodyComponent>())
             p1->OnTriggerEnter.Broadcast({}, evt1);
@@ -807,7 +811,7 @@ namespace RTGDEngine
     }
 
     void PhysicsSystem::BroadcastTriggerStay(Entity e1, Entity e2,
-        const Events::TriggerStayEvent& evt1, const Events::TriggerStayEvent& evt2)
+                                             const Events::TriggerStayEvent& evt1, const Events::TriggerStayEvent& evt2)
     {
         if (auto p1 = e1.get_ref<RigidbodyComponent>())
             p1->OnTriggerStay.Broadcast({}, evt1);
@@ -820,7 +824,7 @@ namespace RTGDEngine
     }
 
     void PhysicsSystem::BroadcastTriggerExit(Entity e1, Entity e2,
-        const Events::TriggerExitEvent& evt1, const Events::TriggerExitEvent& evt2)
+                                             const Events::TriggerExitEvent& evt1, const Events::TriggerExitEvent& evt2)
     {
         if (auto p1 = e1.get_ref<RigidbodyComponent>())
             p1->OnTriggerExit.Broadcast({}, evt1);
@@ -900,10 +904,6 @@ namespace RTGDEngine
             }
             case EContactPhase::Exit:
             {
-                auto& bi = GetBodyInterface();
-                if (!bi.IsActive(contact.Body1) && !bi.IsActive(contact.Body2))
-                    break;
-
                 m_activeContacts.erase(MakeContactKey(contact.Body1, contact.Body2));
 
                 if (isTrigger)
@@ -963,6 +963,8 @@ namespace RTGDEngine
         settings.mSpeculativeContactDistance = config.value("SpeculativeContactDistance", 0.02f);
         settings.mNumVelocitySteps = config.value("NumVelocitySteps", 10u);
         settings.mNumPositionSteps = config.value("NumPositionSteps", 2u);
+        settings.mContactNormalCosMaxDeltaRotation = std::cos(
+            JPH::DegreesToRadians(config.value("ContactNormalCosMaxDeltaRotation", 20.0f)));
         m_physicsSystem.SetPhysicsSettings(settings);
 
         m_contactListener.Owner = this;

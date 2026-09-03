@@ -150,6 +150,8 @@ add_library(Engine SHARED
         Include/Systems/Physics/PhysicalCharacterController.h
         Source/Systems/Physics/VirtualCharacterController.cpp
         Include/Systems/Physics/VirtualCharacterController.h
+        Source/AssetLoader/MeshSimplifier.cpp
+        Include/AssetLoader/MeshSimplifier.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -177,6 +179,7 @@ target_link_libraries(Engine PUBLIC
         enkiTS
         nlohmann_json::nlohmann_json
         Jolt
+        meshoptimizer
 )
 
 if (WIN32)

@@ -31,6 +31,32 @@ namespace RTGDEngine
                     GDebugDraw.DrawCapsule(transform.Position, collider.Extents.y, collider.Extents.x,
                                            transform.Rotation, color);
                     break;
+                case EPhysicsShape::Mesh:
+                case EPhysicsShape::ConvexHull:
+                    if (collider.NativeShape)
+                    {
+                        JPH::Float3 verts[128 * 3];
+                        int n;
+                        JPH::Vec3 comOffset = collider.NativeShape->GetCenterOfMass();
+                        JPH::RVec3 comPos = ToRVec3(transform.Position) + ToQuat(transform.Rotation) * comOffset;
+
+                        JPH::Shape::GetTrianglesContext ctx;
+                        collider.NativeShape->GetTrianglesStart(ctx, JPH::AABox::sBiggest(),
+                                                                comPos, ToQuat(transform.Rotation),
+                                                                JPH::Vec3::sReplicate(1.0f));
+
+                        while ((n = collider.NativeShape->GetTrianglesNext(ctx, 128, verts)) > 0)
+                        {
+                            for (int i = 0; i < n; ++i)
+                            {
+                                JPH::Vec3 a(verts[i * 3 + 0]), b(verts[i * 3 + 1]), c(verts[i * 3 + 2]);
+                                GDebugDraw.DrawLine(ToFloat3(a), ToFloat3(b), color, 0);
+                                GDebugDraw.DrawLine(ToFloat3(b), ToFloat3(c), color, 0);
+                                GDebugDraw.DrawLine(ToFloat3(a), ToFloat3(c), color, 0);
+                            }
+                        }
+                    }
+                    break;
             }
         });
 

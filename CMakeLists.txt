@@ -31,6 +31,8 @@ add_subdirectory(ThirdParty/DiligentEngine)
 
 add_subdirectory(ThirdParty/spdlog)
 
+add_subdirectory(ThirdParty/meshoptimizer)
+
 set(GAINPUT_TESTS OFF CACHE BOOL "" FORCE)
 set(GAINPUT_SAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/gainput)

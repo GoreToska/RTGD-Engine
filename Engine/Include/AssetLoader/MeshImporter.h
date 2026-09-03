@@ -10,9 +10,12 @@
 #include "Engine/EngineExport.h"
 #include "Render/Vertex.h"
 #include "Tools/Bounds.h"
+#include "Tools/RTGDMacros.h"
 
-namespace RTGDEngine {
-    struct MeshImportData {
+namespace RTGDEngine
+{
+    struct MeshImportData
+    {
         std::vector<VertexPNTUV> Vertices = {};
         std::vector<uint32_t> Indices = {};
         uint32_t VertexCount = 0;
@@ -32,8 +35,13 @@ namespace RTGDEngine {
         };
     };
 
-    class ENGINE_API MeshImporter {
+    class ENGINE_API MeshImporter
+    {
+        DECLARE_SINGLETON(MeshImporter);
+
     public:
-        static MeshImportData Import(const std::string &absolutePath);
+        MeshImportData Import(const std::string& absolutePath);
     };
+
+    DECLARE_GLOBAL_SINGLETON(MeshImporter, GMeshImporter);
 } // RTGDEngine

@@ -34,7 +34,35 @@
         "TransformComponent": { "Position": {"x":0,"y":0,"z":0}, "Rotation": {"w":0.5773503,"x":0.5773503,"y":0.5773503,"z":0}, "Scale": {"x":1,"y":1,"z":1} },                                                                     
         "UUIDComponent": { "ID": 0 }                                                                                                                                                                                                
       } }                                                                                                                                                                                                                           
-    },                                                                                                                                                                                                                              
+    },
+    {
+          "Name": "PhysHelmet",
+          "Data": { "components": {
+            "MeshComponent": {
+              "Material": { "Path": "Assets/Materials/Helmet.mat" },
+              "Mesh": { "Path": "Assets/Helmet/DamagedHelmet.gltf" }
+            },
+            "RenderComponent": { "CastShadows": true, "IsVisible": true },
+            "TransformComponent": { "Position": {"x":0,"y":0,"z":0}, "Rotation": {"w":0.5773503,"x":0.5773503,"y":0.5773503,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
+            "UUIDComponent": { "ID": 0 },
+            "ColliderComponent": { "Shape": "ConvexHull", "CollisionMeshPath": "Assets/Helmet/DamagedHelmet.gltf", "ConvexHullPointTarget": 50, "MeshTriangleTarget": 100 },
+            "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 20 }
+          } }
+        },
+    {
+          "Name": "PhysHelmetMesh",
+          "Data": { "components": {
+            "MeshComponent": {
+              "Material": { "Path": "Assets/Materials/Helmet.mat" },
+              "Mesh": { "Path": "Assets/Helmet/DamagedHelmet.gltf" }
+            },
+            "RenderComponent": { "CastShadows": true, "IsVisible": true },
+            "TransformComponent": { "Position": {"x":-3,"y":0,"z":0}, "Rotation": {"w":0.5773503,"x":0.5773503,"y":0.5773503,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
+            "UUIDComponent": { "ID": 0 },
+            "ColliderComponent": { "Shape": "Mesh", "CollisionMeshPath": "Assets/Helmet/DamagedHelmet.gltf", "ConvexHullPointTarget": 50, "MeshTriangleTarget": 100  },
+            "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 }
+          } }
+        },
     {
       "Name": "Spheres",
       "Data": { "components": {

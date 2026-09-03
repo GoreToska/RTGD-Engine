@@ -14,6 +14,7 @@
 #include "Systems/Physics/PhysicsSystem.h"
 #include "Systems/Physics/PhysicsLayer.h"
 #include "TransformComponent.h"
+#include "AssetLoader/PathResolve.h"
 #include "Event/Events.h"
 #include "Tools/Alias.h"
 #include "Event/Delegate.h"
@@ -119,8 +120,18 @@ namespace RTGDEngine
                 auto collider = e.get_ref<ColliderComponent>();
                 auto rb = e.get_ref<RigidbodyComponent>();
                 auto xf = e.get_ref<TransformComponent>();
+
                 if (!rb || !xf || !collider)
                     return;
+
+                bool isMeshShape = collider->Shape == EPhysicsShape::Mesh || collider->Shape ==
+                                   EPhysicsShape::ConvexHull;
+
+                if (collider->Shape == EPhysicsShape::Mesh && rb->MotionType != EMotionType::Static)
+                {
+                    LogError("Mesh collider requires static motion type, entity: {} ID: {}.", e.name().c_str(), e.id());
+                    return;
+                }
 
                 auto& bi = GPhysics.GetBodyInterface();
                 if (!rb->BodyID.IsInvalid())
@@ -130,7 +141,13 @@ namespace RTGDEngine
                     bi.DestroyBody(rb->BodyID);
                 }
 
-                JPH::ShapeRefC shape = ColliderComponent::MakeShape(collider->Shape, collider->Extents);
+                JPH::ShapeRefC shape = collider->NativeShape;
+                if (!shape)
+                {
+                    LogError("Shape is not valid, entity: {}, id: {}", e.name().c_str(), e.id());
+                    return;
+                }
+
                 JPH::EMotionType motion = rb->MotionType == EMotionType::Static
                                               ? JPH::EMotionType::Static
                                               : rb->MotionType == EMotionType::Kinematic
@@ -151,8 +168,14 @@ namespace RTGDEngine
                 if (rb->MotionType != EMotionType::Static)
                 {
                     settings.mOverrideMassProperties = JPH::EOverrideMassProperties::MassAndInertiaProvided;
-                    settings.mMassPropertiesOverride = ColliderComponent::ComputeMassProperties(
-                        collider->Shape, collider->Extents, rb->Mass);
+                    JPH::MassProperties props = isMeshShape
+                                                    ? shape->GetMassProperties()
+                                                    : ColliderComponent::ComputeMassProperties(
+                                                        collider->Shape, collider->Extents, rb->Mass);
+                    if (isMeshShape)
+                        props.ScaleToMass(rb->Mass);
+
+                    settings.mMassPropertiesOverride = props;
                 }
 
                 rb->BodyID = bi.CreateAndAddBody(settings,

@@ -47,7 +47,7 @@ namespace RTGDEngine {
         LogInfo("Async load queued '{}' - handle {}", key, handle);
 
         GJobSystem.Submit([key, handle, onComplete]() {
-            MeshImportData data = MeshImporter::Import(key);
+            MeshImportData data = GMeshImporter.Import(key);
 
             if (!data.Success) {
                 LogError("Mesh import failed {}", key);
@@ -87,7 +87,7 @@ namespace RTGDEngine {
         }
 
 
-        MeshImportData data = MeshImporter::Import(absolutePath);
+        MeshImportData data = GMeshImporter.Import(absolutePath);
 
         if (!data.Success)
             return INVALID_MESH_HANDLE;
