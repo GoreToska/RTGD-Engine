@@ -58,9 +58,9 @@ namespace RTGDEngine
                 if (!charComp || !transform || !collider)
                     return;
 
-                if (collider->Shape == EPhysicsShape::Mesh)
+                if (collider->Shape == EPhysicsShape::Mesh || collider->Shape == EPhysicsShape::ConvexHull)
                 {
-                    LogError("Mesh collider is not allowed on character controller, entity: {}, id: {}",
+                    LogError("Mesh/ConvexHull collider is not allowed on character controller, entity: {}, id: {}",
                              e.name().c_str(), e.id());
                     return;
                 }
