@@ -188,5 +188,30 @@
       "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
       "UUIDComponent": { "ID": 0 }
     } }
+  },
+  {
+    "Name": "House_Door",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":-0.6,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1.5,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.75,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 10 },
+      "ConstraintComponent": {
+        "Type": "Hinge",
+        "OtherEntityName": "House_WallFrontLeft",
+        "Point1": {"x":9.25,"y":-0.6,"z":2},
+        "HingeAxis1": {"x":0,"y":1,"z":0},
+        "NormalAxis1": {"x":0,"y":0,"z":1},
+        "Point2": {"x":9.25,"y":-0.6,"z":2},
+        "HingeAxis2": {"x":0,"y":1,"z":0},
+        "NormalAxis2": {"x":0,"y":0,"z":1},
+        "EnableLimits": false,
+        "LimitsMinDeg": -180,
+        "LimitsMaxDeg": 180,
+        "MaxFrictionTorque": 0
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
   }
   ]

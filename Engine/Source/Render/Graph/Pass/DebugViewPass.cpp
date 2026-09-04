@@ -47,7 +47,7 @@ namespace RTGDEngine
     {
         using namespace Diligent;
 
-        auto& rm = GRenderResources;
+        auto& rm = GRenderResources();
         const MaterialData& mat = rm.GetMaterial(m_material);
 
         if (!mat.PSO || !mat.SRB)

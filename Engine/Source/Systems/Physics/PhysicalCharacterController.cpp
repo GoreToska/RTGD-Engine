@@ -24,14 +24,14 @@ namespace RTGDEngine
         settings.mMaxSlopeAngle = JPH::DegreesToRadians(maxSlopeAngleDeg);
         settings.mLayer = Layers::Encode(layer, true);
 
-        m_character = new JPH::Character(&settings, ToRVec3(position), ToQuat(rotation), 0, &GPhysics.GetJoltSystem());
+        m_character = new JPH::Character(&settings, ToRVec3(position), ToQuat(rotation), 0, &GPhysics().GetJoltSystem());
         m_character->AddToPhysicsSystem(JPH::EActivation::Activate);
-        GPhysics.RegisterBody(m_character->GetBodyID(), entity.id(), false);
+        GPhysics().RegisterBody(m_character->GetBodyID(), entity.id(), false);
     }
 
     PhysicalCharacterController::~PhysicalCharacterController()
     {
-        GPhysics.UnregisterBody(m_character->GetBodyID());
+        GPhysics().UnregisterBody(m_character->GetBodyID());
         m_character->RemoveFromPhysicsSystem();
     }
 

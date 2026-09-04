@@ -14,6 +14,7 @@
 #include "Scene.h"
 #include "Event/EventBus.h"
 #include "Tools/RTGDMacros.h"
+#include "Tools/Alias.h"
 
 namespace RTGDEngine {
     class Scene;
@@ -68,7 +69,9 @@ namespace RTGDEngine {
 
         void ApplyPendingEntityCommands();
 
-        flecs::entity GetEntity(uint64_t id) const;
+        Entity GetEntity(uint64_t id) const;
+
+        Entity Find(const std::string& name);
 
         // Parent ID here can be a scene ID too - if scene ID is passed, entity will be created as part of this scene (for additional scenes support)
         flecs::entity CreateEntity(const std::string &name, flecs::entity parent = {});

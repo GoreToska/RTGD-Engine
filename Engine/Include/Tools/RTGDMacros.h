@@ -15,4 +15,4 @@ private: \
 ClassName() = default;
 
 #define DECLARE_GLOBAL_SINGLETON(ClassName, GlobalName) \
-      inline ClassName &GlobalName = ClassName::Instance();
+      inline ClassName &GlobalName() { return ClassName::Instance();}

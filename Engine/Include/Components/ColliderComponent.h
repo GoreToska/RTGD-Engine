@@ -65,7 +65,7 @@ namespace RTGDEngine
                                             const uint32_t ConvexHullPointTarget = 200,
                                             const uint32_t MeshTriangleTarget = 1000)
         {
-            MeshImportData data = GMeshImporter.Import(absolutePath);
+            MeshImportData data = GMeshImporter().Import(absolutePath);
             if (!data.Success)
             {
                 LogError("Collision mesh import failed '{}': {}", absolutePath, data.ErrorMessage);
@@ -80,7 +80,7 @@ namespace RTGDEngine
                 {
                     float ratio = static_cast<float>(MeshTriangleTarget) * 3.0f / static_cast<float>(data.Indices.
                                       size());
-                    data = GMeshSimplifier.Simplify(data, ratio, 0.1);
+                    data = GMeshSimplifier().Simplify(data, ratio, 0.1);
                 }
 
                 JPH::VertexList vertices;
@@ -102,7 +102,7 @@ namespace RTGDEngine
                 std::vector<Float3> simplified;
                 if (data.Vertices.size() > ConvexHullPointTarget)
                 {
-                    simplified = GMeshSimplifier.SimplifyPoints(data.Vertices, ConvexHullPointTarget);
+                    simplified = GMeshSimplifier().SimplifyPoints(data.Vertices, ConvexHullPointTarget);
                 }
 
                 JPH::Array<JPH::Vec3> points;

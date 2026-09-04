@@ -34,7 +34,6 @@ void RTGDEngine::GroundCheckSystem::Update(World& world, float deltaTime)
     {
         float distance = BottomOffset(collider.Shape, collider.Extents) + ground.Margin;
         JPH::BodyID self[] = {rb.BodyID};
-        ground.IsGrounded = GPhysics.Raycast(transform.Position, {0, -1, 0}, distance, false, ground.LayerMask, self).
-                Hit;
+        ground.IsGrounded = GPhysics().Raycast(transform.Position, {0, -1, 0}, distance, false, ground.LayerMask, self).Hit;
     });
 }

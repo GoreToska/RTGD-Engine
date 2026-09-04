@@ -12,7 +12,7 @@
 
 namespace RTGDEngine {
     void EditorCameraSystem::Update(const flecs::world &world, float deltaTime) {
-        auto &input = GInput;
+        auto &input = GInput();
 
         world.each([&](EditorCameraMovementComponent &editorCam,
                        VelocityComponent &velocity,

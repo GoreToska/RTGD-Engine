@@ -316,6 +316,8 @@ namespace RTGDEngine
 
         nlohmann::json LoadPhysicsConfigJson(const std::string& fullPath);
 
+        void CreateConstraints(World& world);
+
         Layers::LayerRegistry m_layers;
 
         std::unique_ptr<JPH::TempAllocatorImpl> m_tempAllocator;

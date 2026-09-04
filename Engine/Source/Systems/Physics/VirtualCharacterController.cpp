@@ -26,14 +26,14 @@ namespace RTGDEngine
         settings.mInnerBodyLayer = layer;
 
         m_character = new JPH::CharacterVirtual(&settings, ToRVec3(position), ToQuat(rotation), 0,
-                                                &GPhysics.GetJoltSystem());
+                                                &GPhysics().GetJoltSystem());
 
-        GPhysics.RegisterBody(m_character->GetInnerBodyID(), entity.id(), false);
+        GPhysics().RegisterBody(m_character->GetInnerBodyID(), entity.id(), false);
     }
 
     VirtualCharacterController::~VirtualCharacterController()
     {
-        GPhysics.UnregisterBody(m_character->GetInnerBodyID());
+        GPhysics().UnregisterBody(m_character->GetInnerBodyID());
     }
 
     JPH::BodyID VirtualCharacterController::GetBodyID() const
@@ -100,7 +100,7 @@ namespace RTGDEngine
 
     void VirtualCharacterController::Update(float deltaTime)
     {
-        JPH::PhysicsSystem& system = GPhysics.GetJoltSystem();
+        JPH::PhysicsSystem& system = GPhysics().GetJoltSystem();
         JPH::Vec3 gravity = system.GetGravity();
         JPH::Vec3 up = m_character->GetUp();
 
@@ -120,6 +120,6 @@ namespace RTGDEngine
         m_character->UpdateGroundVelocity();
         m_character->Update(deltaTime, gravity, system.GetDefaultBroadPhaseLayerFilter(m_objectLayer),
                             system.GetDefaultLayerFilter(m_objectLayer), JPH::BodyFilter{}, JPH::ShapeFilter{},
-                            GPhysics.GetTempAllocator());
+                            GPhysics().GetTempAllocator());
     }
 }

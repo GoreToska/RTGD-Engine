@@ -19,7 +19,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory().CreateDefaultShaderSourceStreamFactory(
+        GRenderSystem().GetFactory().CreateDefaultShaderSourceStreamFactory(
             absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
@@ -86,7 +86,7 @@ namespace RTGDEngine
 
         BindStandardConstantBuffers(*data.SRB);
 
-        return GRenderResources.RegisterMaterial("triangle", std::move(data));
+        return GRenderResources().RegisterMaterial("triangle", std::move(data));
     }
 
     MaterialHandle PipelineFactory::CreateMeshPipeline(Diligent::IRenderDevice& device, Diligent::ISwapChain& swapChain,
@@ -95,7 +95,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory().CreateDefaultShaderSourceStreamFactory(
+        GRenderSystem().GetFactory().CreateDefaultShaderSourceStreamFactory(
             absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
@@ -157,7 +157,7 @@ namespace RTGDEngine
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
         BindStandardConstantBuffers(*data.SRB);
 
-        return GRenderResources.RegisterMaterial("mesh_default", std::move(data));
+        return GRenderResources().RegisterMaterial("mesh_default", std::move(data));
     }
 
     MaterialHandle PipelineFactory::CreateShadowPipeline(Diligent::IRenderDevice& device,
@@ -166,7 +166,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory()
+        GRenderSystem().GetFactory()
                 .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
@@ -231,9 +231,9 @@ namespace RTGDEngine
 
         auto* shadowVar = data.SRB->GetVariableByName(SHADER_TYPE_VERTEX, "ShadowConstants");
         if (shadowVar)
-            shadowVar->Set(&GRenderSystem.GetFrameConstants().Shadow());
+            shadowVar->Set(&GRenderSystem().GetFrameConstants().Shadow());
 
-        return GRenderResources.RegisterMaterial("shadow", std::move(data));
+        return GRenderResources().RegisterMaterial("shadow", std::move(data));
     }
 
     MaterialHandle PipelineFactory::CreateGBufferPipeline(Diligent::IRenderDevice& device,
@@ -242,7 +242,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory()
+        GRenderSystem().GetFactory()
                 .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
@@ -345,7 +345,7 @@ namespace RTGDEngine
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
         BindStandardConstantBuffers(*data.SRB);
 
-        return GRenderResources.RegisterMaterial(
+        return GRenderResources().RegisterMaterial(
             "gbuffer", std::move(data));
     }
 
@@ -356,7 +356,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory()
+        GRenderSystem().GetFactory()
                 .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
@@ -450,11 +450,11 @@ namespace RTGDEngine
                 var->Set(obj);
         };
 
-        bindVar(SHADER_TYPE_PIXEL, "LightConstants", &GRenderSystem.GetFrameConstants().Light());
-        bindVar(SHADER_TYPE_PIXEL, "CameraConstants", &GRenderSystem.GetFrameConstants().Camera());
-        bindVar(SHADER_TYPE_PIXEL, "ShadowConstants", &GRenderSystem.GetFrameConstants().Shadow());
+        bindVar(SHADER_TYPE_PIXEL, "LightConstants", &GRenderSystem().GetFrameConstants().Light());
+        bindVar(SHADER_TYPE_PIXEL, "CameraConstants", &GRenderSystem().GetFrameConstants().Camera());
+        bindVar(SHADER_TYPE_PIXEL, "ShadowConstants", &GRenderSystem().GetFrameConstants().Shadow());
 
-        return GRenderResources.RegisterMaterial(
+        return GRenderResources().RegisterMaterial(
             "lighting", std::move(data));
     }
 
@@ -465,7 +465,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory()
+        GRenderSystem().GetFactory()
                 .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
@@ -529,7 +529,7 @@ namespace RTGDEngine
 
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
 
-        return GRenderResources.RegisterMaterial(
+        return GRenderResources().RegisterMaterial(
             "debug_view", std::move(data));
     }
 
@@ -540,7 +540,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory()
+        GRenderSystem().GetFactory()
                 .CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
@@ -618,7 +618,7 @@ namespace RTGDEngine
 
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
 
-        return GRenderResources.RegisterMaterial(
+        return GRenderResources().RegisterMaterial(
             "lighting", std::move(data));
     }
 
@@ -629,7 +629,7 @@ namespace RTGDEngine
         using namespace Diligent;
 
         RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
-        GRenderSystem.GetFactory().CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
+        GRenderSystem().GetFactory().CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
 
         ShaderCreateInfo shaderCI;
         shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
@@ -696,14 +696,14 @@ namespace RTGDEngine
         data.PSO->CreateShaderResourceBinding(&data.SRB, true);
         BindStandardConstantBuffers(*data.SRB);
 
-        return GRenderResources.RegisterMaterial("debug_lines", std::move(data));
+        return GRenderResources().RegisterMaterial("debug_lines", std::move(data));
     }
 
     void PipelineFactory::BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb)
     {
         using namespace Diligent;
 
-        auto& rs = GRenderSystem;
+        auto& rs = GRenderSystem();
 
         struct Binding
         {

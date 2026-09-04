@@ -50,7 +50,7 @@ namespace RTGDEngine {
 
 
     void EditorBridge::Initialize() {
-        auto &bus = GEventBus;
+        auto &bus = GEventBus();
         auto mark = [this](const auto &) { MarkHierarchyDirty(); };
 
         bus.Subscribe(Events::OnEntityCreated, mark);
@@ -62,7 +62,7 @@ namespace RTGDEngine {
     }
 
     void EditorBridge::PublishSnapshot() {
-        const auto scene = GScene.GetActiveScene();
+        const auto scene = GScene().GetActiveScene();
         if (!scene)
             return;
 
@@ -88,7 +88,7 @@ namespace RTGDEngine {
 
         std::string json = "{}";
         if (const uint64_t selected = m_selectedID.load(std::memory_order_relaxed)) {
-            if (const flecs::entity e = GScene.GetEntity(selected); e.is_alive()) {
+            if (const flecs::entity e = GScene().GetEntity(selected); e.is_alive()) {
                 static const flecs::entity_to_json_desc_t desc = [] {
                     flecs::entity_to_json_desc_t d = ECS_ENTITY_TO_JSON_INIT;
                     d.serialize_type_info = true;
@@ -115,7 +115,7 @@ namespace RTGDEngine {
 
     void EditorBridge::SetSelected(uint64_t id) {
         m_selectedID.store(id, std::memory_order_relaxed);
-        GEventBus.Emit(Events::OnSelectionChanged, {});
+        GEventBus().Emit(Events::OnSelectionChanged, {});
     }
 
     uint32_t EditorBridge::SelectedVersion() const {

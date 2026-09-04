@@ -22,13 +22,13 @@ namespace RTGDEngine
             switch (collider.Shape)
             {
                 case EPhysicsShape::Box:
-                    GDebugDraw.DrawBox(transform.Position, collider.Extents, transform.Rotation, color);
+                    GDebugDraw().DrawBox(transform.Position, collider.Extents, transform.Rotation, color);
                     break;
                 case EPhysicsShape::Sphere:
-                    GDebugDraw.DrawSphere(transform.Position, collider.Extents.x, color);
+                    GDebugDraw().DrawSphere(transform.Position, collider.Extents.x, color);
                     break;
                 case EPhysicsShape::Capsule:
-                    GDebugDraw.DrawCapsule(transform.Position, collider.Extents.y, collider.Extents.x,
+                    GDebugDraw().DrawCapsule(transform.Position, collider.Extents.y, collider.Extents.x,
                                            transform.Rotation, color);
                     break;
                 case EPhysicsShape::Mesh:
@@ -50,9 +50,9 @@ namespace RTGDEngine
                             for (int i = 0; i < n; ++i)
                             {
                                 JPH::Vec3 a(verts[i * 3 + 0]), b(verts[i * 3 + 1]), c(verts[i * 3 + 2]);
-                                GDebugDraw.DrawLine(ToFloat3(a), ToFloat3(b), color, 0);
-                                GDebugDraw.DrawLine(ToFloat3(b), ToFloat3(c), color, 0);
-                                GDebugDraw.DrawLine(ToFloat3(a), ToFloat3(c), color, 0);
+                                GDebugDraw().DrawLine(ToFloat3(a), ToFloat3(b), color, 0);
+                                GDebugDraw().DrawLine(ToFloat3(b), ToFloat3(c), color, 0);
+                                GDebugDraw().DrawLine(ToFloat3(a), ToFloat3(c), color, 0);
                             }
                         }
                     }
@@ -60,11 +60,11 @@ namespace RTGDEngine
             }
         });
 
-        auto lines = GDebugDraw.TakeLines();
+        auto lines = GDebugDraw().TakeLines();
         if (lines.empty())
             return;
 
-        const MaterialData& mat = GRenderResources.GetMaterial(m_material);
+        const MaterialData& mat = GRenderResources().GetMaterial(m_material);
         if (!mat.PSO || !mat.SRB)
             return;
 

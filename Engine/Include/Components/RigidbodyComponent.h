@@ -63,32 +63,32 @@ namespace RTGDEngine
 
         void AddForce(const Float3& force) const
         {
-            GPhysics.AddForce(BodyID, force);
+            GPhysics().AddForce(BodyID, force);
         }
 
         void AddForceAtPosition(const Float3& force, const Float3& position) const
         {
-            GPhysics.AddForceAtPosition(BodyID, force, position);
+            GPhysics().AddForceAtPosition(BodyID, force, position);
         }
 
         void AddTorque(const Float3& torque) const
         {
-            GPhysics.AddTorque(BodyID, torque);
+            GPhysics().AddTorque(BodyID, torque);
         }
 
         void AddImpulse(const Float3& impulse) const
         {
-            GPhysics.AddImpulse(BodyID, impulse);
+            GPhysics().AddImpulse(BodyID, impulse);
         }
 
         void AddImpulseAtPosition(const Float3& impulse, const Float3& position) const
         {
-            GPhysics.AddImpulseAtPosition(BodyID, impulse, position);
+            GPhysics().AddImpulseAtPosition(BodyID, impulse, position);
         }
 
         void AddAngularImpulse(const Float3& impulse) const
         {
-            GPhysics.AddAngularImpulse(BodyID, impulse);
+            GPhysics().AddAngularImpulse(BodyID, impulse);
         }
 
         static void RegisterMeta(const flecs::world& world)
@@ -133,10 +133,10 @@ namespace RTGDEngine
                     return;
                 }
 
-                auto& bi = GPhysics.GetBodyInterface();
+                auto& bi = GPhysics().GetBodyInterface();
                 if (!rb->BodyID.IsInvalid())
                 {
-                    GPhysics.UnregisterBody(rb->BodyID);
+                    GPhysics().UnregisterBody(rb->BodyID);
                     bi.RemoveBody(rb->BodyID);
                     bi.DestroyBody(rb->BodyID);
                 }
@@ -182,7 +182,8 @@ namespace RTGDEngine
                                                  rb->MotionType == EMotionType::Static
                                                      ? JPH::EActivation::DontActivate
                                                      : JPH::EActivation::Activate);
-                GPhysics.RegisterBody(rb->BodyID, e.id(), collider->IsTrigger);
+                GPhysics().RegisterBody(rb->BodyID, e.id(), collider->IsTrigger);
+                LogInfo("Create physics body for '{}' registered, BodyID valid", e.name().c_str());
             };
 
             world.observer<RigidbodyComponent>().event(flecs::OnSet).each(
@@ -203,8 +204,8 @@ namespace RTGDEngine
                 {
                     if (c.BodyID.IsInvalid())
                         return;
-                    GPhysics.UnregisterBody(c.BodyID);
-                    auto& bi = GPhysics.GetBodyInterface();
+                    GPhysics().UnregisterBody(c.BodyID);
+                    auto& bi = GPhysics().GetBodyInterface();
                     bi.RemoveBody(c.BodyID);
                     bi.DestroyBody(c.BodyID);
                 });

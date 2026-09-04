@@ -38,13 +38,13 @@ namespace RTGDEngine
     {
         AddSystem([](flecs::world&, float dt)
         {
-            GTimer.Update(dt);
+            GTimer().Update(dt);
         }, ESystemPhase::PreUpdate);
 
         AddSystem([&](flecs::world& world, float dt)
         {
             if (m_isPlayMode)
-                GPhysics.Update(world, dt);
+                GPhysics().Update(world, dt);
         }, ESystemPhase::FixedUpdate, 0);
 
         AddSystem(GroundCheckSystem::Update, ESystemPhase::FixedUpdate, 1);
@@ -68,28 +68,28 @@ namespace RTGDEngine
     {
         m_platformWindow = std::move(window);
 
-        GLogger.Initialize();
+        GLogger().Initialize();
 
-        GJobSystem.Initialize();
+        GJobSystem().Initialize();
 
-        GScene.Initialize();
+        GScene().Initialize();
 
-        GPhysics.Initialize();
+        GPhysics().Initialize();
 
 #ifdef RTGD_EDITOR
-        GEditorBridge.Initialize();
+        GEditorBridge().Initialize();
 
-        GScene.GetWorld().entity("EditorCamera").add<TransformComponent>().add<CameraComponent>().add<
+        GScene().GetWorld().entity("EditorCamera").add<TransformComponent>().add<CameraComponent>().add<
             EditorCameraMovementComponent>().add<VelocityComponent>().add<UUIDComponent>();
 #endif
 
-        GRenderSystem.Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
+        GRenderSystem().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
                                  m_platformWindow->GetHeight());
 
-        GRenderResources.Initialize(GRenderSystem.GetDevice(),
-                                    GRenderSystem.GetContext());
+        GRenderResources().Initialize(GRenderSystem().GetDevice(),
+                                    GRenderSystem().GetContext());
 
-        GInput.AddWindowHandle(m_platformWindow.get());
+        GInput().AddWindowHandle(m_platformWindow.get());
 
         m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
         m_platformWindow->OnClose = []() { Instance().OnClose(); };
@@ -150,7 +150,7 @@ namespace RTGDEngine
 
     void Engine::DestroyGameContent()
     {
-        GScene.GetWorld().delete_with<GameRootTag>();
+        GScene().GetWorld().delete_with<GameRootTag>();
     }
 
     void Engine::UnloadGameModule()
@@ -178,12 +178,12 @@ namespace RTGDEngine
 
     void Engine::Shutdown()
     {
-        GEventBus.Process();
+        GEventBus().Process();
         UnloadGameModule();
-        GRenderResources.Shutdown();
-        GRenderSystem.Shutdown();
-        GScene.Shutdown();
-        GPhysics.Shutdown();
+        GRenderResources().Shutdown();
+        GRenderSystem().Shutdown();
+        GScene().Shutdown();
+        GPhysics().Shutdown();
         m_platformWindow->Destroy();
     }
 
@@ -223,26 +223,26 @@ namespace RTGDEngine
 
     void Engine::Update(const float deltaTime)
     {
-        GJobSystem.Flush(MAX_JOBS_TO_REMOVE);
-        GScene.ApplyPendingSceneChanges();
-        GScene.ApplyPendingEntityCommands();
-        GEventBus.Process();
+        GJobSystem().Flush(MAX_JOBS_TO_REMOVE);
+        GScene().ApplyPendingSceneChanges();
+        GScene().ApplyPendingEntityCommands();
+        GEventBus().Process();
 
-        GInput.Update();
+        GInput().Update();
 
-        if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
+        if (GInput().IsDown(EInputAction::CtrlLeft) && GInput().IsPressed(
                 EInputAction::ReloadGameModule))
         {
             ReloadGameModule();
         }
 
-        if (GInput.IsDown(EInputAction::CtrlLeft) && GInput.IsPressed(
+        if (GInput().IsDown(EInputAction::CtrlLeft) && GInput().IsPressed(
                 EInputAction::TogglePlayMode))
         {
             TogglePlayMode();
         }
 
-        auto& world = GScene.GetWorld();
+        auto& world = GScene().GetWorld();
         RunPhase(ESystemPhase::PreUpdate, world, deltaTime);
 
         m_fixedAccumulator += deltaTime;
@@ -255,10 +255,10 @@ namespace RTGDEngine
         RunPhase(ESystemPhase::Update, world, deltaTime);
         RunPhase(ESystemPhase::PostUpdate, world, deltaTime);
 
-        GInput.PostUpdate();
+        GInput().PostUpdate();
 
 #ifdef RTGD_EDITOR
-        GEditorBridge.PublishSnapshot();
+        GEditorBridge().PublishSnapshot();
 #endif
 
         Render();
@@ -266,19 +266,19 @@ namespace RTGDEngine
 
     void Engine::Render()
     {
-        GRenderSystem.ApplyPendingResize(GScene.GetWorld());
+        GRenderSystem().ApplyPendingResize(GScene().GetWorld());
 
-        auto& rs = GRenderSystem;
+        auto& rs = GRenderSystem();
         auto& device = rs.GetDevice();
         auto& context = rs.GetContext();
-        auto& rm = GRenderResources;
+        auto& rm = GRenderResources();
 
         rm.FlushMeshUploads(device);
         rm.FlushTextureUploads(device, context);
         rm.ProcessPendingDestroys();
 
-        GRenderSystem.ExecuteFrame(GScene.GetWorld());
-        GRenderSystem.Present();
+        GRenderSystem().ExecuteFrame(GScene().GetWorld());
+        GRenderSystem().Present();
     }
 
     void Engine::CreateConsole()
@@ -314,7 +314,7 @@ namespace RTGDEngine
             m_gameModule->OnStop();
             ClearSystems(ESystemGroup::Game);
             DestroyGameContent();
-            GScene.ReloadAll();
+            GScene().ReloadAll();
         }
     }
 
@@ -392,10 +392,10 @@ namespace RTGDEngine
             h = m_pendingH;
         }
 
-        GRenderSystem.Resize(w, h);
-        GInput.Resize(w, h);
+        GRenderSystem().Resize(w, h);
+        GInput().Resize(w, h);
         m_platformWindow->SetSize(w, h);
-        GEventBus.Emit(Events::OnWindowResized, {w, h}, {});
+        GEventBus().Emit(Events::OnWindowResized, {w, h}, {});
     }
 
 #ifdef RTGD_EDITOR
@@ -411,7 +411,7 @@ namespace RTGDEngine
             m_pickRequest.Pending = false;
         }
 
-        const flecs::entity e = GRenderSystem.PickEntity(x, y); {
+        const flecs::entity e = GRenderSystem().PickEntity(x, y); {
             std::lock_guard<std::mutex> lock(m_pickMutex);
             m_pickRequest.Result = e.id();
             m_pickRequest.Done = true;
@@ -423,6 +423,6 @@ namespace RTGDEngine
 
     void Engine::OnClose()
     {
-        GEventBus.Emit(Events::OnWindowClosed, {}, {});
+        GEventBus().Emit(Events::OnWindowClosed, {}, {});
     }
 }

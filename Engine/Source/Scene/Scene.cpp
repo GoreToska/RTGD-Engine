@@ -29,7 +29,7 @@ namespace RTGDEngine
         if (m_gameRoot.is_alive())
             return m_gameRoot;
 
-        m_gameRoot = GScene.CreateEntity("GameRoot", m_root).add<GameRootTag>();
+        m_gameRoot = GScene().CreateEntity("GameRoot", m_root).add<GameRootTag>();
         return m_gameRoot;
     }
 
@@ -143,19 +143,20 @@ namespace RTGDEngine
         std::vector<Entity> created = {};
         created.reserve(entities.size());
 
-        for (auto& entity: entities)
+        for (auto& entity : entities)
+            created.push_back(m_world->entity());
+
+        for (size_t i = 0; i < entities.size(); ++i)
+            created[i].from_json(entities[i].data.c_str());
+
+        for (size_t i = 0; i < created.size(); ++i)
         {
-            auto e = m_world->entity();
-            e.child_of(m_root);
-            e.set_name(entity.name.c_str());
-            e.add<SceneEntity>();
-            created.push_back(e);
+            created[i].set_name(entities[i].name.c_str()).add<SceneEntity>();
         }
 
         for (size_t i = 0; i < created.size(); ++i)
         {
             Entity parent = entities[i].parentName.empty() ? m_root : m_root.lookup(entities[i].parentName.c_str());
-
             if (!parent.is_valid())
             {
                 LogError("Parent '{}' not found for {}", entities[i].parentName.c_str(), entities[i].name);
@@ -163,11 +164,6 @@ namespace RTGDEngine
             }
 
             created[i].child_of(parent);
-        }
-
-        for (size_t i = 0; i < entities.size(); ++i)
-        {
-            created[i].from_json(entities[i].data.c_str());
         }
     }
 } // RTGDEngine

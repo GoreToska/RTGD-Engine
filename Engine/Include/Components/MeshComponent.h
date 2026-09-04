@@ -35,7 +35,7 @@ namespace RTGDEngine {
             world.observer<MeshComponent>()
                     .event(flecs::OnSet)
                     .each([](MeshComponent &mc) {
-                        auto &am = GAssets;
+                        auto &am = GAssets();
                         if (!mc.Mesh.Path.empty())
                             mc.Mesh.Resolve(am.GetMesh(GetAbsolutePath(mc.Mesh.Path)));
                         if (!mc.Material.Path.empty())

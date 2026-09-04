@@ -355,7 +355,7 @@ namespace RTGDEngine
                 for (uint32_t c = 0; c < chunkCount; c += CHUNKS_PER_JOB)
                     m_cullJobs.push_back({v, c, std::min(c + CHUNKS_PER_JOB, chunkCount)});
 
-            GJobSystem.ParallelFor(static_cast<uint32_t>(m_cullJobs.size()), 1,
+            GJobSystem().ParallelFor(static_cast<uint32_t>(m_cullJobs.size()), 1,
                                    [&](uint32_t begin, uint32_t end, uint32_t)
                                    {
                                        for (uint32_t j = begin; j < end; ++j)

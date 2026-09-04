@@ -43,17 +43,17 @@ namespace RTGDEngine
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
-#define LogTrace(...)    RTGDEngine::GLogger.GetLogger().log( \
+#define LogTrace(...)    RTGDEngine::GLogger().GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::trace, __VA_ARGS__)
 
-#define LogInfo(...)     RTGDEngine::GLogger.GetLogger().log( \
+#define LogInfo(...)     RTGDEngine::GLogger().GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::info, __VA_ARGS__)
 
-#define LogWarn(...)     RTGDEngine::GLogger.GetLogger().log( \
+#define LogWarn(...)     RTGDEngine::GLogger().GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::warn, __VA_ARGS__)
 
-#define LogError(...)    RTGDEngine::GLogger.GetLogger().log( \
+#define LogError(...)    RTGDEngine::GLogger().GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::err, __VA_ARGS__)
 
-#define LogCritical(...) RTGDEngine::GLogger.GetLogger().log( \
+#define LogCritical(...) RTGDEngine::GLogger().GetLogger().log( \
 spdlog::source_loc{__FILENAME__, __LINE__, __FUNCTION__}, spdlog::level::critical, __VA_ARGS__)

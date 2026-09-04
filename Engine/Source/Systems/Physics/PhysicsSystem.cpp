@@ -18,10 +18,12 @@
 
 #include "AssetLoader/PathResolve.h"
 #include "Components/CharacterControllerComponent.h"
+#include "Components/ConstraintComponent.h"
 #include "Components/RigidbodyComponent.h"
 #include "Components/TransformComponent.h"
 #include "Jolt/RegisterTypes.h"
 #include "Jolt/Core/Factory.h"
+#include "Jolt/Physics/Body/BodyLockMulti.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/json_fwd.hpp"
 
@@ -193,13 +195,13 @@ namespace RTGDEngine
     RaycastHit PhysicsSystem::Raycast(const Float3& origin, const Float3& direction, float distance, bool hitTriggers,
                                       uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
-        return Raycast(GScene.GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
+        return Raycast(GScene().GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
     }
 
     RaycastHit PhysicsSystem::Raycast(const Float3& origin, const Float3& direction, float distance, bool hitTriggers,
                                       uint32_t layerMask, std::span<const Entity> ignore)
     {
-        return Raycast(GScene.GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
+        return Raycast(GScene().GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
     }
 
     std::vector<RaycastHit> PhysicsSystem::RaycastAll(World& world, const Float3& origin, const Float3& direction,
@@ -231,7 +233,7 @@ namespace RTGDEngine
                                                       bool hitTriggers, uint32_t layerMask,
                                                       std::span<const JPH::BodyID> ignore)
     {
-        return RaycastAll(GScene.GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
+        return RaycastAll(GScene().GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
     }
 
     std::vector<RaycastHit> PhysicsSystem::RaycastAll(World& world, const Float3& origin, const Float3& direction,
@@ -246,7 +248,7 @@ namespace RTGDEngine
                                                       bool hitTriggers, uint32_t layerMask,
                                                       std::span<const Entity> ignore)
     {
-        return RaycastAll(GScene.GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
+        return RaycastAll(GScene().GetWorld(), origin, direction, distance, hitTriggers, layerMask, ignore);
     }
 
     RaycastHit PhysicsSystem::SphereCast(World& world, const Float3& origin, const Float3& direction, float radius,
@@ -287,14 +289,14 @@ namespace RTGDEngine
     RaycastHit PhysicsSystem::SphereCast(const Float3& origin, const Float3& direction, float radius, float distance,
                                          bool hitTriggers, uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
-        return SphereCast(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ignore);
+        return SphereCast(GScene().GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ignore);
     }
 
     RaycastHit PhysicsSystem::SphereCast(const Float3& origin, const Float3& direction, float radius, float distance,
                                          bool hitTriggers, uint32_t layerMask, std::span<const Entity> ignore)
     {
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return SphereCast(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ids);
+        return SphereCast(GScene().GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ids);
     }
 
     std::vector<RaycastHit> PhysicsSystem::SphereCastAll(World& world, const Float3& origin, const Float3& direction,
@@ -341,7 +343,7 @@ namespace RTGDEngine
                                                          float distance, bool hitTriggers, uint32_t layerMask,
                                                          std::span<const JPH::BodyID> ignore)
     {
-        return SphereCastAll(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ignore);
+        return SphereCastAll(GScene().GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ignore);
     }
 
     std::vector<RaycastHit> PhysicsSystem::SphereCastAll(const Float3& origin, const Float3& direction, float radius,
@@ -349,7 +351,7 @@ namespace RTGDEngine
                                                          std::span<const Entity> ignore)
     {
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return SphereCastAll(GScene.GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ids);
+        return SphereCastAll(GScene().GetWorld(), origin, direction, radius, distance, hitTriggers, layerMask, ids);
     }
 
     RaycastHit PhysicsSystem::BoxCast(World& world, const Float3& origin, const Float3& direction,
@@ -393,7 +395,7 @@ namespace RTGDEngine
                                       float distance, const Quaternion& rotation, bool hitTriggers,
                                       uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
-        return BoxCast(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, layerMask,
+        return BoxCast(GScene().GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, layerMask,
                        ignore);
     }
 
@@ -402,7 +404,7 @@ namespace RTGDEngine
                                       uint32_t layerMask, std::span<const Entity> ignore)
     {
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return BoxCast(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, layerMask,
+        return BoxCast(GScene().GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers, layerMask,
                        ids);
     }
 
@@ -453,7 +455,7 @@ namespace RTGDEngine
                                                       const Quaternion& rotation, bool hitTriggers,
                                                       uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
-        return BoxCastAll(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers,
+        return BoxCastAll(GScene().GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers,
                           layerMask, ignore);
     }
 
@@ -463,7 +465,7 @@ namespace RTGDEngine
                                                       uint32_t layerMask, std::span<const Entity> ignore)
     {
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return BoxCastAll(GScene.GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers,
+        return BoxCastAll(GScene().GetWorld(), origin, direction, halfExtent, distance, rotation, hitTriggers,
                           layerMask, ids);
     }
 
@@ -506,14 +508,14 @@ namespace RTGDEngine
     std::vector<OverlapHit> PhysicsSystem::OverlapSphere(const Float3& center, float radius, bool hitTriggers,
                                                          uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
-        return OverlapSphere(GScene.GetWorld(), center, radius, hitTriggers, layerMask, ignore);
+        return OverlapSphere(GScene().GetWorld(), center, radius, hitTriggers, layerMask, ignore);
     }
 
     std::vector<OverlapHit> PhysicsSystem::OverlapSphere(const Float3& center, float radius, bool hitTriggers,
                                                          uint32_t layerMask, std::span<const Entity> ignore)
     {
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return OverlapSphere(GScene.GetWorld(), center, radius, hitTriggers, layerMask, ids);
+        return OverlapSphere(GScene().GetWorld(), center, radius, hitTriggers, layerMask, ids);
     }
 
     std::vector<OverlapHit> PhysicsSystem::OverlapBox(World& world, const Float3& center, const Float3& halfExtent,
@@ -557,7 +559,7 @@ namespace RTGDEngine
                                                       const Quaternion& rotation, bool hitTriggers,
                                                       uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
-        return OverlapBox(GScene.GetWorld(), center, halfExtent, rotation, hitTriggers, layerMask, ignore);
+        return OverlapBox(GScene().GetWorld(), center, halfExtent, rotation, hitTriggers, layerMask, ignore);
     }
 
     std::vector<OverlapHit> PhysicsSystem::OverlapBox(const Float3& center, const Float3& halfExtent,
@@ -565,7 +567,7 @@ namespace RTGDEngine
                                                       uint32_t layerMask, std::span<const Entity> ignore)
     {
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return OverlapBox(GScene.GetWorld(), center, halfExtent, rotation, hitTriggers, layerMask, ids);
+        return OverlapBox(GScene().GetWorld(), center, halfExtent, rotation, hitTriggers, layerMask, ids);
     }
 
     std::vector<OverlapHit> PhysicsSystem::OverlapCapsule(World& world, const Float3& center, float radius,
@@ -611,7 +613,7 @@ namespace RTGDEngine
                                                           const Quaternion& rotation, bool hitTriggers,
                                                           uint32_t layerMask, std::span<const JPH::BodyID> ignore)
     {
-        return OverlapCapsule(GScene.GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask,
+        return OverlapCapsule(GScene().GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask,
                               ignore);
     }
 
@@ -620,7 +622,7 @@ namespace RTGDEngine
                                                           uint32_t layerMask, std::span<const Entity> ignore)
     {
         std::vector<JPH::BodyID> ids = ResolveIgnoreList(ignore);
-        return OverlapCapsule(GScene.GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask, ids);
+        return OverlapCapsule(GScene().GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask, ids);
     }
 
     OverlapHit PhysicsSystem::MakeOverlapHit(World& world, const JPH::CollideShapeResult& result)
@@ -754,6 +756,86 @@ namespace RTGDEngine
         }
     }
 
+    void PhysicsSystem::CreateConstraints(World& world)
+    {
+        world.each([](Entity e, ConstraintComponent& c)
+        {
+            auto constraint = e.get_ref<ConstraintComponent>();
+            if (constraint->NativeConstraint) return;
+
+            auto rb1 = e.get_ref<RigidbodyComponent>();
+            if (!constraint || !rb1 || rb1->BodyID.IsInvalid())
+            {
+                LogError("Constraint id={} name='{}': no self body yet", e.id(), e.name().c_str());
+                return;
+            }
+
+            if (constraint->NativeConstraint)
+            {
+                GPhysics().GetJoltSystem().RemoveConstraint(constraint->NativeConstraint);
+                constraint->NativeConstraint = nullptr;
+            }
+
+            JPH::BodyID id2;
+            if (!constraint->OtherEntityName.empty())
+            {
+                Entity other = GScene().Find(constraint->OtherEntityName);
+                if (!other)
+                {
+                    LogError("Constraint {}: '{}' not found", e.name().c_str(),
+                             constraint->OtherEntityName.c_str());
+                    return;
+                }
+
+                auto rb2 = other ? other.get_ref<RigidbodyComponent>() : flecs::ref<RigidbodyComponent>{};
+                if (!rb2 || rb2->BodyID.IsInvalid())
+                {
+                    LogError("Constraint {}: other body not ready", e.name().c_str());
+                    return;
+                }
+
+                id2 = rb2->BodyID;
+            }
+
+            JPH::BodyID lockIds[2] = {rb1->BodyID, id2};
+            int numLocks = id2.IsInvalid() ? 1 : 2;
+            auto& lockInterface = GPhysics().GetJoltSystem().GetBodyLockInterface();
+            JPH::BodyLockMultiWrite lock(lockInterface, lockIds, numLocks);
+            JPH::Body* body1 = lock.GetBody(0);
+
+            if (!body1)
+            {
+                LogError("Constraint {}: lock1 failed", e.name().c_str());
+                return;
+            }
+            JPH::Body* body2 = numLocks == 2 ? lock.GetBody(1) : &JPH::Body::sFixedToWorld;
+
+            if (numLocks == 2 && !body2)
+            {
+                LogError("Constraint {}: lock failed", e.name().c_str());
+                return;
+            }
+
+            JPH::HingeConstraintSettings settings;
+            settings.mPoint1 = ToRVec3(constraint->Point1);
+            settings.mHingeAxis1 = ToVec3(constraint->HingeAxis1);
+            settings.mNormalAxis1 = ToVec3(constraint->NormalAxis1);
+            settings.mPoint2 = ToRVec3(constraint->Point2);
+            settings.mHingeAxis2 = ToVec3(constraint->HingeAxis2);
+            settings.mNormalAxis2 = ToVec3(constraint->NormalAxis2);
+            settings.mMaxFrictionTorque = constraint->MaxFrictionTorque;
+            if (constraint->EnableLimits)
+            {
+                settings.mLimitsMin = constraint->LimitsMinDeg * (JPH::JPH_PI / 180.0f);
+                settings.mLimitsMax = constraint->LimitsMaxDeg * (JPH::JPH_PI / 180.0f);
+            }
+
+            constraint->NativeConstraint = settings.Create(*body1, *body2);
+            GPhysics().GetJoltSystem().AddConstraint(constraint->NativeConstraint);
+            LogInfo("Constraint {}: built, ptr={}", e.name().c_str(), (void*)constraint->NativeConstraint.GetPtr());
+        });
+    }
+
     void PhysicsSystem::BroadcastCollisionEnter(Entity e1, Entity e2,
                                                 const Events::CollisionEnterEvent& evt1,
                                                 const Events::CollisionEnterEvent& evt2)
@@ -851,13 +933,13 @@ namespace RTGDEngine
         if (isTrigger)
         {
             Events::TriggerStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
-            GEventBus.Emit(Events::OnTriggerStay, evt1, EmitBadge<PhysicsSystem>{});
+            GEventBus().Emit(Events::OnTriggerStay, evt1, EmitBadge<PhysicsSystem>{});
             BroadcastTriggerStay(e1, e2, evt1, evt2);
         }
         else
         {
             Events::CollisionStayEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
-            GEventBus.Emit(Events::OnCollisionStay, evt1, EmitBadge<PhysicsSystem>{});
+            GEventBus().Emit(Events::OnCollisionStay, evt1, EmitBadge<PhysicsSystem>{});
             BroadcastCollisionStay(e1, e2, evt1, evt2);
         }
     }
@@ -882,13 +964,13 @@ namespace RTGDEngine
                 if (isTrigger)
                 {
                     Events::TriggerEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
-                    GEventBus.Emit(Events::OnTriggerEnter, evt1, EmitBadge<PhysicsSystem>{});
+                    GEventBus().Emit(Events::OnTriggerEnter, evt1, EmitBadge<PhysicsSystem>{});
                     BroadcastTriggerEnter(e1, e2, evt1, evt2);
                 }
                 else
                 {
                     Events::CollisionEnterEvent evt1{e1, e2, point, normal}, evt2{e2, e1, point, normal};
-                    GEventBus.Emit(Events::OnCollisionEnter, evt1, EmitBadge<PhysicsSystem>{});
+                    GEventBus().Emit(Events::OnCollisionEnter, evt1, EmitBadge<PhysicsSystem>{});
                     BroadcastCollisionEnter(e1, e2, evt1, evt2);
                 }
                 m_activeContacts[MakeContactKey(contact.Body1, contact.Body2)] = contact;
@@ -909,13 +991,13 @@ namespace RTGDEngine
                 if (isTrigger)
                 {
                     Events::TriggerExitEvent evt1{e1, e2}, evt2{e2, e1};
-                    GEventBus.Emit(Events::OnTriggerExit, evt1, EmitBadge<PhysicsSystem>{});
+                    GEventBus().Emit(Events::OnTriggerExit, evt1, EmitBadge<PhysicsSystem>{});
                     BroadcastTriggerExit(e1, e2, evt1, evt2);
                 }
                 else
                 {
                     Events::CollisionExitEvent evt1{e1, e2}, evt2{e2, e1};
-                    GEventBus.Emit(Events::OnCollisionExit, evt1, EmitBadge<PhysicsSystem>{});
+                    GEventBus().Emit(Events::OnCollisionExit, evt1, EmitBadge<PhysicsSystem>{});
                     BroadcastCollisionExit(e1, e2, evt1, evt2);
                 }
                 break;
@@ -971,8 +1053,10 @@ namespace RTGDEngine
         m_physicsSystem.SetContactListener(&m_contactListener);
     }
 
-    void PhysicsSystem::Update(flecs::world& world, float deltaTime)
+    void PhysicsSystem::Update(World& world, float deltaTime)
     {
+        CreateConstraints(world);
+
         world.query<RigidbodyComponent, TransformComponent>().each(
             [&](RigidbodyComponent& physics, TransformComponent& transform)
             {
