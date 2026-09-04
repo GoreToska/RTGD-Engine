@@ -770,12 +770,6 @@ namespace RTGDEngine
                 return;
             }
 
-            if (constraint->NativeConstraint)
-            {
-                GPhysics().GetJoltSystem().RemoveConstraint(constraint->NativeConstraint);
-                constraint->NativeConstraint = nullptr;
-            }
-
             JPH::BodyID id2;
             if (!constraint->OtherEntityName.empty())
             {
