@@ -111,5 +111,82 @@
           "ColliderComponent": { "Shape": "Box", "Extents": {"x":1,"y":0.5,"z":1}, "IsTrigger": true },"RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
           "UUIDComponent": { "ID": 0 }
         } }
-    }
+    },
+  {
+    "Name": "House_Floor",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":-2,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":6,"y":0.4,"z":6} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":3,"y":0.2,"z":3} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallBack",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":-0.6,"z":-2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":4.3,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":2.15,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallLeft",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":8,"y":-0.6,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":2.4,"z":4.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":1.2,"z":2.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallRight",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":12,"y":-0.6,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":2.4,"z":4.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":1.2,"z":2.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallFrontLeft",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":8.55,"y":-0.6,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1.4,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.7,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallFrontRight",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":11.45,"y":-0.6,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1.4,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.7,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_Roof",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":0.75,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":4.6,"y":0.3,"z":4.6} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":2.3,"y":0.15,"z":2.3} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  }
   ]

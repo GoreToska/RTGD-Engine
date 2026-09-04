@@ -152,6 +152,7 @@ add_library(Engine SHARED
         Include/Systems/Physics/VirtualCharacterController.h
         Source/AssetLoader/MeshSimplifier.cpp
         Include/AssetLoader/MeshSimplifier.h
+        Include/Components/ConstraintComponent.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

@@ -11,51 +11,56 @@
 
 #include "Event/EventBus.h"
 
-namespace RTGDEngine {
-    class ENGINE_API Scene {
+namespace RTGDEngine
+{
+    class ENGINE_API Scene
+    {
     public:
-        struct EntityData {
+        struct EntityData
+        {
             std::string name;
+            std::string parentName;
             std::string data;
         };
 
-        explicit Scene(flecs::world &world, const std::string &name);
+        explicit Scene(flecs::world& world, const std::string& name);
 
         ~Scene() = default;
 
         flecs::entity GetOrCreateGameRoot();
 
-        flecs::entity Find(const std::string &name);
+        flecs::entity Find(const std::string& name);
 
         [[nodiscard]] flecs::entity GetRoot() const;
 
-        [[nodiscard]] const std::string &GetName() const;
+        [[nodiscard]] const std::string& GetName() const;
 
-        void SetName(const std::string &name);
+        void SetName(const std::string& name);
 
         std::string Serialize() const;
 
-        void Deserialize(const std::string &json);
+        void Deserialize(const std::string& json);
 
         void Clear();
 
-        void SaveToFile(const std::string &absolutePath) const;
+        void SaveToFile(const std::string& absolutePath) const;
 
-        bool LoadFromFile(const std::string &absolutePath);
+        bool LoadFromFile(const std::string& absolutePath);
 
         bool Reload();
 
-        static std::vector<EntityData> ParseScene(const std::string &json); // thread safe for async scene loading
-        void ApplyEntities(const std::vector<EntityData> &entities);
+        static std::vector<EntityData> ParseScene(const std::string& json); // thread safe for async scene loading
+        void ApplyEntities(const std::vector<EntityData>& entities);
 
         template<typename Func>
-        void Each(Func &&func) {
+        void Each(Func&& func)
+        {
             m_world->query_builder<>().with(flecs::ChildOf, m_root).build().each(std::forward<Func>(func));
         }
 
     private:
         std::string m_name;
-        flecs::world *m_world;
+        flecs::world* m_world;
         flecs::entity m_root;
         flecs::entity m_gameRoot;
         std::string m_lastLoadedPath;
