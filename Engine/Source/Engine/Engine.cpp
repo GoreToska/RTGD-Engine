@@ -84,10 +84,10 @@ namespace RTGDEngine
 #endif
 
         GRenderSystem().Initialize(m_platformWindow->GetHandle(), m_platformWindow->GetWidth(),
-                                 m_platformWindow->GetHeight());
+                                   m_platformWindow->GetHeight());
 
         GRenderResources().Initialize(GRenderSystem().GetDevice(),
-                                    GRenderSystem().GetContext());
+                                      GRenderSystem().GetContext());
 
         GInput().AddWindowHandle(m_platformWindow.get());
 
@@ -209,8 +209,14 @@ namespace RTGDEngine
 
         LogInfo("Loaded game module: {}.", dllPath);
 
-        m_gameModule.reset(m_getGameModuleFunc());
+        auto module = m_getGameModuleFunc();
+        if (!module)
+        {
+            LogError("Failed to get game module symbol: {}.", dllPath);
+            return false;
+        }
 
+        m_gameModule.reset(module);
         m_gameModule->Initialize();
 
         return true;
@@ -301,6 +307,12 @@ namespace RTGDEngine
 
     void Engine::TogglePlayMode()
     {
+        if (!m_gameModule)
+        {
+            LogError("No game module loaded.");
+            return;
+        }
+
         m_isPlayMode = !m_isPlayMode;
 
         if (m_isPlayMode)
