@@ -14,6 +14,7 @@
 #include "Scene.h"
 #include "Event/EventBus.h"
 #include "Tools/RTGDMacros.h"
+#include "Tools/Alias.h"
 
 namespace RTGDEngine {
     class Scene;
@@ -43,6 +44,8 @@ namespace RTGDEngine {
 
         std::shared_ptr<Scene> LoadSceneFromFile(const std::string &absolutePath);
 
+        void ReloadAll();
+
         void RequestActiveScene(const std::string &name);
 
         void RequestUnloadScene(const std::string &name);
@@ -66,7 +69,9 @@ namespace RTGDEngine {
 
         void ApplyPendingEntityCommands();
 
-        flecs::entity GetEntity(uint64_t id) const;
+        Entity GetEntity(uint64_t id) const;
+
+        Entity Find(const std::string& name);
 
         // Parent ID here can be a scene ID too - if scene ID is passed, entity will be created as part of this scene (for additional scenes support)
         flecs::entity CreateEntity(const std::string &name, flecs::entity parent = {});
@@ -80,6 +85,8 @@ namespace RTGDEngine {
         void ReparentEntity(flecs::entity e, flecs::entity parent = {});
 
         void EnqueueCommand(std::function<void(flecs::world &)> func);
+
+        void Shutdown();
 
     private:
         std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};

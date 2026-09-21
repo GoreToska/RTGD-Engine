@@ -34,7 +34,7 @@ namespace RTGDEngine {
         using namespace Diligent;
 
         auto &rm = GRenderResources;
-        const MaterialData &matData = rm.GetMaterial(m_material);
+        const MaterialData &matData = rm().GetMaterial(m_material);
 
         if (!matData.PSO || !matData.SRB)
             return;
@@ -52,9 +52,9 @@ namespace RTGDEngine {
         bindSRV("g_PBR", g.SRV(m_pbr));
         bindSRV("g_ShadowMap", g.SRV(m_shadowMap));
 
-        auto defTex = GRenderResources.GetDefaultTextureHandle();
+        auto defTex = GRenderResources().GetDefaultTextureHandle();
         if (defTex != INVALID_TEXTURE_HANDLE) {
-            const auto &tex = GRenderResources.GetTexture(defTex);
+            const auto &tex = GRenderResources().GetTexture(defTex);
             auto *samVar = matData.SRB->GetVariableByName(SHADER_TYPE_PIXEL, "g_Sampler");
             if (samVar && tex.Sampler)
                 samVar->Set(tex.Sampler);

@@ -17,7 +17,7 @@ namespace RTGDEngine {
     void CompositePass::Execute(RenderContext &context) {
         using namespace Diligent;
 
-        const MaterialData &matData = GRenderResources.GetMaterial(m_material);
+        const MaterialData &matData = GRenderResources().GetMaterial(m_material);
         if (!matData.PSO || !matData.SRB)
             return;
 

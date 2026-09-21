@@ -34,7 +34,35 @@
         "TransformComponent": { "Position": {"x":0,"y":0,"z":0}, "Rotation": {"w":0.5773503,"x":0.5773503,"y":0.5773503,"z":0}, "Scale": {"x":1,"y":1,"z":1} },                                                                     
         "UUIDComponent": { "ID": 0 }                                                                                                                                                                                                
       } }                                                                                                                                                                                                                           
-    },                                                                                                                                                                                                                              
+    },
+    {
+          "Name": "PhysHelmet",
+          "Data": { "components": {
+            "MeshComponent": {
+              "Material": { "Path": "Assets/Materials/Helmet.mat" },
+              "Mesh": { "Path": "Assets/Helmet/DamagedHelmet.gltf" }
+            },
+            "RenderComponent": { "CastShadows": true, "IsVisible": true },
+            "TransformComponent": { "Position": {"x":0,"y":0,"z":0}, "Rotation": {"w":0.5773503,"x":0.5773503,"y":0.5773503,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
+            "UUIDComponent": { "ID": 0 },
+            "ColliderComponent": { "Shape": "ConvexHull", "CollisionMeshPath": "Assets/Helmet/DamagedHelmet.gltf", "ConvexHullPointTarget": 50, "MeshTriangleTarget": 100 },
+            "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 20 }
+          } }
+        },
+    {
+          "Name": "PhysHelmetMesh",
+          "Data": { "components": {
+            "MeshComponent": {
+              "Material": { "Path": "Assets/Materials/Helmet.mat" },
+              "Mesh": { "Path": "Assets/Helmet/DamagedHelmet.gltf" }
+            },
+            "RenderComponent": { "CastShadows": true, "IsVisible": true },
+            "TransformComponent": { "Position": {"x":-3,"y":0,"z":0}, "Rotation": {"w":0.5773503,"x":0.5773503,"y":0.5773503,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
+            "UUIDComponent": { "ID": 0 },
+            "ColliderComponent": { "Shape": "Mesh", "CollisionMeshPath": "Assets/Helmet/DamagedHelmet.gltf", "ConvexHullPointTarget": 50, "MeshTriangleTarget": 100  },
+            "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 }
+          } }
+        },
     {
       "Name": "Spheres",
       "Data": { "components": {
@@ -53,5 +81,577 @@
         "DirectionalLightComponent": { "Direction": {"x":-0.5,"y":-1.0,"z":-0.3}, "Color": {"x":1.0,"y":0.95,"z":0.8}, "Intensity": 3.0 },                                                                                          
         "UUIDComponent": { "ID": 0 }                                                                                                                                                                                                
       } }                                                                                                                                                                                                                           
-    }                                                                                                                                                                                                                               
+    },
+    {
+        "Name": "Physics Floor",
+        "Data": { "components": {
+          "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+          "RenderComponent": { "CastShadows": true, "IsVisible": true },
+          "TransformComponent": { "Position": {"x":0,"y":-2,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":15,"y":1,"z":15} },
+          "ColliderComponent": { "Shape": "Box", "Extents": {"x":15,"y":1,"z":15} },
+          "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+          "UUIDComponent": { "ID": 0 }
+        } }
+      },
+{
+    "Name": "Falling Box",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":0,"y":4,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.5,"y":0.5,"z":0.5}, "IsTrigger": false },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 20 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+        "Name": "Trigger Zone",
+        "Data": { "components": {
+          "TransformComponent": { "Position": {"x":0,"y":0.5,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1,"y":1,"z":1} },
+          "ColliderComponent": { "Shape": "Box", "Extents": {"x":1,"y":0.5,"z":1}, "IsTrigger": true },"RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+          "UUIDComponent": { "ID": 0 }
+        } }
+    },
+  {
+    "Name": "House_Floor",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":0,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":6,"y":0.4,"z":6} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":3,"y":0.2,"z":3} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallBack",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":1.4,"z":-2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":4.3,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":2.15,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallLeft",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":8,"y":1.4,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":2.4,"z":4.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":1.2,"z":2.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallRight",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":12,"y":1.4,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":2.4,"z":4.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":1.2,"z":2.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallFrontLeft",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":8.55,"y":1.4,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1.4,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.7,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_WallFrontRight",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":11.45,"y":1.4,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1.4,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.7,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_Roof",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":2.75,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":4.6,"y":0.3,"z":4.6} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":2.3,"y":0.15,"z":2.3} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "House_Door",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":10,"y":1.4,"z":2}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":1.5,"y":2.4,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.75,"y":1.2,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 10 },
+      "ConstraintComponent": {
+        "Type": "Hinge",
+        "OtherEntityName": "House_WallFrontLeft",
+        "Point1": {"x":9.25,"y":-0.6,"z":1.85},
+        "Axis1": {"x":0,"y":1,"z":0},
+        "NormalAxis1": {"x":0,"y":0,"z":1},
+        "Point2": {"x":9.25,"y":-0.6,"z":1.85},
+        "Axis2": {"x":0,"y":1,"z":0},
+        "NormalAxis2": {"x":0,"y":0,"z":1},
+        "EnableLimits": false,
+        "LimitsMin": -180,
+        "LimitsMax": 180,
+        "MaxFriction": 0
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Slider_Anchor",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-6,"y":2,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":0.3,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":0.15,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Slider_Block",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-6,"y":2,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.6,"y":0.6,"z":0.6} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.3,"y":0.3,"z":0.3} },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 5 },
+      "ConstraintComponent": {
+        "Type": "Slider",
+        "OtherEntityName": "Slider_Anchor",
+        "Point1": {"x":-6,"y":2,"z":0},
+        "Axis1": {"x":0,"y":1,"z":0},
+        "NormalAxis1": {"x":1,"y":0,"z":0},
+        "Point2": {"x":-6,"y":2,"z":0},
+        "Axis2": {"x":0,"y":1,"z":0},
+        "NormalAxis2": {"x":1,"y":0,"z":0},
+        "EnableLimits": true,
+        "LimitsMin": -2,
+        "LimitsMax": 0,
+        "MaxFriction": 0
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Fixed_Anchor",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-9,"y":2,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.6,"y":0.3,"z":0.6} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.3,"y":0.15,"z":0.3} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Fixed_Block",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-9,"y":1.4,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.6,"y":0.6,"z":0.6} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.3,"y":0.3,"z":0.3} },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 5 },
+      "ConstraintComponent": {
+        "Type": "Fixed",
+        "OtherEntityName": "Fixed_Anchor",
+        "Point1": {"x":-9,"y":1.7,"z":0},
+        "Axis1": {"x":1,"y":0,"z":0},
+        "NormalAxis1": {"x":0,"y":1,"z":0},
+        "Point2": {"x":-9,"y":1.7,"z":0},
+        "Axis2": {"x":1,"y":0,"z":0},
+        "NormalAxis2": {"x":0,"y":1,"z":0}
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Distance_Anchor",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-12,"y":3,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":0.3,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":0.15,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Distance_Ball",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-11,"y":2,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.5,"y":0.5,"z":0.5} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.25,"y":0.25,"z":0.25} },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 5 },
+      "ConstraintComponent": {
+        "Type": "Distance",
+        "OtherEntityName": "Distance_Anchor",
+        "Point1": {"x":-11,"y":2,"z":0},
+        "Point2": {"x":-12,"y":3,"z":0},
+        "MinDistance": 0,
+        "MaxDistance": 2
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Cone_Anchor",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-15,"y":3,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":0.3,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":0.15,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Cone_Block",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-14.2,"y":1.6,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.5,"y":0.5,"z":0.5} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.25,"y":0.25,"z":0.25} },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 5 },
+      "ConstraintComponent": {
+        "Type": "Cone",
+        "OtherEntityName": "Cone_Anchor",
+        "Point1": {"x":-15,"y":3,"z":0},
+        "Axis1": {"x":0,"y":-1,"z":0},
+        "Point2": {"x":-15,"y":3,"z":0},
+        "Axis2": {"x":0,"y":-1,"z":0},
+        "HalfConeAngle": 45
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "SwingTwist_Anchor",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-18,"y":3,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":0.3,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":0.15,"z":0.15} },
+      "RigidbodyComponent": { "MotionType": "Static", "Mass": 1 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "SwingTwist_Block",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":-17,"y":1.5,"z":0}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.5,"y":0.5,"z":0.5} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.25,"y":0.25,"z":0.25} },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 5 },
+      "ConstraintComponent": {
+        "Type": "SwingTwist",
+        "OtherEntityName": "SwingTwist_Anchor",
+        "Point1": {"x":-18,"y":3,"z":0},
+        "Axis1": {"x":0,"y":-1,"z":0},
+        "NormalAxis1": {"x":1,"y":0,"z":0},
+        "Point2": {"x":-18,"y":3,"z":0},
+        "Axis2": {"x":0,"y":-1,"z":0},
+        "NormalAxis2": {"x":1,"y":0,"z":0},
+        "HalfConeAngle": 30,
+        "PlaneHalfConeAngle": 50,
+        "EnableLimits": true,
+        "LimitsMin": -30,
+        "LimitsMax": 30,
+        "MaxFriction": 2
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_Pelvis",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":3,"y":1.5,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.4,"y":0.3,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.2,"y":0.15,"z":0.15} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 8 },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_Torso",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":3,"y":2.0,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.5,"y":0.7,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.25,"y":0.35,"z":0.15} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 10 },
+      "ConstraintComponent": {
+        "Type": "SwingTwist",
+        "OtherEntityName": "Ragdoll_Pelvis",
+        "Point1": {"x":3,"y":1.65,"z":3},
+        "Axis1": {"x":0,"y":1,"z":0},
+        "NormalAxis1": {"x":1,"y":0,"z":0},
+        "Point2": {"x":3,"y":1.65,"z":3},
+        "Axis2": {"x":0,"y":1,"z":0},
+        "NormalAxis2": {"x":1,"y":0,"z":0},
+        "HalfConeAngle": 20,
+        "PlaneHalfConeAngle": 30,
+        "EnableLimits": true,
+        "LimitsMin": -10,
+        "LimitsMax": 10,
+        "MaxFriction": 5
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_Head",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":3,"y":2.5,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.3,"y":0.3,"z":0.3} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.15,"y":0.15,"z":0.15} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 4 },
+      "ConstraintComponent": {
+        "Type": "SwingTwist",
+        "OtherEntityName": "Ragdoll_Torso",
+        "Point1": {"x":3,"y":2.35,"z":3},
+        "Axis1": {"x":0,"y":1,"z":0},
+        "NormalAxis1": {"x":1,"y":0,"z":0},
+        "Point2": {"x":3,"y":2.35,"z":3},
+        "Axis2": {"x":0,"y":1,"z":0},
+        "NormalAxis2": {"x":1,"y":0,"z":0},
+        "HalfConeAngle": 40,
+        "PlaneHalfConeAngle": 40,
+        "EnableLimits": true,
+        "LimitsMin": -45,
+        "LimitsMax": 45,
+        "MaxFriction": 1
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_UpperArm_L",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":3.45,"y":2.3,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.4,"y":0.16,"z":0.16} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.2,"y":0.08,"z":0.08} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 3 },
+      "ConstraintComponent": {
+        "Type": "SwingTwist",
+        "OtherEntityName": "Ragdoll_Torso",
+        "Point1": {"x":3.25,"y":2.3,"z":3},
+        "Axis1": {"x":1,"y":0,"z":0},
+        "NormalAxis1": {"x":0,"y":1,"z":0},
+        "Point2": {"x":3.25,"y":2.3,"z":3},
+        "Axis2": {"x":1,"y":0,"z":0},
+        "NormalAxis2": {"x":0,"y":1,"z":0},
+        "HalfConeAngle": 80,
+        "PlaneHalfConeAngle": 60,
+        "EnableLimits": true,
+        "LimitsMin": -60,
+        "LimitsMax": 60,
+        "MaxFriction": 0.1
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_LowerArm_L",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":3.83,"y":2.3,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.36,"y":0.14,"z":0.14} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.18,"y":0.07,"z":0.07} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 2 },
+      "ConstraintComponent": {
+        "Type": "Hinge",
+        "OtherEntityName": "Ragdoll_UpperArm_L",
+        "Point1": {"x":3.65,"y":2.3,"z":3},
+        "Axis1": {"x":0,"y":0,"z":1},
+        "NormalAxis1": {"x":0,"y":1,"z":0},
+        "Point2": {"x":3.65,"y":2.3,"z":3},
+        "Axis2": {"x":0,"y":0,"z":1},
+        "NormalAxis2": {"x":0,"y":1,"z":0},
+        "EnableLimits": true,
+        "LimitsMin": -140,
+        "LimitsMax": 0,
+        "MaxFriction": 0
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_UpperArm_R",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":2.55,"y":2.3,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.4,"y":0.16,"z":0.16} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.2,"y":0.08,"z":0.08} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 3 },
+      "ConstraintComponent": {
+        "Type": "SwingTwist",
+        "OtherEntityName": "Ragdoll_Torso",
+        "Point1": {"x":2.75,"y":2.3,"z":3},
+        "Axis1": {"x":-1,"y":0,"z":0},
+        "NormalAxis1": {"x":0,"y":1,"z":0},
+        "Point2": {"x":2.75,"y":2.3,"z":3},
+        "Axis2": {"x":-1,"y":0,"z":0},
+        "NormalAxis2": {"x":0,"y":1,"z":0},
+        "HalfConeAngle": 80,
+        "PlaneHalfConeAngle": 60,
+        "EnableLimits": true,
+        "LimitsMin": -60,
+        "LimitsMax": 60,
+        "MaxFriction": 0.1
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_LowerArm_R",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":2.17,"y":2.3,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.36,"y":0.14,"z":0.14} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.18,"y":0.07,"z":0.07} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 2 },
+      "ConstraintComponent": {
+        "Type": "Hinge",
+        "OtherEntityName": "Ragdoll_UpperArm_R",
+        "Point1": {"x":2.35,"y":2.3,"z":3},
+        "Axis1": {"x":0,"y":0,"z":1},
+        "NormalAxis1": {"x":0,"y":1,"z":0},
+        "Point2": {"x":2.35,"y":2.3,"z":3},
+        "Axis2": {"x":0,"y":0,"z":1},
+        "NormalAxis2": {"x":0,"y":1,"z":0},
+        "EnableLimits": true,
+        "LimitsMin": 0,
+        "LimitsMax": 140,
+        "MaxFriction": 0
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_UpperLeg_L",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":3.12,"y":1.1,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.2,"y":0.5,"z":0.2} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.1,"y":0.25,"z":0.1} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 5 },
+      "ConstraintComponent": {
+        "Type": "SwingTwist",
+        "OtherEntityName": "Ragdoll_Pelvis",
+        "Point1": {"x":3.12,"y":1.35,"z":3},
+        "Axis1": {"x":0,"y":-1,"z":0},
+        "NormalAxis1": {"x":1,"y":0,"z":0},
+        "Point2": {"x":3.12,"y":1.35,"z":3},
+        "Axis2": {"x":0,"y":-1,"z":0},
+        "NormalAxis2": {"x":1,"y":0,"z":0},
+        "HalfConeAngle": 45,
+        "PlaneHalfConeAngle": 70,
+        "EnableLimits": true,
+        "LimitsMin": -20,
+        "LimitsMax": 20,
+        "MaxFriction": 0.15
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_LowerLeg_L",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":3.12,"y":0.6,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.18,"y":0.5,"z":0.18} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.09,"y":0.25,"z":0.09} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 4 },
+      "ConstraintComponent": {
+        "Type": "Hinge",
+        "OtherEntityName": "Ragdoll_UpperLeg_L",
+        "Point1": {"x":3.12,"y":0.85,"z":3},
+        "Axis1": {"x":1,"y":0,"z":0},
+        "NormalAxis1": {"x":0,"y":0,"z":1},
+        "Point2": {"x":3.12,"y":0.85,"z":3},
+        "Axis2": {"x":1,"y":0,"z":0},
+        "NormalAxis2": {"x":0,"y":0,"z":1},
+        "EnableLimits": true,
+        "LimitsMin": -140,
+        "LimitsMax": 0,
+        "MaxFriction": 0
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_UpperLeg_R",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":2.88,"y":1.1,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.2,"y":0.5,"z":0.2} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.1,"y":0.25,"z":0.1} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 5 },
+      "ConstraintComponent": {
+        "Type": "SwingTwist",
+        "OtherEntityName": "Ragdoll_Pelvis",
+        "Point1": {"x":2.88,"y":1.35,"z":3},
+        "Axis1": {"x":0,"y":-1,"z":0},
+        "NormalAxis1": {"x":1,"y":0,"z":0},
+        "Point2": {"x":2.88,"y":1.35,"z":3},
+        "Axis2": {"x":0,"y":-1,"z":0},
+        "NormalAxis2": {"x":1,"y":0,"z":0},
+        "HalfConeAngle": 45,
+        "PlaneHalfConeAngle": 70,
+        "EnableLimits": true,
+        "LimitsMin": -20,
+        "LimitsMax": 20,
+        "MaxFriction": 0.15
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  },
+  {
+    "Name": "Ragdoll_LowerLeg_R",
+    "Data": { "components": {
+      "MeshComponent": { "Material": { "Path": "Assets/Materials/Cube.mat" }, "Mesh": { "Path": "Assets/BoxTextured.gltf" } },
+      "RenderComponent": { "CastShadows": true, "IsVisible": true },
+      "TransformComponent": { "Position": {"x":2.88,"y":0.6,"z":3}, "Rotation": {"w":1,"x":0,"y":0,"z":0}, "Scale": {"x":0.18,"y":0.5,"z":0.18} },
+      "ColliderComponent": { "Shape": "Box", "Extents": {"x":0.09,"y":0.25,"z":0.09} , "Layer": 6 },
+      "RigidbodyComponent": { "MotionType": "Dynamic", "Mass": 4 },
+      "ConstraintComponent": {
+        "Type": "Hinge",
+        "OtherEntityName": "Ragdoll_UpperLeg_R",
+        "Point1": {"x":2.88,"y":0.85,"z":3},
+        "Axis1": {"x":1,"y":0,"z":0},
+        "NormalAxis1": {"x":0,"y":0,"z":1},
+        "Point2": {"x":2.88,"y":0.85,"z":3},
+        "Axis2": {"x":1,"y":0,"z":0},
+        "NormalAxis2": {"x":0,"y":0,"z":1},
+        "EnableLimits": true,
+        "LimitsMin": -140,
+        "LimitsMax": 0,
+        "MaxFriction": 0
+      },
+      "UUIDComponent": { "ID": 0 }
+    } }
+  }
   ]

@@ -8,6 +8,12 @@
 
 namespace RTGDEngine
 {
+    struct LineVertex
+    {
+        Float3 Position;
+        Float4 Color;
+    };
+
     struct VertexPC
     {
         Float3 Position;
@@ -41,6 +47,14 @@ namespace RTGDEngine
                 {1, 0, 3, Diligent::VT_FLOAT32, false, offsetof(VertexPNTUV, Normal), stride},
                 {2, 0, 4, Diligent::VT_FLOAT32, false, offsetof(VertexPNTUV, Tangent), stride},
                 {3, 0, 2, Diligent::VT_FLOAT32, false, offsetof(VertexPNTUV, UV), stride},
+            };
+        }
+
+        inline std::vector<Diligent::LayoutElement> Line()
+        {
+            return {
+                {0, 0, 3, Diligent::VT_FLOAT32, false, offsetof(LineVertex, Position), sizeof(LineVertex)},
+                {1, 0, 4, Diligent::VT_FLOAT32, false, offsetof(LineVertex, Color), sizeof(LineVertex)}
             };
         }
     }

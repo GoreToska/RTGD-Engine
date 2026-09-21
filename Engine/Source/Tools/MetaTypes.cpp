@@ -5,9 +5,13 @@
 #include "Tools/MetaTypes.h"
 
 #include "Components/CameraComponent.h"
+#include "Components/CharacterControllerComponent.h"
+#include "Components/ConstraintComponent.h"
 #include "Components/GameRootTag.h"
+#include "Components/GroundCheckComponent.h"
 #include "Components/LightComponent.h"
 #include "Components/MeshComponent.h"
+#include "Components/RigidbodyComponent.h"
 #include "Components/RenderComponent.h"
 #include "Components/TransformComponent.h"
 #include "Components/UUIDComponent.h"
@@ -15,15 +19,19 @@
 #include "Tools/Alias.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine {
-    void RegisterMetaTypes(const flecs::world &world) {
+namespace RTGDEngine
+{
+    void RegisterMetaTypes(const flecs::world& world)
+    {
         world.component<std::string>()
                 .opaque(flecs::String)
-                .serialize([](const flecs::serializer *s, const std::string *data) {
-                    const char *str = data->c_str();
+                .serialize([](const flecs::serializer* s, const std::string* data)
+                {
+                    const char* str = data->c_str();
                     return s->value(flecs::String, &str);
                 })
-                .assign_string([](std::string *data, const char *value) {
+                .assign_string([](std::string* data, const char* value)
+                {
                     *data = value;
                 });
 
@@ -71,6 +79,11 @@ namespace RTGDEngine {
         RenderComponent::RegisterMeta(world);
         UUIDComponent::RegisterMeta(world);
         VelocityComponent::RegisterMeta(world);
+        ColliderComponent::RegisterMeta(world);
+        GroundCheckComponent::RegisterMeta(world);
+        RigidbodyComponent::RegisterMeta(world);
+        CharacterControllerComponent::RegisterMeta(world);
+        ConstraintComponent::RegisterMeta(world);
 
         LogInfo("Meta types registered");
     }

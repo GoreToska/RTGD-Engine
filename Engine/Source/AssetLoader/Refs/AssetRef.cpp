@@ -7,25 +7,25 @@
 
 
 void RTGDEngine::AcquireAsset(MeshHandle h) {
-    GRenderResources.AcquireAsset(h);
+    GRenderResources().AcquireAsset(h);
 }
 
 void RTGDEngine::ReleaseAsset(MeshHandle h) {
-    GRenderResources.ReleaseAsset(h);
+    GRenderResources().ReleaseAsset(h);
 }
 
 void RTGDEngine::AcquireAsset(MaterialHandle h) {
-    GRenderResources.AcquireAsset(h);
+    GRenderResources().AcquireAsset(h);
 }
 
 void RTGDEngine::ReleaseAsset(MaterialHandle h) {
-    GRenderResources.ReleaseAsset(h);
+    GRenderResources().ReleaseAsset(h);
 }
 
 void RTGDEngine::AcquireAsset(TextureHandle h) {
-    GRenderResources.AcquireAsset(h);
+    GRenderResources().AcquireAsset(h);
 }
 
 void RTGDEngine::ReleaseAsset(TextureHandle h) {
-    GRenderResources.ReleaseAsset(h);
+    GRenderResources().ReleaseAsset(h);
 }
