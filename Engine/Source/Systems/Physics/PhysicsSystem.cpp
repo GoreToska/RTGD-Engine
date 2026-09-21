@@ -24,6 +24,9 @@
 #include "Jolt/RegisterTypes.h"
 #include "Jolt/Core/Factory.h"
 #include "Jolt/Physics/Body/BodyLockMulti.h"
+#include "Jolt/Physics/Constraints/DistanceConstraint.h"
+#include "Jolt/Physics/Constraints/FixedConstraint.h"
+#include "Jolt/Physics/Constraints/SliderConstraint.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/json_fwd.hpp"
 
@@ -761,7 +764,8 @@ namespace RTGDEngine
         world.each([](Entity e, ConstraintComponent& c)
         {
             auto constraint = e.get_ref<ConstraintComponent>();
-            if (constraint->NativeConstraint) return;
+            if (constraint->NativeConstraint)
+                return;
 
             auto rb1 = e.get_ref<RigidbodyComponent>();
             if (!constraint || !rb1 || rb1->BodyID.IsInvalid())
@@ -810,21 +814,71 @@ namespace RTGDEngine
                 return;
             }
 
-            JPH::HingeConstraintSettings settings;
-            settings.mPoint1 = ToRVec3(constraint->Point1);
-            settings.mHingeAxis1 = ToVec3(constraint->HingeAxis1);
-            settings.mNormalAxis1 = ToVec3(constraint->NormalAxis1);
-            settings.mPoint2 = ToRVec3(constraint->Point2);
-            settings.mHingeAxis2 = ToVec3(constraint->HingeAxis2);
-            settings.mNormalAxis2 = ToVec3(constraint->NormalAxis2);
-            settings.mMaxFrictionTorque = constraint->MaxFrictionTorque;
-            if (constraint->EnableLimits)
+            switch (c.Type)
             {
-                settings.mLimitsMin = constraint->LimitsMinDeg * (JPH::JPH_PI / 180.0f);
-                settings.mLimitsMax = constraint->LimitsMaxDeg * (JPH::JPH_PI / 180.0f);
+                case EConstraintType::Hinge:
+                {
+                    JPH::HingeConstraintSettings settings;
+                    settings.mPoint1 = ToRVec3(constraint->Point1);
+                    settings.mHingeAxis1 = ToVec3(constraint->Axis1);
+                    settings.mNormalAxis1 = ToVec3(constraint->NormalAxis1);
+                    settings.mPoint2 = ToRVec3(constraint->Point2);
+                    settings.mHingeAxis2 = ToVec3(constraint->Axis2);
+                    settings.mNormalAxis2 = ToVec3(constraint->NormalAxis2);
+                    settings.mMaxFrictionTorque = constraint->MaxFriction;
+                    if (constraint->EnableLimits)
+                    {
+                        settings.mLimitsMin = constraint->LimitsMin * (JPH::JPH_PI / 180.0f);
+                        settings.mLimitsMax = constraint->LimitsMax * (JPH::JPH_PI / 180.0f);
+                    }
+
+                    constraint->NativeConstraint = settings.Create(*body1, *body2);
+                    break;
+                }
+                case EConstraintType::Slider:
+                {
+                    JPH::SliderConstraintSettings settings;
+                    settings.mPoint1 = ToRVec3(constraint->Point1);
+                    settings.mPoint2 = ToVec3(constraint->Point2);
+                    settings.mSliderAxis1 = ToRVec3(constraint->Axis1);
+                    settings.mSliderAxis2 = ToRVec3(constraint->Axis2);
+                    settings.mNormalAxis1 = ToRVec3(constraint->NormalAxis1);
+                    settings.mNormalAxis2 = ToRVec3(constraint->NormalAxis2);
+                    settings.mMaxFrictionForce = constraint->MaxFriction;
+
+                    if (constraint->EnableLimits)
+                    {
+                        settings.mLimitsMin = constraint->LimitsMin;
+                        settings.mLimitsMax = constraint->LimitsMax;
+                    }
+
+                    constraint->NativeConstraint = settings.Create(*body1, *body2);
+                    break;
+                }
+                case EConstraintType::Fixed:
+                {
+                    JPH::FixedConstraintSettings settings;
+                    settings.mPoint1 = ToRVec3(constraint->Point1);
+                    settings.mPoint2 = ToRVec3(constraint->Point2);
+                    settings.mAxisX1 = ToVec3(constraint->Axis1);
+                    settings.mAxisX2 = ToVec3(constraint->Axis2);
+                    settings.mAxisY1 = ToVec3(constraint->NormalAxis1);
+                    settings.mAxisY2 = ToVec3(constraint->NormalAxis2);
+                    constraint->NativeConstraint = settings.Create(*body1, *body2);
+                    break;
+                }
+                case EConstraintType::Distance:
+                {
+                    JPH::DistanceConstraintSettings settings;
+                    settings.mPoint1 = ToRVec3(constraint->Point1);
+                    settings.mPoint2 = ToRVec3(constraint->Point2);
+                    settings.mMinDistance = constraint->MinDistance;
+                    settings.mMaxDistance = constraint->MaxDistance;
+                    constraint->NativeConstraint = settings.Create(*body1, *body2);
+                    break;
+                }
             }
 
-            constraint->NativeConstraint = settings.Create(*body1, *body2);
             GPhysics().GetJoltSystem().AddConstraint(constraint->NativeConstraint);
             LogInfo("Constraint {}: built, ptr={}", e.name().c_str(), (void*)constraint->NativeConstraint.GetPtr());
         });
