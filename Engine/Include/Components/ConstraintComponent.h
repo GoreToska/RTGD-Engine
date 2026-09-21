@@ -24,7 +24,9 @@ namespace RTGDEngine
         Hinge,
         Slider,
         Fixed,
-        Distance
+        Distance,
+        Cone,
+        SwingTwist
     };
 
     struct ConstraintComponent
@@ -43,6 +45,8 @@ namespace RTGDEngine
         bool EnableLimits = false;
         float LimitsMin = -180.0f;
         float LimitsMax = 180.0f;
+        float HalfConeAngle = 0.0f;
+        float PlaneHalfConeAngle = 0.0f;
 
         float MinDistance = -1.0f;
         float MaxDistance = -1.0f;
@@ -57,7 +61,9 @@ namespace RTGDEngine
                     .constant("Hinge", EConstraintType::Hinge)
                     .constant("Slider", EConstraintType::Slider)
                     .constant("Fixed", EConstraintType::Fixed)
-                    .constant("Distance", EConstraintType::Distance);
+                    .constant("Distance", EConstraintType::Distance)
+                    .constant("Cone", EConstraintType::Cone)
+                    .constant("SwingTwist", EConstraintType::SwingTwist);
 
             world.component<ConstraintComponent>("ConstraintComponent")
                     .member<EConstraintType>("Type")
@@ -71,6 +77,8 @@ namespace RTGDEngine
                     .member<bool>("EnableLimits")
                     .member<float>("LimitsMin")
                     .member<float>("LimitsMax")
+                    .member<float>("HalfConeAngle")
+                    .member<float>("PlaneHalfConeAngle")
                     .member<float>("MinDistance")
                     .member<float>("MaxDistance")
                     .member<float>("MaxFriction");

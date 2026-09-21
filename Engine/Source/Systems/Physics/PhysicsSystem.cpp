@@ -24,9 +24,11 @@
 #include "Jolt/RegisterTypes.h"
 #include "Jolt/Core/Factory.h"
 #include "Jolt/Physics/Body/BodyLockMulti.h"
+#include "Jolt/Physics/Constraints/ConeConstraint.h"
 #include "Jolt/Physics/Constraints/DistanceConstraint.h"
 #include "Jolt/Physics/Constraints/FixedConstraint.h"
 #include "Jolt/Physics/Constraints/SliderConstraint.h"
+#include "Jolt/Physics/Constraints/SwingTwistConstraint.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/json_fwd.hpp"
 
@@ -874,6 +876,37 @@ namespace RTGDEngine
                     settings.mPoint2 = ToRVec3(constraint->Point2);
                     settings.mMinDistance = constraint->MinDistance;
                     settings.mMaxDistance = constraint->MaxDistance;
+                    constraint->NativeConstraint = settings.Create(*body1, *body2);
+                    break;
+                }
+                case EConstraintType::Cone:
+                {
+                    JPH::ConeConstraintSettings settings;
+                    settings.mPoint1 = ToRVec3(constraint->Point1);
+                    settings.mPoint2 = ToRVec3(constraint->Point2);
+                    settings.mTwistAxis1 = ToVec3(constraint->Axis1);
+                    settings.mTwistAxis2 = ToVec3(constraint->Axis2);
+                    settings.mHalfConeAngle = constraint->HalfConeAngle * (JPH::JPH_PI / 180.0f);
+                    constraint->NativeConstraint = settings.Create(*body1, *body2);
+                    break;
+                }
+                case EConstraintType::SwingTwist:
+                {
+                    JPH::SwingTwistConstraintSettings settings;
+                    settings.mPosition1 = ToRVec3(constraint->Point1);
+                    settings.mPosition2 = ToRVec3(constraint->Point2);
+                    settings.mTwistAxis1 = ToVec3(constraint->Axis1);
+                    settings.mTwistAxis2 = ToVec3(constraint->Axis2);
+                    settings.mPlaneAxis1 = ToVec3(constraint->NormalAxis1);
+                    settings.mPlaneAxis2 = ToVec3(constraint->NormalAxis2);
+                    settings.mNormalHalfConeAngle = constraint->HalfConeAngle * (JPH::JPH_PI / 180.0f);
+                    settings.mPlaneHalfConeAngle = constraint->PlaneHalfConeAngle * (JPH::JPH_PI / 180.0f);
+                    settings.mMaxFrictionTorque = constraint->MaxFriction;
+                    if (constraint->EnableLimits)
+                    {
+                        settings.mTwistMinAngle = constraint->LimitsMin * (JPH::JPH_PI / 180.0f);
+                        settings.mTwistMaxAngle = constraint->LimitsMax * (JPH::JPH_PI / 180.0f);
+                    }
                     constraint->NativeConstraint = settings.Create(*body1, *body2);
                     break;
                 }
