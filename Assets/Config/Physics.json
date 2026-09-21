@@ -23,12 +23,17 @@
     "Player",
     "Enemy",
     "Trigger",
-    "Projectile"
+    "Projectile",
+    "Ragdoll"
   ],
   "Collide": [
     [
       "Default",
       "Default"
+    ],
+    [
+      "Default",
+      "Ragdoll"
     ],
     [
       "Default",

@@ -92,7 +92,7 @@ namespace RTGDEngine
 
         const std::vector<std::string>& GetLayerNames() const { return m_layers.GetNames(); }
         int GetLayerIndex(std::string_view layerName) const { return m_layers.GetIndex(layerName); };
-        uint8_t GetLayerMask(std::string_view layerName) const { return 1 << GetLayerIndex(layerName); };
+        uint32_t GetLayerMask(std::string_view layerName) const { return 1 << GetLayerIndex(layerName); };
         std::string GetLayerName(int index) const { return m_layers.GetName(index); };
 
         void RegisterBody(JPH::BodyID id, uint64_t entity, bool IsTrigger);
