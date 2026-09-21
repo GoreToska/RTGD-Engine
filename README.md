@@ -39,6 +39,12 @@ normalized path, so requesting the same file twice returns the same handle.
 values, and asset references by path. Scenes can be loaded and unloaded additively at
 runtime without restarting the engine.
 
+**Rigid-body physics based on Jolt.** Box, sphere, capsule, mesh and convex hull colliders,
+triggers, raycasts and shape casts, physical and virtual character controllers, and a
+data-driven gameplay collision-layer matrix configured from JSON. Six two-body
+constraint types (hinge, slider, fixed, distance, cone, swing-twist) cover everything
+from a hinged door to a fully articulated ragdoll.
+
 ## Features
 ### Rendering
 - Deferred shading with a G-buffer pass and a fullscreen lighting pass
@@ -54,6 +60,14 @@ runtime without restarting the engine.
 - Camera, editor camera, movement, light and timer systems
 - JSON scene serialization with additive load and unload at runtime
 - Event bus for engine-wide notifications
+
+### Physics
+- Rigid bodies (static, dynamic, kinematic) based on Jolt Physics
+- Box, sphere, capsule, mesh and convex hull colliders, with mesh decimation for mesh/hull shapes
+- Triggers with enter/stay/exit events, raycasts and sphere/box casts (single-hit and multi-hit), all layer-mask aware
+- Data-driven gameplay collision layers and collision matrix, loaded from JSON
+- Physical and virtual character controllers
+- Hinge, slider, fixed, distance, cone and swing-twist constraints, for joints and ragdolls
 
 ### Assets
 - glTF mesh import through assimp, texture import through stb_image
@@ -114,8 +128,10 @@ dotnet run -c Release
 |---|---|
 | [Diligent Engine](https://github.com/DiligentGraphics/DiligentEngine) | Graphics API abstraction (D3D12 / Vulkan) |
 | [flecs](https://github.com/SanderMertens/flecs) | ECS and runtime reflection |
+| [Jolt Physics](https://github.com/jrouwe/JoltPhysics) | Rigid body physics |
 | [enkiTS](https://github.com/dougbinks/enkiTS) | Task scheduler |
 | [assimp](https://github.com/assimp/assimp) | Mesh import |
+| [meshoptimizer](https://github.com/zeux/meshoptimizer) | Mesh simplification for collider decimation & LOD |
 | [gainput](https://github.com/jkuhlmann/gainput) | Input handling |
 | [spdlog](https://github.com/gabime/spdlog) | Logging |
 | [stb](https://github.com/nothings/stb) | Image loading |
