@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "RenderDevice.h"
-#include "RenderHandle.h"
+#include "../AssetLoader/AssetHandle.h"
 #include "Engine/EngineExport.h"
 
 

@@ -5,7 +5,7 @@
 #pragma once
 #include "AssetLoader/AssetManager.h"
 #include "AssetLoader/Refs/AssetRef.h"
-#include "Render/RenderHandle.h"
+#include "../AssetLoader/AssetHandle.h"
 #include "AssetLoader/PathResolve.h"
 
 namespace RTGDEngine {

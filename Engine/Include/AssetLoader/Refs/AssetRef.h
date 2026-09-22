@@ -6,7 +6,7 @@
 #include <string>
 
 #include "Engine/EngineExport.h"
-#include "Render/RenderHandle.h"
+#include "AssetLoader/AssetHandle.h"
 
 namespace RTGDEngine {
     template<typename AssetHandle>
@@ -85,4 +85,8 @@ namespace RTGDEngine {
     ENGINE_API void AcquireAsset(TextureHandle h);
 
     ENGINE_API void ReleaseAsset(TextureHandle h);
+
+    ENGINE_API void AcquireAsset(SoundHandle h);
+
+    ENGINE_API void ReleaseAsset(SoundHandle h);
 }

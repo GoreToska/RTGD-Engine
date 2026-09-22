@@ -5,7 +5,7 @@
 #pragma once
 #include <flecs.h>
 
-#include "RenderHandle.h"
+#include "../AssetLoader/AssetHandle.h"
 #include "Tools/Visibility.h"
 
 namespace RTGDEngine {

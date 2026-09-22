@@ -27,6 +27,7 @@
 #include "Tools/Logger.h"
 #include "Event/Events.h"
 #include "Event/EventBus.h"
+#include "Systems/AudioSystem.h"
 #include "Systems/GroundCheckSystem.h"
 #include "Systems/Physics/PhysicsSystem.h"
 
@@ -36,12 +37,12 @@ namespace RTGDEngine
 
     void Engine::RegisterBaseSystems()
     {
-        AddSystem([](flecs::world&, float dt)
+        AddSystem([](World&, float dt)
         {
             GTimer().Update(dt);
         }, ESystemPhase::PreUpdate);
 
-        AddSystem([&](flecs::world& world, float dt)
+        AddSystem([&](World& world, float dt)
         {
             if (m_isPlayMode)
                 GPhysics().Update(world, dt);
@@ -49,7 +50,12 @@ namespace RTGDEngine
 
         AddSystem(GroundCheckSystem::Update, ESystemPhase::FixedUpdate, 1);
 
-        AddSystem([this](flecs::world& world, float dt)
+        AddSystem([this](World& world, float dt)
+        {
+            GAudio().Update(world, dt);
+        }, ESystemPhase::PostUpdate);
+
+        AddSystem([this](World& world, float dt)
         {
             if (!m_isPlayMode)
                 EditorCameraSystem::Update(world, dt);
@@ -58,7 +64,7 @@ namespace RTGDEngine
         AddSystem(MovementSystem::Update, ESystemPhase::Update, 0);
         AddSystem(CameraSystem::Update, ESystemPhase::Update, 20);
 
-        AddSystem([](flecs::world& world, float)
+        AddSystem([](World& world, float)
         {
             LightSystem::Update(world);
         }, ESystemPhase::Update, 30);
@@ -69,12 +75,10 @@ namespace RTGDEngine
         m_platformWindow = std::move(window);
 
         GLogger().Initialize();
-
         GJobSystem().Initialize();
-
         GScene().Initialize();
-
         GPhysics().Initialize();
+        GAudio().Initialize();
 
 #ifdef RTGD_EDITOR
         GEditorBridge().Initialize();
@@ -184,6 +188,8 @@ namespace RTGDEngine
         GRenderSystem().Shutdown();
         GScene().Shutdown();
         GPhysics().Shutdown();
+        GAudio().Shutdown();
+
         m_platformWindow->Destroy();
     }
 
@@ -351,7 +357,7 @@ namespace RTGDEngine
         }
     }
 
-    void Engine::RunPhase(ESystemPhase phase, flecs::world& world, float deltaTime)
+    void Engine::RunPhase(ESystemPhase phase, World& world, float deltaTime)
     {
         for (auto& entry: m_systems[static_cast<size_t>(phase)])
         {

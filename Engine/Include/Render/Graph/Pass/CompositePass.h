@@ -4,7 +4,7 @@
 
 
 #include "IRenderPass.h"
-#include "Render/RenderHandle.h"
+#include "../../../AssetLoader/AssetHandle.h"
 
 namespace RTGDEngine {
     class CompositePass : public IRenderPass {

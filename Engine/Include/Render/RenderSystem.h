@@ -23,7 +23,7 @@
 
 
 #include "ConstBuffers.h"
-#include "RenderHandle.h"
+#include "../AssetLoader/AssetHandle.h"
 #include "Engine/EngineExport.h"
 #include "Platform/WindowHandle.h"
 #include "Tools/RTGDMacros.h"

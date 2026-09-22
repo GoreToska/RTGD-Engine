@@ -7,7 +7,7 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-#include "Render/RenderHandle.h"
+#include "AssetHandle.h"
 #include "Render/RenderResourceManager.h"
 #include "Tools/RTGDMacros.h"
 

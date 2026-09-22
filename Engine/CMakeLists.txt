@@ -153,6 +153,8 @@ add_library(Engine SHARED
         Source/AssetLoader/MeshSimplifier.cpp
         Include/AssetLoader/MeshSimplifier.h
         Include/Components/ConstraintComponent.h
+        Source/Systems/AudioSystem.cpp
+        Include/Systems/AudioSystem.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
@@ -181,6 +183,7 @@ target_link_libraries(Engine PUBLIC
         nlohmann_json::nlohmann_json
         Jolt
         meshoptimizer
+        fmodstudio
 )
 
 if (WIN32)
