@@ -17,7 +17,7 @@ add_library(Engine SHARED
         Include/Components/RenderComponent.h
         Source/Render/RenderResourceManager.cpp
         Include/Render/RenderResourceManager.h
-        Include/Render/RenderHandle.h
+        Include/AssetLoader/AssetHandle.h
         Include/Render/SimpleMeshFactory.h
         Source/Render/SimpleMeshFactory.cpp
         Source/Scene/RTGDEntityFactory.cpp

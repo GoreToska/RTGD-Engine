@@ -16,23 +16,33 @@
 #include "Render/PipelineFactory.h"
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
+#include "Systems/AudioSystem.h"
 #include "Tools/Logger.h"
 
-namespace RTGDEngine {
-    void AssetManager::Initialize() {
-        GRenderResources().OnAssetDestroyed = [](uint32_t v, EAssetType t) {
+namespace RTGDEngine
+{
+    void AssetManager::Initialize()
+    {
+        GRenderResources().OnAssetDestroyed = [](uint32_t v, EAssetType t)
+        {
             Instance().OnResourceDestroyed(v, t);
+        };
+
+        GAudio().OnBankDestroyed = [](uint32_t v)
+        {
+            Instance().OnResourceDestroyed(v, EAssetType::Bank);
         };
     }
 
-    MeshHandle AssetManager::GetMesh(const std::string &absolutePath, std::function<void(MeshHandle)> onComplete) {
+    MeshHandle AssetManager::GetMesh(const std::string& absolutePath, std::function<void(MeshHandle)> onComplete)
+    {
         const std::string key = Normalize(absolutePath);
 
-        MeshHandle handle;
-        {
+        MeshHandle handle; {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end()) {
+            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end())
+            {
                 if (GRenderResources().IsAlive(it->second))
                     return it->second;
                 m_meshByPath.erase(it);
@@ -46,10 +56,12 @@ namespace RTGDEngine {
 
         LogInfo("Async load queued '{}' - handle {}", key, handle);
 
-        GJobSystem().Submit([key, handle, onComplete]() {
+        GJobSystem().Submit([key, handle, onComplete]()
+        {
             MeshImportData data = GMeshImporter().Import(key);
 
-            if (!data.Success) {
+            if (!data.Success)
+            {
                 LogError("Mesh import failed {}", key);
                 return;
             }
@@ -67,14 +79,15 @@ namespace RTGDEngine {
         return handle;
     }
 
-    MeshHandle AssetManager::GetMeshSync(const std::string &absolutePath) {
+    MeshHandle AssetManager::GetMeshSync(const std::string& absolutePath)
+    {
         const std::string key = Normalize(absolutePath);
 
-        MeshHandle handle;
-        {
+        MeshHandle handle; {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end()) {
+            if (auto it = m_meshByPath.find(key); it != m_meshByPath.end())
+            {
                 if (GRenderResources().IsAlive(it->second))
                     return it->second;
                 m_meshByPath.erase(it);
@@ -102,15 +115,16 @@ namespace RTGDEngine {
         return handle;
     }
 
-    TextureHandle AssetManager::GetTexture(const std::string &path,
-                                           bool isSRGB, std::function<void(TextureHandle)> onComplete) {
+    TextureHandle AssetManager::GetTexture(const std::string& path,
+                                           bool isSRGB, std::function<void(TextureHandle)> onComplete)
+    {
         const std::string key = Normalize(path);
 
-        TextureHandle handle;
-        {
+        TextureHandle handle; {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end()) {
+            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end())
+            {
                 if (GRenderResources().IsAlive(it->second))
                     return it->second;
                 m_textureByPath.erase(it);
@@ -118,15 +132,17 @@ namespace RTGDEngine {
 
             handle = GRenderResources().RegisterTexture(key, TextureData{}, AssetID(key));
             m_textureByPath[key] = handle;
-            m_textureHandleByPath[handle] = key;
+            m_texturePathByHandle[handle] = key;
         }
 
         LogInfo("AssetLoader: async texture queued '{}' → handle {}", key, handle);
 
-        GJobSystem().Submit([key, handle, isSRGB, onComplete]() {
+        GJobSystem().Submit([key, handle, isSRGB, onComplete]()
+        {
             TextureImportData data = TextureImporter::Import(key);
 
-            if (!data.Success) {
+            if (!data.Success)
+            {
                 LogError("Texture import failed {}", key);
                 return;
             }
@@ -142,11 +158,12 @@ namespace RTGDEngine {
         return handle;
     }
 
-    MaterialHandle AssetManager::GetMaterial(const std::string &absolutePath) {
-        const std::string key = Normalize(absolutePath);
-        {
+    MaterialHandle AssetManager::GetMaterial(const std::string& absolutePath)
+    {
+        const std::string key = Normalize(absolutePath); {
             std::lock_guard lock(m_registryMutex);
-            if (auto it = m_materialByPath.find(key); it != m_materialByPath.end()) {
+            if (auto it = m_materialByPath.find(key); it != m_materialByPath.end())
+            {
                 if (GRenderResources().IsAlive(it->second))
                     return it->second;
 
@@ -155,16 +172,18 @@ namespace RTGDEngine {
         }
 
         std::ifstream f(key);
-        if (!f) {
+        if (!f)
+        {
             LogError("Material not found '{}'", key);
             return INVALID_MATERIAL_HANDLE;
         }
 
         nlohmann::json j;
-        try {
+        try
+        {
             f >> j;
 
-            auto &rs = GRenderSystem();
+            auto& rs = GRenderSystem();
 
             MaterialHandle mat = PipelineFactory::CreateMeshPipeline(
                 rs.GetDevice(), rs.GetSwapChain(), GetAbsolutePath("Shaders"));
@@ -176,8 +195,10 @@ namespace RTGDEngine {
                 {"AO", ETextureSlot::AO}
             };
 
-            if (j.contains("Textures")) {
-                for (auto &[name, path]: j["Textures"].items()) {
+            if (j.contains("Textures"))
+            {
+                for (auto& [name, path]: j["Textures"].items())
+                {
                     auto it = slots.find(name);
 
                     if (it == slots.end())
@@ -186,9 +207,7 @@ namespace RTGDEngine {
                     const bool srgb = it->second == ETextureSlot::Diffuse;
                     AssignTexture(mat, it->second, GetAbsolutePath(path.get<std::string>()), srgb);
                 }
-            }
-
-            {
+            } {
                 std::lock_guard lock(m_registryMutex);
                 m_materialByPath[key] = mat;
                 m_materialPathByHandle[mat] = key;
@@ -196,20 +215,23 @@ namespace RTGDEngine {
             }
 
             return mat;
-        } catch (const nlohmann::json::exception &e) {
+        }
+        catch (const nlohmann::json::exception& e)
+        {
             LogError("Material parse error '{}': {}", key, e.what());
             return INVALID_MATERIAL_HANDLE;
         }
     }
 
-    TextureHandle AssetManager::GetTextureSync(const std::string &absolutePath, bool isSRGB) {
+    TextureHandle AssetManager::GetTextureSync(const std::string& absolutePath, bool isSRGB)
+    {
         const std::string key = Normalize(absolutePath);
 
-        TextureHandle handle;
-        {
+        TextureHandle handle; {
             std::lock_guard lock(m_registryMutex);
 
-            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end()) {
+            if (auto it = m_textureByPath.find(key); it != m_textureByPath.end())
+            {
                 if (GRenderResources().IsAlive(it->second))
                     return it->second;
                 m_textureByPath.erase(it);
@@ -217,7 +239,7 @@ namespace RTGDEngine {
 
             handle = GRenderResources().RegisterTexture(absolutePath, TextureData{}, AssetID(key));
             m_textureByPath[key] = handle;
-            m_textureHandleByPath[handle] = key;
+            m_texturePathByHandle[handle] = key;
         }
 
         TextureImportData data = TextureImporter::Import(absolutePath);
@@ -233,12 +255,14 @@ namespace RTGDEngine {
         return handle;
     }
 
-    void AssetManager::AssignTexture(MaterialHandle material, ETextureSlot slot, const std::string &meshAbsPath,
-                                     bool srgb) {
+    void AssetManager::AssignTexture(MaterialHandle material, ETextureSlot slot, const std::string& meshAbsPath,
+                                     bool srgb)
+    {
         GRenderResources().QueueTextureBind(material, GetTexture(meshAbsPath, srgb), slot);
     }
 
-    const std::string &AssetManager::GetMeshPath(MeshHandle mesh) const {
+    const std::string& AssetManager::GetMeshPath(MeshHandle mesh) const
+    {
         static const std::string empty;
         std::lock_guard lock(m_registryMutex);
 
@@ -246,62 +270,118 @@ namespace RTGDEngine {
         return it != m_meshPathByHandle.end() ? it->second : empty;
     }
 
-    const std::string &AssetManager::GetTexturePath(TextureHandle texture) const {
+    const std::string& AssetManager::GetTexturePath(TextureHandle texture) const
+    {
         static const std::string empty;
         std::lock_guard lock(m_registryMutex);
 
-        auto it = m_textureHandleByPath.find(texture);
-        return it != m_textureHandleByPath.end() ? it->second : empty;
+        auto it = m_texturePathByHandle.find(texture);
+        return it != m_texturePathByHandle.end() ? it->second : empty;
     }
 
-    uint64_t AssetManager::AssetID(const std::string &key) {
+    BankHandle AssetManager::GetBank(const std::string& path)
+    {
+        const std::string key = Normalize(path);
+        std::lock_guard lock(m_registryMutex);
+
+        if (auto it = m_bankByPath.find(key); it != m_bankByPath.end())
+        {
+            if (GAudio().IsAlive(it->second))
+                return it->second;
+            m_bankByPath.erase(it);
+        }
+
+        auto handle = GAudio().LoadBank(key, AssetID(key));
+        if (handle == INVALID_BANK_HANDLE)
+            return handle;
+
+        m_bankByPath[key] = handle;
+        m_bankPathByHandle[handle] = key;
+        return handle;
+    }
+
+    const std::string& AssetManager::GetBankPath(BankHandle bank) const
+    {
+        static const std::string empty;
+        std::lock_guard lock(m_registryMutex);
+
+        auto it = m_bankPathByHandle.find(bank);
+        return it != m_bankPathByHandle.end() ? it->second : empty;
+    }
+
+    uint64_t AssetManager::AssetID(const std::string& key)
+    {
         const std::string relative = GetRelativePath(key);
         return EventID(relative.empty() ? key : relative);
     }
 
-    std::string AssetManager::Normalize(const std::string &path) {
+    std::string AssetManager::Normalize(const std::string& path)
+    {
         return std::filesystem::path(path).lexically_normal().generic_string();
     }
 
-    void AssetManager::OnResourceDestroyed(uint32_t handle, EAssetType type) {
-        std::string path;
-
-        {
+    void AssetManager::OnResourceDestroyed(uint32_t handle, EAssetType type)
+    {
+        std::string path; {
             std::lock_guard lock(m_registryMutex);
 
-            switch (type) {
-                case EAssetType::Mesh: {
+            switch (type)
+            {
+                case EAssetType::Mesh:
+                {
                     MeshHandle h{};
                     h.value = handle;
-                    if (auto it = m_meshPathByHandle.find(h); it != m_meshPathByHandle.end()) {
+                    if (auto it = m_meshPathByHandle.find(h); it != m_meshPathByHandle.end())
+                    {
                         path = it->second;
-                        m_meshByPath.erase(path);
+                        if (auto p = m_meshByPath.find(path); p != m_meshByPath.end() && p->second == h)
+                            m_meshByPath.erase(p);
                         m_meshPathByHandle.erase(it);
                     }
                     break;
                 }
 
-                case EAssetType::Texture: {
+                case EAssetType::Texture:
+                {
                     TextureHandle h{};
                     h.value = handle;
-                    if (auto it = m_textureHandleByPath.find(h); it != m_textureHandleByPath.end()) {
+                    if (auto it = m_texturePathByHandle.find(h); it != m_texturePathByHandle.end())
+                    {
                         path = it->second;
-                        m_textureByPath.erase(path);
-                        m_textureHandleByPath.erase(it);
+                        if (auto p = m_textureByPath.find(path); p != m_textureByPath.end() && p->second == h)
+                            m_textureByPath.erase(p);
+                        m_texturePathByHandle.erase(it);
                     }
                     break;
                 }
-                case EAssetType::Material: {
+                case EAssetType::Material:
+                {
                     MaterialHandle h{};
                     h.value = handle;
-                    if (auto it = m_materialPathByHandle.find(h); it != m_materialPathByHandle.end()) {
+                    if (auto it = m_materialPathByHandle.find(h); it != m_materialPathByHandle.end())
+                    {
                         path = it->second;
-                        m_materialByPath.erase(path);
+                        if (auto p = m_materialByPath.find(path); p != m_materialByPath.end() && p->second == h)
+                            m_materialByPath.erase(p);
                         m_materialPathByHandle.erase(it);
                     }
                     break;
                 }
-                case EAssetType::None: {
+                case EAssetType::Bank:
+                {
+                    BankHandle h{};
+                    h.value = handle;
+                    if (auto it = m_bankPathByHandle.find(h); it != m_bankPathByHandle.end())
+                    {
+                        path = it->second;
+                        if (auto p = m_bankByPath.find(path); p != m_bankByPath.end() && p->second == h)
+                            m_bankByPath.erase(p);
+                        m_bankPathByHandle.erase(it);
+                    }
+                    break;
+                }
+                case EAssetType::None:
+                {
                     LogError("Trying to destroy 'None' asset type.");
                     break;
                 }

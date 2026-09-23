@@ -76,6 +76,7 @@ namespace RTGDEngine
 
         GLogger().Initialize();
         GJobSystem().Initialize();
+        GAssets().Initialize();
         GScene().Initialize();
         GPhysics().Initialize();
         GAudio().Initialize();
@@ -330,9 +331,10 @@ namespace RTGDEngine
         {
             LogInfo("Exiting play mode.");
             m_gameModule->OnStop();
-            ClearSystems(ESystemGroup::Game);
             DestroyGameContent();
             GScene().ReloadAll();
+            GAudio().StopAll();
+            ClearSystems(ESystemGroup::Game);
         }
     }
 

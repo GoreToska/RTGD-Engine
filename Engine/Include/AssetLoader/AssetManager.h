@@ -11,39 +11,45 @@
 #include "Render/RenderResourceManager.h"
 #include "Tools/RTGDMacros.h"
 
-namespace RTGDEngine {
-    class AssetManager {
+namespace RTGDEngine
+{
+    class AssetManager
+    {
         DECLARE_SINGLETON(AssetManager);
 
     public:
         void Initialize();
 
         MeshHandle GetMesh(
-            const std::string &absolutePath,
+            const std::string& absolutePath,
             std::function<void(MeshHandle)> onComplete = nullptr);
 
-        MeshHandle GetMeshSync(const std::string &absolutePath);
+        MeshHandle GetMeshSync(const std::string& absolutePath);
 
         TextureHandle GetTexture(
-            const std::string &path,
+            const std::string& path,
             bool isSRGB = true,
             std::function<void(TextureHandle)> onComplete = nullptr);
 
-        MaterialHandle GetMaterial(const std::string &absolutePath);
+        MaterialHandle GetMaterial(const std::string& absolutePath);
 
-        TextureHandle GetTextureSync(const std::string &absolutePath, bool isSRGB = true);
+        TextureHandle GetTextureSync(const std::string& absolutePath, bool isSRGB = true);
 
-        void AssignTexture(MaterialHandle material, ETextureSlot slot, const std::string &meshAbsPath,
+        void AssignTexture(MaterialHandle material, ETextureSlot slot, const std::string& meshAbsPath,
                            bool srgb = true);
 
-        const std::string &GetMeshPath(MeshHandle mesh) const;
+        const std::string& GetMeshPath(MeshHandle mesh) const;
 
-        const std::string &GetTexturePath(TextureHandle texture) const;
+        const std::string& GetTexturePath(TextureHandle texture) const;
 
-        static uint64_t AssetID(const std::string &key);
+        BankHandle GetBank(const std::string& path);
+
+        const std::string& GetBankPath(BankHandle bank) const;
+
+        static uint64_t AssetID(const std::string& key);
 
     private:
-        static std::string Normalize(const std::string &path);
+        static std::string Normalize(const std::string& path);
 
         void OnResourceDestroyed(uint32_t handle, EAssetType type);
 
@@ -51,10 +57,13 @@ namespace RTGDEngine {
         std::unordered_map<MeshHandle, std::string> m_meshPathByHandle = {};
 
         std::unordered_map<std::string, TextureHandle> m_textureByPath = {};
-        std::unordered_map<TextureHandle, std::string> m_textureHandleByPath = {};
+        std::unordered_map<TextureHandle, std::string> m_texturePathByHandle = {};
 
         std::unordered_map<std::string, MaterialHandle> m_materialByPath = {};
         std::unordered_map<MaterialHandle, std::string> m_materialPathByHandle = {};
+
+        std::unordered_map<std::string, BankHandle> m_bankByPath = {};
+        std::unordered_map<BankHandle, std::string> m_bankPathByHandle = {};
 
         mutable std::mutex m_registryMutex = {};
     };

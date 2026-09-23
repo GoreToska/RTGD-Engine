@@ -30,17 +30,17 @@ namespace RTGDEngine {
     struct MeshTag;
     struct MaterialTag;
     struct TextureTag;
-    struct SoundTag;
+    struct BankTag;
 
     using MeshHandle = Handle<MeshTag>;
     using MaterialHandle = Handle<MaterialTag>;
     using TextureHandle = Handle<TextureTag>;
-    using SoundHandle = Handle<SoundTag>;
+    using BankHandle = Handle<BankTag>;
 
     constexpr MeshHandle INVALID_MESH_HANDLE = MeshHandle();;
     constexpr MaterialHandle INVALID_MATERIAL_HANDLE = MaterialHandle();
     constexpr TextureHandle INVALID_TEXTURE_HANDLE = TextureHandle();
-    constexpr SoundHandle INVALID_SOUND_HANDLE = SoundHandle();
+    constexpr BankHandle INVALID_BANK_HANDLE = BankHandle();
 }
 
 template<typename Tag>

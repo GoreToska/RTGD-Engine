@@ -10,16 +10,48 @@
 
 #include "Engine/EngineExport.h"
 #include "AssetLoader/AssetHandle.h"
+#include "AssetLoader/Refs/AssetRef.h"
 #include "Render/ResourcePool.h"
 #include "Tools/Alias.h"
 #include "Tools/RTGDMacros.h"
 
 namespace RTGDEngine
 {
-    struct SoundData
+    enum class EStopMode
+    {
+        AllowFadeout,
+        Immediate,
+    };
+
+    struct BankData
     {
         FMOD::Studio::Bank* bank = nullptr;
         std::string Path;
+    };
+
+    class ENGINE_API AudioEvent
+    {
+    public:
+        AudioEvent() = default;
+
+        explicit AudioEvent(FMOD::Studio::EventInstance* instance) : m_instance(instance)
+        {
+        }
+
+        bool IsValid() const;
+
+        bool IsPlaying() const;
+
+        void Stop(EStopMode mode = EStopMode::Immediate);
+
+        void SetPaused(bool paused);
+
+        void SetParameter(const char* name, float value);
+
+        void SetPosition(const Float3& position);
+
+    private:
+        FMOD::Studio::EventInstance* m_instance = nullptr;
     };
 
     class ENGINE_API AudioSystem
@@ -35,24 +67,39 @@ namespace RTGDEngine
 
         FMOD::Studio::System* GetStudioSystem() const { return m_studioSystem; }
 
-        SoundHandle LoadSound(const std::string& absolutePath, uint64_t assetID);
+        BankHandle LoadBank(const std::string& absolutePath, uint64_t assetID);
 
-        bool IsAlive(SoundHandle handle) const;
+        bool IsAlive(BankHandle handle) const;
 
-        void AcquireAsset(SoundHandle handle);
+        void AcquireAsset(BankHandle handle);
 
-        void ReleaseAsset(SoundHandle handle);
+        void ReleaseAsset(BankHandle handle);
 
-        std::function<void(uint32_t)> OnSoundDestroyed = {};
+        std::function<void(uint32_t)> OnBankDestroyed = {};
+
+        AudioEvent Play(std::string_view event);
+
+        AudioEvent Play(std::string_view event, const Float3& position);
+
+        void PlayOneShot(std::string_view event);
+
+        void PlayOneShot(std::string_view event, const Float3& position);
+
+        void StopAll(EStopMode mode = EStopMode::Immediate);
+
+        FMOD::Studio::EventInstance* CreateInstance(std::string_view event);
 
     private:
-        void ProcessPendingSoundDestroys();
+        void ProcessPendingBankDestroys();
 
+        FMOD::Studio::Bank* LoadBankFile(const std::string& absolutePath);
 
         FMOD::Studio::System* m_studioSystem = nullptr;
         FMOD::System* m_coreSystem = nullptr;
 
-        ResourcePool<SoundData> m_sounds = {};
+        std::vector<BankRef> m_bootstrapBanks = {};
+
+        ResourcePool<BankData> m_banks = {};
         std::mutex m_lifetimeMutex = {};
     };
 

@@ -11,5 +11,6 @@ namespace RTGDEngine {
         Mesh,
         Material,
         Texture,
+        Bank,
     };
 }

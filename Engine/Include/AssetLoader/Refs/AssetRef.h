@@ -73,6 +73,7 @@ namespace RTGDEngine {
     using MeshRef = AssetRef<MeshHandle>;
     using MaterialRef = AssetRef<MaterialHandle>;
     using TextureRef = AssetRef<TextureHandle>;
+    using BankRef = AssetRef<BankHandle>;
 
     ENGINE_API void AcquireAsset(MeshHandle h);
 
@@ -86,7 +87,7 @@ namespace RTGDEngine {
 
     ENGINE_API void ReleaseAsset(TextureHandle h);
 
-    ENGINE_API void AcquireAsset(SoundHandle h);
+    ENGINE_API void AcquireAsset(BankHandle h);
 
-    ENGINE_API void ReleaseAsset(SoundHandle h);
+    ENGINE_API void ReleaseAsset(BankHandle h);
 }

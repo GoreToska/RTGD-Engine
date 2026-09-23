@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "fmod_errors.h"
+#include "fmod_studio.hpp"
 #include "GameExpoty.h"
 #include "AssetLoader/PathResolve.h"
 #include "Components/CameraComponent.h"
@@ -15,6 +17,7 @@
 #include "Input/InputSystem.h"
 #include "Render/DebugDraw.h"
 #include "Scene/SceneManager.h"
+#include "Systems/AudioSystem.h"
 #include "Tools/Logger.h"
 
 Game& Game::Instance()
@@ -98,8 +101,7 @@ void Game::OnStart()
     GEngine().AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
                       ESystemGroup::Game);
 
-    LogInfo("Layer number: {}", m_player.get<ColliderComponent>().Layer);
-    LogInfo("Layer name: {}", GPhysics().GetLayerName(m_player.get<ColliderComponent>().Layer));
+    GAudio().Play("MusicLoop");
 }
 
 void Game::OnStop()
