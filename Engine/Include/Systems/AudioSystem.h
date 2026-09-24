@@ -89,6 +89,18 @@ namespace RTGDEngine
 
         void StopAll(EStopMode mode = EStopMode::Immediate);
 
+        void SetBusVolume(std::string_view bus, float volume);
+
+        void SetBusPaused(std::string_view bus, bool paused);
+
+        void SetMasterVolume(float volume);
+
+        void SetPaused(bool paused);
+
+        void SetGlobalParameter(std::string_view name, float value);
+
+        float GetGlobalParameter(std::string_view name) const;
+
         FMOD::Studio::EventInstance* CreateInstance(std::string_view event);
 
     private:

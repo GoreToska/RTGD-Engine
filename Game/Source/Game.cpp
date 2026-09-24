@@ -75,7 +75,8 @@ void Game::OnStart()
             .set<ColliderComponent>({
                 .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}, .Friction = 0.0f
             })
-            .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Physical});
+            .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Physical})
+            .set<AudioSourceComponent>({{"Assets/Audio/Desktop/Music.bank"}, "MusicLoop"});
 
     m_playerCam = GScene().CreateEntity("PlayerCamera", GScene().GetGameRoot());
 
@@ -101,10 +102,6 @@ void Game::OnStart()
                         ESystemGroup::Game);
     GEngine().AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
                         ESystemGroup::Game);
-
-    auto sound = GScene().CreateEntity("Sound", GScene().GetGameRoot());
-    sound.set<AudioSourceComponent>({{"Assets/Audio/Desktop/Music.bank"}, "MusicLoop"});
-    sound.set<TransformComponent>({});
 }
 
 void Game::OnStop()

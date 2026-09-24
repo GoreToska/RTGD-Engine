@@ -338,6 +338,68 @@ namespace RTGDEngine
             master->stopAllEvents(ToFMODStopMode(mode));
     }
 
+    void AudioSystem::SetBusVolume(std::string_view bus, float volume)
+    {
+        if (!m_studioSystem)
+            return;
+
+        FMOD::Studio::Bus* b = nullptr;
+        auto result = m_studioSystem->getBus(WithPrefix(bus, "bus:/").c_str(), &b);
+        if (result == FMOD_OK)
+            b->setVolume(volume);
+        else
+            LogError("No such bus '{}': {}", bus, FMOD_ErrorString(result));
+    }
+
+    void AudioSystem::SetBusPaused(std::string_view bus, bool paused)
+    {
+        if (!m_studioSystem)
+            return;
+
+        FMOD::Studio::Bus* b = nullptr;
+        auto result = m_studioSystem->getBus(WithPrefix(bus, "bus:/").c_str(), &b);
+        if ( result == FMOD_OK)
+            b->setPaused(paused);
+        else
+            LogError("No such bus '{}': {}", bus, FMOD_ErrorString(result));
+    }
+
+    void AudioSystem::SetMasterVolume(float volume)
+    {
+        SetBusVolume("bus:/", volume);
+    }
+
+    void AudioSystem::SetPaused(bool paused)
+    {
+        SetBusPaused("bus:/", paused);
+    }
+
+    void AudioSystem::SetGlobalParameter(std::string_view name, float value)
+    {
+        if (!m_studioSystem)
+            return;
+
+        FMOD_RESULT result = m_studioSystem->setParameterByName(std::string(name).c_str(), value);
+        if (result != FMOD_OK)
+            LogError("Sound SetParameter '{}' failed: {}", name, FMOD_ErrorString(result));
+    }
+
+    float AudioSystem::GetGlobalParameter(std::string_view name) const
+    {
+        if (!m_studioSystem)
+        {
+            LogError("No studio system initialized!");
+            return 0.0f;
+        }
+
+        float value = 0.0f;
+        FMOD_RESULT result = m_studioSystem->getParameterByName(std::string(name).c_str(), &value);
+        if (result != FMOD_OK)
+            LogError("No such parameter on master bank: '{}'", name);
+
+        return value;
+    }
+
     FMOD::Studio::EventInstance* AudioSystem::CreateInstance(std::string_view event)
     {
         if (!m_studioSystem)
