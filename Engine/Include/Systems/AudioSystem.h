@@ -101,7 +101,9 @@ namespace RTGDEngine
 
         float GetGlobalParameter(std::string_view name) const;
 
-        FMOD::Studio::EventInstance* CreateInstance(std::string_view event);
+        AudioEvent StartSnapshot(std::string_view name);
+
+        FMOD::Studio::EventInstance* CreateInstance(std::string_view event, std::string_view prefix = "event:/");
 
     private:
         void ProcessPendingBankDestroys();
@@ -112,6 +114,7 @@ namespace RTGDEngine
         FMOD::System* m_coreSystem = nullptr;
 
         std::vector<BankRef> m_bootstrapBanks = {};
+        std::vector<AudioEvent> m_activeSnapshots = {};
 
         ResourcePool<BankData> m_banks = {};
         std::mutex m_lifetimeMutex = {};

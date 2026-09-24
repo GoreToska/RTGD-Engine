@@ -336,6 +336,11 @@ namespace RTGDEngine
         FMOD::Studio::Bus* master = nullptr;
         if (m_studioSystem->getBus("bus:/", &master) == FMOD_OK)
             master->stopAllEvents(ToFMODStopMode(mode));
+
+        for (auto& snapshot: m_activeSnapshots)
+            snapshot.Stop(mode);
+
+        m_activeSnapshots.clear();
     }
 
     void AudioSystem::SetBusVolume(std::string_view bus, float volume)
@@ -358,7 +363,7 @@ namespace RTGDEngine
 
         FMOD::Studio::Bus* b = nullptr;
         auto result = m_studioSystem->getBus(WithPrefix(bus, "bus:/").c_str(), &b);
-        if ( result == FMOD_OK)
+        if (result == FMOD_OK)
             b->setPaused(paused);
         else
             LogError("No such bus '{}': {}", bus, FMOD_ErrorString(result));
@@ -400,12 +405,27 @@ namespace RTGDEngine
         return value;
     }
 
-    FMOD::Studio::EventInstance* AudioSystem::CreateInstance(std::string_view event)
+    AudioEvent AudioSystem::StartSnapshot(std::string_view name)
+    {
+        FMOD::Studio::EventInstance* instance = CreateInstance(name, "snapshot:/");
+        if (!instance)
+            return {};
+
+        instance->start();
+        instance->release();
+
+        std::erase_if(m_activeSnapshots, [](const AudioEvent& event) { return !event.IsValid(); });
+        AudioEvent snapshot{instance};
+        m_activeSnapshots.push_back(snapshot);
+        return snapshot;
+    }
+
+    FMOD::Studio::EventInstance* AudioSystem::CreateInstance(std::string_view event, std::string_view prefix)
     {
         if (!m_studioSystem)
             return nullptr;
 
-        const std::string path = WithPrefix(event, "event:/");
+        const std::string path = WithPrefix(event, prefix);
 
         FMOD::Studio::EventDescription* desc = nullptr;
         FMOD_RESULT result = m_studioSystem->getEvent(path.c_str(), &desc);

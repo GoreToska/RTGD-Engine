@@ -54,13 +54,15 @@ void Game::SetupInput()
     m_moveRight = GInput().RegisterAction("PlayerMoveRight");
     m_interact = GInput().RegisterAction("Interact");
     m_jump = GInput().RegisterAction("Jump");
-
+    m_muffle = GInput().RegisterAction("Muffle");
+     
     GInput().BindKey(m_moveForward, gainput::KeyW);
     GInput().BindKey(m_moveBackward, gainput::KeyS);
     GInput().BindKey(m_moveLeft, gainput::KeyA);
     GInput().BindKey(m_moveRight, gainput::KeyD);
     GInput().BindKey(m_interact, gainput::KeyE);
     GInput().BindKey(m_jump, gainput::KeySpace);
+    GInput().BindKey(m_muffle, gainput::KeyM);
 
     GInput().SetRelativeMouseMode(true);
 }
@@ -167,6 +169,14 @@ void Game::CameraUpdate(flecs::world& world, float deltaTime)
             LogInfo("[interact] hit {} at {:.2f}m", hit.Target.name().c_str(), hit.Distance);
         else
             LogInfo("[interact] nothing in range");
+    }
+
+    if (GInput().IsPressed(m_muffle))
+    {
+        if (m_muffledEvent.IsValid())
+            m_muffledEvent.Stop(EStopMode::AllowFadeout);
+        else
+            m_muffledEvent = GAudio().StartSnapshot("Muffled");
     }
 }
 
