@@ -333,9 +333,10 @@ namespace RTGDEngine
             m_gameModule->OnStop();
             DestroyGameContent();
             GScene().ReloadAll();
-            GAudio().StopAll();
             ClearSystems(ESystemGroup::Game);
         }
+
+        GAudio().SetPlaying(m_isPlayMode);
     }
 
     void Engine::AddSystem(SystemFunc func, ESystemPhase phase, int order, ESystemGroup group)

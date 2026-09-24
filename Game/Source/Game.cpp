@@ -5,6 +5,7 @@
 #include "fmod_studio.hpp"
 #include "GameExpoty.h"
 #include "AssetLoader/PathResolve.h"
+#include "Components/AudioSourceComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/CharacterControllerComponent.h"
 #include "Components/GroundCheckComponent.h"
@@ -78,7 +79,7 @@ void Game::OnStart()
 
     m_playerCam = GScene().CreateEntity("PlayerCamera", GScene().GetGameRoot());
 
-    m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({});
+    m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({}).add<AudioListenerComponent>();
 
     GScene().CreateEntity("Enemy", GScene().GetGameRoot()).set<TransformComponent>({{-2.0f, 1.0f, 0.0f}})
             .set<VelocityComponent>({}).set<ColliderComponent>({
@@ -97,11 +98,13 @@ void Game::OnStart()
             .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Virtual});
 
     GEngine().AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::FixedUpdate, 0,
-                      ESystemGroup::Game);
+                        ESystemGroup::Game);
     GEngine().AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
-                      ESystemGroup::Game);
+                        ESystemGroup::Game);
 
-    GAudio().Play("MusicLoop");
+    auto sound = GScene().CreateEntity("Sound", GScene().GetGameRoot());
+    sound.set<AudioSourceComponent>({{"Assets/Audio/Desktop/Music.bank"}, "MusicLoop"});
+    sound.set<TransformComponent>({});
 }
 
 void Game::OnStop()
@@ -159,9 +162,9 @@ void Game::CameraUpdate(flecs::world& world, float deltaTime)
     if (GInput().IsPressed(m_interact))
     {
         GDebugDraw().DrawLine(camTransform.Position + camTransform.GetForward() * 0.15,
-                            camTransform.GetForward() * m_interactionDistance, {0, 1, 0, 1}, 5);
+                              camTransform.GetForward() * m_interactionDistance, {0, 1, 0, 1}, 5);
         auto hit = GPhysics().Raycast(camTransform.Position, camTransform.GetForward(), m_interactionDistance, false,
-                                    GPhysics().GetLayerMask("Default"), std::span(&m_player, 1));
+                                      GPhysics().GetLayerMask("Default"), std::span(&m_player, 1));
 
         if (hit.Hit)
             LogInfo("[interact] hit {} at {:.2f}m", hit.Target.name().c_str(), hit.Distance);

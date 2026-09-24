@@ -155,6 +155,7 @@ add_library(Engine SHARED
         Include/Components/ConstraintComponent.h
         Source/Systems/AudioSystem.cpp
         Include/Systems/AudioSystem.h
+        Include/Components/AudioSourceComponent.h
 )
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)

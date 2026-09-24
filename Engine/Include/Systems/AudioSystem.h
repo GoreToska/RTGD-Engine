@@ -85,6 +85,8 @@ namespace RTGDEngine
 
         void PlayOneShot(std::string_view event, const Float3& position);
 
+        void SetPlaying(bool playing);
+
         void StopAll(EStopMode mode = EStopMode::Immediate);
 
         FMOD::Studio::EventInstance* CreateInstance(std::string_view event);
@@ -101,6 +103,7 @@ namespace RTGDEngine
 
         ResourcePool<BankData> m_banks = {};
         std::mutex m_lifetimeMutex = {};
+        bool m_isPlaying = false;
     };
 
     DECLARE_GLOBAL_SINGLETON(AudioSystem, GAudio);

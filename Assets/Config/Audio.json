@@ -2,7 +2,6 @@
   "BanksDirectory": "Assets/Audio/Desktop",
   "Bootstrap": [
     "Master.bank",
-    "Master.strings.bank",
-    "Music.bank"
+    "Master.strings.bank"
   ]
 }

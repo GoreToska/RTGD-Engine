@@ -4,6 +4,7 @@
 // ReSharper disable CppExpressionWithoutSideEffects
 #include "Tools/MetaTypes.h"
 
+#include "Components/AudioSourceComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/CharacterControllerComponent.h"
 #include "Components/ConstraintComponent.h"
@@ -39,6 +40,7 @@ namespace RTGDEngine
                 .member<std::string>("Path"); // handle is transient
         flecs::component<MaterialRef>(world, "MaterialRef")
                 .member<std::string>("Path"); // handle is transient
+        flecs::component<BankRef>(world, "BankRef").member<std::string>("Path"); // handle is transient
 
         if (!MetaAlreadyRegistered(world, flecs::component<Float2>(world, "Float2")))
             world.component<Float2>()
@@ -84,6 +86,9 @@ namespace RTGDEngine
         RigidbodyComponent::RegisterMeta(world);
         CharacterControllerComponent::RegisterMeta(world);
         ConstraintComponent::RegisterMeta(world);
+        AudioSourceComponent::RegisterMeta(world);
+        AudioListenerComponent::RegisterMeta(world);
+        AudioListenerComponent::RegisterMeta(world);
 
         LogInfo("Meta types registered");
     }

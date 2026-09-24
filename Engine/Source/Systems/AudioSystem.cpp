@@ -10,6 +10,8 @@
 
 #include "AssetLoader/AssetManager.h"
 #include "AssetLoader/PathResolve.h"
+#include "Components/AudioSourceComponent.h"
+#include "Components/TransformComponent.h"
 #include "nlohmann/json.hpp"
 
 namespace RTGDEngine
@@ -51,6 +53,15 @@ namespace RTGDEngine
         attr.position = {position.x, position.y, position.z};
         attr.forward = {0.0f, 0.0f, 1.0f};
         attr.up = {0.0f, 1.0f, 0.0f};
+        return attr;
+    }
+
+    static FMOD_3D_ATTRIBUTES Make3DAttributes(const TransformComponent& transform)
+    {
+        FMOD_3D_ATTRIBUTES attr{};
+        attr.position = {transform.Position.x, transform.Position.y, transform.Position.z};
+        attr.forward = {transform.GetForward().x, transform.GetForward().y, transform.GetForward().z};
+        attr.up = {transform.GetUp().x, transform.GetUp().y, transform.GetUp().z};
         return attr;
     }
 
@@ -164,6 +175,29 @@ namespace RTGDEngine
             return;
 
         ProcessPendingBankDestroys();
+
+        world.each([&](AudioListenerComponent listener, const TransformComponent& t)
+        {
+            auto a = Make3DAttributes(t);
+            m_studioSystem->setListenerAttributes(0, &a);
+        });
+
+        world.each([&](AudioSourceComponent& source, const TransformComponent& t)
+        {
+            if (!m_isPlaying)
+            {
+                source.Started = false;
+                return;
+            }
+
+            if (source.PlayOnStart && !source.Started)
+            {
+                source.Play(t.Position);
+                source.Started = true;
+            }
+
+            source.Playing.SetPosition(t.Position);
+        });
 
         m_studioSystem->update();
     }
@@ -284,6 +318,14 @@ namespace RTGDEngine
     void AudioSystem::PlayOneShot(std::string_view event, const Float3& position)
     {
         Play(event, position);
+    }
+
+    void AudioSystem::SetPlaying(bool playing)
+    {
+        m_isPlaying = playing;
+
+        if (!m_isPlaying)
+            StopAll();
     }
 
     void AudioSystem::StopAll(EStopMode mode)
