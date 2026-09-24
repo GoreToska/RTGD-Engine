@@ -292,6 +292,13 @@ namespace RTGDEngine
         if (!instance)
             return {};
 
+        bool is3D = false;
+        FMOD::Studio::EventDescription* desc = nullptr;
+        instance->getDescription(&desc);
+        desc->is3D(&is3D);
+        if (is3D)
+            LogWarn("3D sound event '{}' player with no position.", event);
+
         instance->start();
         instance->release();
         return AudioEvent{instance};
@@ -302,13 +309,6 @@ namespace RTGDEngine
         FMOD::Studio::EventInstance* instance = CreateInstance(event);
         if (!instance)
             return {};
-
-        bool is3D = false;
-        FMOD::Studio::EventDescription* desc = nullptr;
-        instance->getDescription(&desc);
-        desc->is3D(&is3D);
-        if (is3D && position == Float3{0, 0, 0})
-            LogWarn("3D sound event '{}' player with no position.", event);
 
         const FMOD_3D_ATTRIBUTES attributes = Make3DAttributes(position);
         instance->set3DAttributes(&attributes);
