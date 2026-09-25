@@ -69,6 +69,8 @@ namespace RTGDEngine
 
         BankHandle LoadBank(const std::string& absolutePath, uint64_t assetID);
 
+        void UnloadBank(BankHandle handle);
+
         bool IsAlive(BankHandle handle) const;
 
         void AcquireAsset(BankHandle handle);

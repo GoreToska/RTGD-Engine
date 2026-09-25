@@ -1,10 +1,10 @@
 set(FMOD_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
-    set(FMOD_CORE_INCLUDE ${FMODE_ROOT}/windows/api/core/inc)
-    set(FMOD_STUDIO_INCLUDE ${FMODE_ROOT}/windows/api/studio/inc)
-    set(FMOD_CORE_LIB ${FMODE_ROOT}/windows/api/core/lib/x64)
-    set(FMOD_STUDIO_LIB ${FMODE_ROOT}/windows/api/studio/lib/x64)
+    set(FMOD_CORE_INCLUDE ${FMOD_ROOT}/windows/api/core/inc)
+    set(FMOD_STUDIO_INCLUDE ${FMOD_ROOT}/windows/api/studio/inc)
+    set(FMOD_CORE_LIB ${FMOD_ROOT}/windows/api/core/lib/x64)
+    set(FMOD_STUDIO_LIB ${FMOD_ROOT}/windows/api/studio/lib/x64)
 
     add_library(fmod SHARED IMPORTED GLOBAL)
     set_target_properties(fmod PROPERTIES
@@ -55,14 +55,14 @@ elseif (UNIX AND NOT APPLE)
             INTERFACE_INCLUDE_DIRECTORIES "${FMOD_STUDIO_INC}"
     )
     target_link_libraries(fmodstudio INTERFACE fmod)
-endif ()
 
-foreach(_fmod_core_lib libfmod.so.14 libfmodL.so.14)
-    if (NOT EXISTS "${FMOD_STUDIO_LIBDIR}/${_fmod_core_lib}")
-        file(CREATE_LINK
-                "${FMOD_CORE_LIBDIR}/${_fmod_core_lib}"
-                "${FMOD_STUDIO_LIBDIR}/${_fmod_core_lib}"
-                SYMBOLIC
-        )
-    endif()
-endforeach()
+    foreach (_fmod_core_lib libfmod.so.14 libfmodL.so.14)
+        if (NOT EXISTS "${FMOD_STUDIO_LIBDIR}/${_fmod_core_lib}")
+            file(CREATE_LINK
+                    "${FMOD_CORE_LIBDIR}/${_fmod_core_lib}"
+                    "${FMOD_STUDIO_LIBDIR}/${_fmod_core_lib}"
+                    SYMBOLIC
+            )
+        endif ()
+    endforeach ()
+endif ()
