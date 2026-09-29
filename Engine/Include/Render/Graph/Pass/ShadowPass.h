@@ -4,7 +4,7 @@
 
 #pragma once
 #include "IRenderPass.h"
-#include "Render/RenderHandle.h"
+#include "../../../AssetLoader/AssetHandle.h"
 
 namespace RTGDEngine {
     class ShadowPass : public IRenderPass {

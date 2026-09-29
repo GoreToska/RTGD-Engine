@@ -6,7 +6,7 @@
 #include <cstdint>
 
 #include "IRenderPass.h"
-#include "Render/RenderHandle.h"
+#include "../../../AssetLoader/AssetHandle.h"
 
 namespace RTGDEngine {
     enum class EDebugChannel : uint32_t {

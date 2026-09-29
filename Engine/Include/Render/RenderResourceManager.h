@@ -10,7 +10,7 @@
 #include "Buffer.h"
 #include "PipelineState.h"
 #include "RefCntAutoPtr.hpp"
-#include "RenderHandle.h"
+#include "../AssetLoader/AssetHandle.h"
 #include "ResourcePool.h"
 #include "Texture.h"
 #include "Vertex.h"

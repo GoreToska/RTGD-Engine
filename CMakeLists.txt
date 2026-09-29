@@ -63,6 +63,8 @@ set(JPH_USE_MTL OFF CACHE BOOL "" FORCE)
 set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/JoltPhysics/Build)
 
+add_subdirectory(ThirdParty/FMOD)
+
 add_subdirectory(Engine)
 add_subdirectory(Game)
 

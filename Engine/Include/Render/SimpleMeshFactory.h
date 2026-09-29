@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "RenderHandle.h"
+#include "../AssetLoader/AssetHandle.h"
 
 namespace Diligent
 {

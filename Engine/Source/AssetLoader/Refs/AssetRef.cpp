@@ -4,6 +4,7 @@
 #include "AssetLoader/Refs/AssetRef.h"
 
 #include "Render/RenderResourceManager.h"
+#include "Systems/AudioSystem.h"
 
 
 void RTGDEngine::AcquireAsset(MeshHandle h) {
@@ -28,4 +29,14 @@ void RTGDEngine::AcquireAsset(TextureHandle h) {
 
 void RTGDEngine::ReleaseAsset(TextureHandle h) {
     GRenderResources().ReleaseAsset(h);
+}
+
+void RTGDEngine::AcquireAsset(BankHandle h)
+{
+    GAudio().AcquireAsset(h);
+}
+
+void RTGDEngine::ReleaseAsset(BankHandle h)
+{
+    GAudio().ReleaseAsset(h);
 }

@@ -11,11 +11,11 @@
 [Rr]elease/
 x64/
 x86/
+!ThirdParty/FMOD/**/x64/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
-
 
 *.aps
 *.idr

@@ -1,8 +1,11 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "fmod_errors.h"
+#include "fmod_studio.hpp"
 #include "GameExpoty.h"
 #include "AssetLoader/PathResolve.h"
+#include "Components/AudioSourceComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/CharacterControllerComponent.h"
 #include "Components/GroundCheckComponent.h"
@@ -15,6 +18,7 @@
 #include "Input/InputSystem.h"
 #include "Render/DebugDraw.h"
 #include "Scene/SceneManager.h"
+#include "Systems/AudioSystem.h"
 #include "Tools/Logger.h"
 
 Game& Game::Instance()
@@ -50,13 +54,15 @@ void Game::SetupInput()
     m_moveRight = GInput().RegisterAction("PlayerMoveRight");
     m_interact = GInput().RegisterAction("Interact");
     m_jump = GInput().RegisterAction("Jump");
-
+    m_muffle = GInput().RegisterAction("Muffle");
+     
     GInput().BindKey(m_moveForward, gainput::KeyW);
     GInput().BindKey(m_moveBackward, gainput::KeyS);
     GInput().BindKey(m_moveLeft, gainput::KeyA);
     GInput().BindKey(m_moveRight, gainput::KeyD);
     GInput().BindKey(m_interact, gainput::KeyE);
     GInput().BindKey(m_jump, gainput::KeySpace);
+    GInput().BindKey(m_muffle, gainput::KeyM);
 
     GInput().SetRelativeMouseMode(true);
 }
@@ -71,11 +77,12 @@ void Game::OnStart()
             .set<ColliderComponent>({
                 .Shape = EPhysicsShape::Capsule, .Extents = {0.3f, 0.5f, 0.0}, .Friction = 0.0f
             })
-            .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Physical});
+            .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Physical})
+            .set<AudioSourceComponent>({{"Assets/Audio/Desktop/Music.bank"}, "MusicLoop"});
 
     m_playerCam = GScene().CreateEntity("PlayerCamera", GScene().GetGameRoot());
 
-    m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({});
+    m_playerCam.set<CameraComponent>({.Priority = 1}).set<TransformComponent>({}).add<AudioListenerComponent>();
 
     GScene().CreateEntity("Enemy", GScene().GetGameRoot()).set<TransformComponent>({{-2.0f, 1.0f, 0.0f}})
             .set<VelocityComponent>({}).set<ColliderComponent>({
@@ -94,12 +101,9 @@ void Game::OnStart()
             .set<CharacterControllerComponent>({.Mode = CharacterControllerComponent::EMode::Virtual});
 
     GEngine().AddSystem(std::bind_front(&Game::PlayerMovementSystem, this), ESystemPhase::FixedUpdate, 0,
-                      ESystemGroup::Game);
+                        ESystemGroup::Game);
     GEngine().AddSystem(std::bind_front(&Game::CameraUpdate, this), ESystemPhase::Update, 10,
-                      ESystemGroup::Game);
-
-    LogInfo("Layer number: {}", m_player.get<ColliderComponent>().Layer);
-    LogInfo("Layer name: {}", GPhysics().GetLayerName(m_player.get<ColliderComponent>().Layer));
+                        ESystemGroup::Game);
 }
 
 void Game::OnStop()
@@ -157,14 +161,22 @@ void Game::CameraUpdate(flecs::world& world, float deltaTime)
     if (GInput().IsPressed(m_interact))
     {
         GDebugDraw().DrawLine(camTransform.Position + camTransform.GetForward() * 0.15,
-                            camTransform.GetForward() * m_interactionDistance, {0, 1, 0, 1}, 5);
+                              camTransform.GetForward() * m_interactionDistance, {0, 1, 0, 1}, 5);
         auto hit = GPhysics().Raycast(camTransform.Position, camTransform.GetForward(), m_interactionDistance, false,
-                                    GPhysics().GetLayerMask("Default"), std::span(&m_player, 1));
+                                      GPhysics().GetLayerMask("Default"), std::span(&m_player, 1));
 
         if (hit.Hit)
             LogInfo("[interact] hit {} at {:.2f}m", hit.Target.name().c_str(), hit.Distance);
         else
             LogInfo("[interact] nothing in range");
+    }
+
+    if (GInput().IsPressed(m_muffle))
+    {
+        if (m_muffledEvent.IsValid())
+            m_muffledEvent.Stop(EStopMode::AllowFadeout);
+        else
+            m_muffledEvent = GAudio().StartSnapshot("Muffled");
     }
 }
 

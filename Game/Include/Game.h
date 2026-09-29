@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Engine/IGameModule.h"
+#include "Systems/AudioSystem.h"
 #include "Tools/Alias.h"
 #include "Tools/RTGDMacros.h"
 
@@ -36,9 +37,12 @@ private:
     ActionID m_moveRight;
     ActionID m_interact;
     ActionID m_jump;
+    ActionID m_muffle;
 
     Entity m_player;
     Entity m_playerCam;
+
+    AudioEvent m_muffledEvent;
 
     float m_eyeHeight = 0.8f;
     float m_currentPitch = 0.0f;
