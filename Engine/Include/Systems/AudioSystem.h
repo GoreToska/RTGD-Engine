@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <fmod_studio.hpp>
 #include <string>
 #include <functional>
 
@@ -14,6 +13,18 @@
 #include "Render/ResourcePool.h"
 #include "Tools/Alias.h"
 #include "Tools/RTGDMacros.h"
+
+namespace FMOD
+{
+    class System;
+}
+
+namespace FMOD::Studio
+{
+    class EventInstance;
+    class System;
+    class Bank;
+}
 
 namespace RTGDEngine
 {

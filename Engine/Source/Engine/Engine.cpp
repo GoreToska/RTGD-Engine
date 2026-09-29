@@ -194,13 +194,14 @@ namespace RTGDEngine
         m_platformWindow->Destroy();
     }
 
-    bool Engine::LoadGameModule(const std::string& dllPath)
+    bool Engine::LoadGameModule(const std::string& modulePath)
     {
+        const std::string path = GetAbsolutePath(modulePath);
         m_gameLib = CreateDynamicLibrary();
 
-        if (!m_gameLib->Load(dllPath))
+        if (!m_gameLib->Load(path))
         {
-            LogError("Failed to load game module: {}.", dllPath);
+            LogError("Failed to load game module: {}.", path);
             m_gameLib.reset();
             return false;
         }
@@ -209,17 +210,17 @@ namespace RTGDEngine
 
         if (!m_getGameModuleFunc)
         {
-            LogError("Failed to get game module symbol: {}.", dllPath);
+            LogError("Failed to get game module symbol: {}.", path);
             m_gameLib.reset();
             return false;
         }
 
-        LogInfo("Loaded game module: {}.", dllPath);
+        LogInfo("Loaded game module: {}.", path);
 
         auto module = m_getGameModuleFunc();
         if (!module)
         {
-            LogError("Failed to get game module symbol: {}.", dllPath);
+            LogError("Failed to get game module symbol: {}.", path);
             return false;
         }
 
