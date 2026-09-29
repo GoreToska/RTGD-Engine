@@ -10,7 +10,8 @@ separate editor process.
 
 The engine is a shared library with a C ABI. The editor is a separate C#/Avalonia
 application that hosts the engine's rendering surface as a native child window and
-drives it through that ABI. Game code will live in its own module, but it is WIP for now.
+drives it through that ABI. Game code lives in its own shared library, loaded at runtime
+and hot-reloadable without restarting the engine.
 
 ## Highlights
 **Multithreaded architecture.** The render thread owns the platform window and the
@@ -21,6 +22,15 @@ thread boundary through mutex-guarded request slots and a condition variable.
 **Deferred renderer with PBR.** G-buffer pass followed by a fullscreen lighting pass,
 metallic-roughness workflow, HLSL shaders compiled through Diligent's abstraction
 layer to D3D12 or Vulkan depending on the platform.
+
+**Render graph.** Each pass declares what it reads and writes; the graph inserts
+resource-state barriers automatically and owns transient render targets in a pool that
+survives across frames and is rebuilt on resize. The whole G-buffer, the scene color
+target and the shadow atlas are graph-owned, so adding an effect means adding a pass.
+
+**Cascaded shadow maps.** Up to four cascades packed into a single depth atlas, with
+practical split scheme, texel snapping against shimmering, per-cascade depth and normal
+bias in world units, and blending between cascades.
 
 **GPU-based entity picking.** The editor requests a pick at screen coordinates; the
 render thread reads back the entity ID from the G-buffer using a fence for
@@ -45,21 +55,31 @@ data-driven gameplay collision-layer matrix configured from JSON. Six two-body
 constraint types (hinge, slider, fixed, distance, cone, swing-twist) cover everything
 from a hinged door to a fully articulated ragdoll.
 
+**Audio based on FMOD Studio.** Banks are loaded through the same ref-counted asset
+system as meshes and textures and unloaded when the last reference goes away. Positional
+sources and listeners are ECS components; one-shot events can follow an entity, and
+Doppler is computed per source from frame-to-frame motion with a teleport threshold.
+Mixer buses, global parameters and snapshots are exposed to gameplay code.
+
 ## Features
 ### Rendering
 - Deferred shading with a G-buffer pass and a fullscreen lighting pass
 - Physically based rendering, metallic-roughness workflow
-- Pipeline state and G-buffer factories, shader loading and caching
+- Render graph with declared pass inputs/outputs, automatic barriers and pooled transient targets
+- Cascaded shadow maps for the directional light: atlas-based, texel-snapped, 3x3 PCF, cascade blending
+- Debug line drawing, including wireframes of every collider shape
+- Pipeline state factory, shader loading and caching
 - Directional and point lights driven by ECS components
 - Dedicated render thread with deferred resize handling
 - GPU entity picking with fence-synchronized readback
 
 ### Scene and ECS
 - Entity-component-system built on flecs
-- Transform, camera, mesh, render, light, velocity and UUID components
+- Transform, camera, mesh, render, light, velocity, UUID, audio source and audio listener components
 - Camera, editor camera, movement, light and timer systems
 - JSON scene serialization with additive load and unload at runtime
 - Event bus for engine-wide notifications
+- Game code in a separate shared library, hot-reloaded with Ctrl+R
 
 ### Physics
 - Rigid bodies (static, dynamic, kinematic) based on Jolt Physics
@@ -68,6 +88,13 @@ from a hinged door to a fully articulated ragdoll.
 - Data-driven gameplay collision layers and collision matrix, loaded from JSON
 - Physical and virtual character controllers
 - Hinge, slider, fixed, distance, cone and swing-twist constraints, for joints and ragdolls
+
+### Audio
+- FMOD Studio integration: bank loading, event playback, 2D and 3D positional events
+- Audio source and listener ECS components, one-shot events attached to entities
+- Per-source Doppler from position deltas, with a configurable max speed to ignore teleports
+- Bus volume and pause, master volume, global parameters, snapshots
+- Bootstrap banks configured from JSON, sample data preloaded on bank load
 
 ### Assets
 - glTF mesh import through assimp, texture import through stb_image
@@ -95,6 +122,7 @@ from a hinged door to a fully articulated ragdoll.
 | CMake | 3.20+ | 3.20+ |
 | Graphics | Windows 10+ with D3D12 | Vulkan SDK |
 | Editor | .NET 10 SDK | .NET 10 SDK |
+| Audio | FMOD Engine 2.03 (in repository) | FMOD Engine 2.03 (in repository) |
 
 ### Engine and standalone runtime
 ```bash
@@ -114,6 +142,11 @@ git submodule update --init --recursive
 The standalone runtime is written to `build/bin/`. Assets and shaders are synced there
 automatically as part of the build.
 
+The FMOD Engine SDK for both platforms is already in `ThirdParty/FMOD/`, so no separate
+download is needed. The FMOD Studio project lives in `FMOD/RTGD/`; built banks are
+committed to `Assets/Audio/Desktop/`, so FMOD Studio is only needed to change the sound
+content.
+
 ### Editor
 Build the engine first — the editor loads the native library from the CMake output
 directory.
@@ -129,6 +162,7 @@ dotnet run -c Release
 | [Diligent Engine](https://github.com/DiligentGraphics/DiligentEngine) | Graphics API abstraction (D3D12 / Vulkan) |
 | [flecs](https://github.com/SanderMertens/flecs) | ECS and runtime reflection |
 | [Jolt Physics](https://github.com/jrouwe/JoltPhysics) | Rigid body physics |
+| [FMOD](https://www.fmod.com) | Audio (FMOD Studio / Core API) |
 | [enkiTS](https://github.com/dougbinks/enkiTS) | Task scheduler |
 | [assimp](https://github.com/assimp/assimp) | Mesh import |
 | [meshoptimizer](https://github.com/zeux/meshoptimizer) | Mesh simplification for collider decimation & LOD |
@@ -139,7 +173,6 @@ dotnet run -c Release
 | [Avalonia](https://avaloniaui.net/) | Editor UI |
  
 ---
-
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
