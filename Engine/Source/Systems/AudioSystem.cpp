@@ -199,6 +199,17 @@ namespace RTGDEngine
             source.Playing.SetPosition(t.Position);
         });
 
+        std::erase_if(m_attachedEvents, [](AttachedEvent& e)
+        {
+            if (!e.event.IsValid() || !e.entity.is_alive())
+                return true;
+
+            if (const auto* t = e.entity.try_get<TransformComponent>())
+                e.event.SetPosition(t->Position);
+
+            return false;
+        });
+
         m_studioSystem->update();
     }
 
@@ -227,6 +238,8 @@ namespace RTGDEngine
         {
             return INVALID_BANK_HANDLE;
         }
+
+        bank->loadSampleData();
 
         std::lock_guard lock(m_lifetimeMutex);
 
@@ -294,10 +307,8 @@ namespace RTGDEngine
 
         bool is3D = false;
         FMOD::Studio::EventDescription* desc = nullptr;
-        instance->getDescription(&desc);
-        desc->is3D(&is3D);
-        if (is3D)
-            LogWarn("3D sound event '{}' player with no position.", event);
+        if (instance->getDescription(&desc) == FMOD_OK && desc->is3D(&is3D) == FMOD_OK && is3D)
+            LogWarn("3D sound event '{}' played with no position.", event);
 
         instance->start();
         instance->release();
@@ -327,6 +338,26 @@ namespace RTGDEngine
         Play(event, position);
     }
 
+    void AudioSystem::PlayOneShotAttached(std::string_view event, Entity entity)
+    {
+        const TransformComponent* transform = entity.is_alive() ? entity.try_get<TransformComponent>() : nullptr;
+        if (!transform && entity.is_alive())
+        {
+            LogWarn("Entity '{}' has no transform to play '{}' attached.", entity.name().c_str(), event);
+            return;
+        }
+
+        if (!entity.is_alive())
+        {
+            LogWarn("Can't play '{}' attached. Entity is not alive.", event);
+            return;
+        }
+
+        AudioEvent instance = Play(event, transform->Position);
+        if (instance.IsValid())
+            m_attachedEvents.push_back({instance, entity});
+    }
+
     void AudioSystem::SetPlaying(bool playing)
     {
         m_isPlaying = playing;
@@ -348,6 +379,7 @@ namespace RTGDEngine
             snapshot.Stop(mode);
 
         m_activeSnapshots.clear();
+        m_attachedEvents.clear();
     }
 
     void AudioSystem::SetBusVolume(std::string_view bus, float volume)

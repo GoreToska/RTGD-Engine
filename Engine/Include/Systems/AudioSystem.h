@@ -87,6 +87,8 @@ namespace RTGDEngine
 
         void PlayOneShot(std::string_view event, const Float3& position);
 
+        void PlayOneShotAttached(std::string_view event, Entity entity);
+
         void SetPlaying(bool playing);
 
         void StopAll(EStopMode mode = EStopMode::Immediate);
@@ -108,6 +110,12 @@ namespace RTGDEngine
         FMOD::Studio::EventInstance* CreateInstance(std::string_view event, std::string_view prefix = "event:/");
 
     private:
+        struct AttachedEvent
+        {
+            AudioEvent event;
+            Entity entity;
+        };
+
         void ProcessPendingBankDestroys();
 
         FMOD::Studio::Bank* LoadBankFile(const std::string& absolutePath);
@@ -117,6 +125,7 @@ namespace RTGDEngine
 
         std::vector<BankRef> m_bootstrapBanks = {};
         std::vector<AudioEvent> m_activeSnapshots = {};
+        std::vector<AttachedEvent> m_attachedEvents = {};
 
         ResourcePool<BankData> m_banks = {};
         std::mutex m_lifetimeMutex = {};
