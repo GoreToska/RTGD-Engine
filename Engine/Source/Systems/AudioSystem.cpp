@@ -47,22 +47,40 @@ namespace RTGDEngine
         return std::string(prefix).append(path);
     }
 
-    static FMOD_3D_ATTRIBUTES Make3DAttributes(const Float3& position)
+    static FMOD_3D_ATTRIBUTES Make3DAttributes(const Float3& position, const Float3& velocity = {})
     {
         FMOD_3D_ATTRIBUTES attr{};
         attr.position = {position.x, position.y, position.z};
         attr.forward = {0.0f, 0.0f, 1.0f};
         attr.up = {0.0f, 1.0f, 0.0f};
+        attr.velocity = {velocity.x, velocity.y, velocity.z};
         return attr;
     }
 
-    static FMOD_3D_ATTRIBUTES Make3DAttributes(const TransformComponent& transform)
+    static FMOD_3D_ATTRIBUTES Make3DAttributes(const TransformComponent& transform, const Float3& velocity = {})
     {
         FMOD_3D_ATTRIBUTES attr{};
         attr.position = {transform.Position.x, transform.Position.y, transform.Position.z};
         attr.forward = {transform.GetForward().x, transform.GetForward().y, transform.GetForward().z};
         attr.up = {transform.GetUp().x, transform.GetUp().y, transform.GetUp().z};
+        attr.velocity = {velocity.x, velocity.y, velocity.z};
         return attr;
+    }
+
+    static Float3 ComputeVelocity(const Float3& position, Float3& prevPosition, bool& hasPrev, float deltaTime,
+                                  float maxSpeed)
+    {
+        Float3 velocity = {};
+        if (hasPrev && deltaTime > 0.0f)
+        {
+            velocity = (position - prevPosition) / deltaTime;
+            if (Diligent::length(velocity) > maxSpeed)
+                velocity = {};
+        }
+
+        prevPosition = position;
+        hasPrev = true;
+        return velocity;
     }
 
     static FMOD_STUDIO_STOP_MODE ToFMODStopMode(EStopMode mode)
@@ -104,11 +122,11 @@ namespace RTGDEngine
             LogError("Sound SetParameter '{}' failed: {}", name, FMOD_ErrorString(result));
     }
 
-    void AudioEvent::SetPosition(const Float3& position)
+    void AudioEvent::SetPosition(const Float3& position, const Float3& velocity)
     {
         if (!IsValid())
             return;
-        const FMOD_3D_ATTRIBUTES attributes = Make3DAttributes(position);
+        const FMOD_3D_ATTRIBUTES attributes = Make3DAttributes(position, velocity);
         m_instance->set3DAttributes(&attributes);
     }
 
@@ -176,9 +194,17 @@ namespace RTGDEngine
 
         ProcessPendingBankDestroys();
 
-        world.each([&](AudioListenerComponent listener, const TransformComponent& t)
+        world.each([&](AudioListenerComponent& listener, const TransformComponent& t)
         {
-            auto a = Make3DAttributes(t);
+            if (!m_isPlaying)
+            {
+                listener.HasPrevPosition = false;
+                return;
+            }
+
+            auto v = ComputeVelocity(t.Position, listener.PrevPosition, listener.HasPrevPosition, deltaTime,
+                                     listener.MaxDopplerSpeed);
+            auto a = Make3DAttributes(t, v);
             m_studioSystem->setListenerAttributes(0, &a);
         });
 
@@ -187,6 +213,7 @@ namespace RTGDEngine
             if (!m_isPlaying)
             {
                 source.Started = false;
+                source.HasPrevPosition = false;
                 return;
             }
 
@@ -196,16 +223,22 @@ namespace RTGDEngine
                 source.Started = true;
             }
 
-            source.Playing.SetPosition(t.Position);
+            auto v = ComputeVelocity(t.Position, source.PrevPosition, source.HasPrevPosition, deltaTime,
+                                     source.MaxDopplerSpeed);
+            source.Playing.SetPosition(t.Position, v);
         });
 
-        std::erase_if(m_attachedEvents, [](AttachedEvent& e)
+        std::erase_if(m_attachedEvents, [deltaTime](AttachedEvent& e)
         {
             if (!e.event.IsValid() || !e.entity.is_alive())
                 return true;
 
             if (const auto* t = e.entity.try_get<TransformComponent>())
-                e.event.SetPosition(t->Position);
+            {
+                bool hasPrev = true;
+                auto v = ComputeVelocity(t->Position, e.prevPosition, hasPrev, deltaTime, e.maxDopplerSpeed);
+                e.event.SetPosition(t->Position, v);
+            }
 
             return false;
         });
@@ -338,7 +371,7 @@ namespace RTGDEngine
         Play(event, position);
     }
 
-    void AudioSystem::PlayOneShotAttached(std::string_view event, Entity entity)
+    void AudioSystem::PlayOneShotAttached(std::string_view event, Entity entity, float maxDopplerSpeed)
     {
         const TransformComponent* transform = entity.is_alive() ? entity.try_get<TransformComponent>() : nullptr;
         if (!transform && entity.is_alive())
@@ -355,7 +388,7 @@ namespace RTGDEngine
 
         AudioEvent instance = Play(event, transform->Position);
         if (instance.IsValid())
-            m_attachedEvents.push_back({instance, entity});
+            m_attachedEvents.push_back({instance, entity, transform->Position, maxDopplerSpeed});
     }
 
     void AudioSystem::SetPlaying(bool playing)

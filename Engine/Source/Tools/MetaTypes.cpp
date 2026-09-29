@@ -88,7 +88,6 @@ namespace RTGDEngine
         ConstraintComponent::RegisterMeta(world);
         AudioSourceComponent::RegisterMeta(world);
         AudioListenerComponent::RegisterMeta(world);
-        AudioListenerComponent::RegisterMeta(world);
 
         LogInfo("Meta types registered");
     }

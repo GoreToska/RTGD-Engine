@@ -17,10 +17,13 @@ namespace RTGDEngine
         BankRef Bank;
         std::string Event;
         bool PlayOnStart = true;
+        float MaxDopplerSpeed = DefaultMaxDopplerSpeed;
 
         // transient
         AudioEvent Playing;
         bool Started = false;
+        Float3 PrevPosition = {};
+        bool HasPrevPosition = false;
 
         void Play(const Float3& position)
         {
@@ -48,7 +51,8 @@ namespace RTGDEngine
             world.component<AudioSourceComponent>("AudioSourceComponent")
                     .member<BankRef>("Bank")
                     .member<std::string>("Event")
-                    .member<bool>("PlayOnStart");
+                    .member<bool>("PlayOnStart")
+                    .member<float>("MaxDopplerSpeed");
 
             world.observer<AudioSourceComponent>().event(flecs::OnSet)
                     .each([](AudioSourceComponent& comp)
@@ -67,9 +71,16 @@ namespace RTGDEngine
 
     struct AudioListenerComponent
     {
+        float MaxDopplerSpeed = DefaultMaxDopplerSpeed;
+
+        //transient
+        Float3 PrevPosition = {};
+        bool HasPrevPosition = false;
+
         static void RegisterMeta(const World& world)
         {
-            world.component<AudioListenerComponent>("AudioListenerComponent");
+            world.component<AudioListenerComponent>("AudioListenerComponent")
+                    .member<float>("MaxDopplerSpeed");
         }
     };
 }

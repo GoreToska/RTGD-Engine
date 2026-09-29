@@ -17,6 +17,8 @@
 
 namespace RTGDEngine
 {
+    inline constexpr float DefaultMaxDopplerSpeed = 200.0f;
+
     enum class EStopMode
     {
         AllowFadeout,
@@ -48,7 +50,7 @@ namespace RTGDEngine
 
         void SetParameter(const char* name, float value);
 
-        void SetPosition(const Float3& position);
+        void SetPosition(const Float3& position, const Float3& velocity = {});
 
     private:
         FMOD::Studio::EventInstance* m_instance = nullptr;
@@ -87,7 +89,7 @@ namespace RTGDEngine
 
         void PlayOneShot(std::string_view event, const Float3& position);
 
-        void PlayOneShotAttached(std::string_view event, Entity entity);
+        void PlayOneShotAttached(std::string_view event, Entity entity, float maxDopplerSpeed = DefaultMaxDopplerSpeed);
 
         void SetPlaying(bool playing);
 
@@ -114,6 +116,8 @@ namespace RTGDEngine
         {
             AudioEvent event;
             Entity entity;
+            Float3 prevPosition;
+            float maxDopplerSpeed;
         };
 
         void ProcessPendingBankDestroys();
