@@ -59,7 +59,7 @@ namespace RTGDEngine
 
         void Shutdown();
 
-        bool LoadGameModule(const std::string& dllPath);
+        bool LoadGameModule(const std::string& modulePath);
 
         bool PollEvents() const;
 

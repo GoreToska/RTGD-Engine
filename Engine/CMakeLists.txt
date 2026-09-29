@@ -153,10 +153,16 @@ add_library(Engine SHARED
         Source/AssetLoader/MeshSimplifier.cpp
         Include/AssetLoader/MeshSimplifier.h
         Include/Components/ConstraintComponent.h
-        Source/Systems/AudioSystem.cpp
         Include/Systems/AudioSystem.h
         Include/Components/AudioSourceComponent.h
 )
+
+if (RTGD_WITH_FMOD)
+    target_sources(Engine PRIVATE Source/Systems/AudioSystem.cpp)
+    target_link_libraries(Engine PUBLIC fmodstudio)
+else ()
+    target_sources(Engine PRIVATE Source/Systems/AudioSystemNull.cpp)
+endif ()
 
 option(RTGD_EDITOR "Build engine with editor tools" ON)
 set_target_properties(Engine PROPERTIES DEBUG_POSTFIX "")
@@ -184,7 +190,6 @@ target_link_libraries(Engine PUBLIC
         nlohmann_json::nlohmann_json
         Jolt
         meshoptimizer
-        fmodstudio
 )
 
 if (WIN32)

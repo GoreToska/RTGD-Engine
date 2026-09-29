@@ -8,6 +8,12 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT Runtime)
+
+include(InstallRequiredSystemLibraries)
+
+option(RTGD_WITH_FMOD "Build audio with FMOD" ON)
 
 # VS 18+ MSVC emits C5232 in SPIRV-Tools
 if (MSVC)
@@ -15,6 +21,12 @@ if (MSVC)
 endif ()
 
 set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
+
+string(TOLOWER "${CMAKE_SYSTEM_NAME}" RTGD_FMOD_PLATFORM)
+if (RTGD_WITH_FMOD AND NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/FMOD/${RTGD_FMOD_PLATFORM}")
+    message(WARNING "FMOD SDK not found, building without audio")
+    set(RTGD_WITH_FMOD OFF)
+endif ()
 
 add_subdirectory(ThirdParty/flecs)
 
@@ -63,7 +75,9 @@ set(JPH_USE_MTL OFF CACHE BOOL "" FORCE)
 set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
 add_subdirectory(ThirdParty/JoltPhysics/Build)
 
-add_subdirectory(ThirdParty/FMOD)
+if (RTGD_WITH_FMOD)
+    add_subdirectory(ThirdParty/FMOD)
+endif ()
 
 add_subdirectory(Engine)
 add_subdirectory(Game)
@@ -73,8 +87,36 @@ add_executable(RTGD-Engine
         main.cpp
 )
 
+set_target_properties(RTGD-Engine Engine Game PROPERTIES INSTALL_RPATH "$ORIGIN")
+
+set(RTGD_THIRD_PARTY_TARGETS flecs gainput assimp
+        Diligent-GraphicsEngineVk-shared Diligent-GraphicsEngineD3D12-shared)
+set(RTGD_SHARED_THIRD_PARTY)
+foreach (t IN LISTS RTGD_THIRD_PARTY_TARGETS)
+    if (TARGET ${t})
+        get_target_property(type ${t} TYPE)
+        if (type STREQUAL "SHARED_LIBRARY")
+            list(APPEND RTGD_SHARED_THIRD_PARTY ${t})
+        endif ()
+    endif ()
+endforeach ()
+
+install(TARGETS RTGD-Engine Engine Game ${RTGD_SHARED_THIRD_PARTY}
+        RUNTIME_DEPENDENCY_SET RTGDRuntimeDeps
+        RUNTIME DESTINATION . COMPONENT Runtime
+        LIBRARY DESTINATION . COMPONENT Runtime
+        ARCHIVE DESTINATION dev COMPONENT Dev)
+
+install(RUNTIME_DEPENDENCY_SET RTGDRuntimeDeps
+        DIRECTORIES $<TARGET_FILE_DIR:RTGD-Engine>
+        PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*"
+        POST_EXCLUDE_REGEXES ".*[Ss]ystem32/.*" "^/lib/.*" "^/lib64/.*" "^/usr/lib/.*"
+        DESTINATION . COMPONENT Runtime)
+
+install(DIRECTORY Assets Shaders DESTINATION . COMPONENT Runtime)
+
 target_compile_definitions(RTGD-Engine PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
-target_compile_definitions(RTGD-Engine PRIVATE GAME_MODULE_PATH="$<TARGET_FILE:Game>")
+target_compile_definitions(RTGD-Engine PRIVATE GAME_MODULE_NAME="$<TARGET_FILE_NAME:Game>")
 set_target_properties(RTGD-Engine PROPERTIES WIN32_EXECUTABLE FALSE)
 
 target_link_libraries(RTGD-Engine PRIVATE
