@@ -256,6 +256,15 @@ namespace RTGDEngine
             TogglePlayMode();
         }
 
+        if (GInput().IsDown(EInputAction::CtrlLeft) && GInput().IsPressed(
+                EInputAction::SaveScene))
+        {
+            if (m_isPlayMode)
+                LogWarn("Can't save scene in play mode.");
+            else
+                GScene().GetActiveScene()->Save();
+        }
+
         auto& world = GScene().GetWorld();
         RunPhase(ESystemPhase::PreUpdate, world, deltaTime);
 

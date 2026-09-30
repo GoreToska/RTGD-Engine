@@ -170,6 +170,7 @@ set_target_properties(Engine PROPERTIES PREFIX "")
 
 if (RTGD_EDITOR)
     target_compile_definitions(Engine PUBLIC RTGD_EDITOR)
+    target_compile_definitions(Engine PRIVATE RTGD_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 endif ()
 
 target_include_directories(Engine PUBLIC

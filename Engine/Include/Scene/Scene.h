@@ -45,6 +45,8 @@ namespace RTGDEngine
 
         void SaveToFile(const std::string& absolutePath) const;
 
+        bool Save() const;
+
         bool LoadFromFile(const std::string& absolutePath);
 
         bool Reload();

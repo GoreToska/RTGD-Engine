@@ -5,6 +5,7 @@
 #include "Scene/Scene.h"
 
 #include <fstream>
+#include <algorithm>
 
 #include "Components/UUIDComponent.h"
 #include "Tools/Alias.h"
@@ -12,6 +13,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "AssetLoader/PathResolve.h"
 #include "Components/GameRootTag.h"
 #include "Scene/SceneManager.h"
 
@@ -56,18 +58,32 @@ namespace RTGDEngine
     std::string Scene::Serialize() const
     {
         nlohmann::json json = nlohmann::json::array();
+        const std::string sceneEntityTag = m_world->component<SceneEntity>().path(".", "").c_str();
 
         std::function<void(Entity, const std::string&)> collect = [&](Entity parent, const std::string& parentName)
         {
             parent.children([&](Entity child)
             {
+                if (child.has<GameRootTag>())
+                    return;
+
                 nlohmann::json full = nlohmann::json::parse(child.to_json().c_str());
+                full.erase("name");
+                full.erase("parent");
+
+                if (auto it = full.find("tags"); it != full.end())
+                {
+                    it->erase(std::remove(it->begin(), it->end(), sceneEntityTag), it->end());
+                    if (it->empty())
+                        full.erase(it);
+                }
+
                 nlohmann::json obj;
                 obj["Name"] = child.name().c_str();
                 if (!parentName.empty())
                     obj["Parent"] = parentName;
 
-                obj["Data"]["components"] = full["components"];
+                obj["Data"] = std::move(full);
                 json.push_back(std::move(obj));
                 collect(child, child.name().c_str());
             });
@@ -102,6 +118,28 @@ namespace RTGDEngine
         LogInfo("Saved to {}", absolutePath.c_str());
     }
 
+    bool Scene::Save() const
+    {
+        if (m_lastLoadedPath.empty())
+        {
+            LogWarn("Scene '{}' was never loaded from file, nothing to save to", m_name);
+            return false;
+        }
+
+        SaveToFile(m_lastLoadedPath);
+
+#ifdef RTGD_SOURCE_DIR
+        const std::filesystem::path sourceDir = RTGD_SOURCE_DIR;
+        if (std::filesystem::exists(sourceDir))
+        {
+            const auto relative = std::filesystem::relative(m_lastLoadedPath, GetAbsolutePath(""));
+            SaveToFile((sourceDir / relative).generic_string());
+        }
+#endif
+
+        return true;
+    }
+
     bool Scene::LoadFromFile(const std::string& absolutePath)
     {
         std::ifstream f(absolutePath.c_str());
@@ -129,8 +167,7 @@ namespace RTGDEngine
         auto arr = nlohmann::json::parse(json);
         for (auto& obj: arr)
         {
-            nlohmann::json data;
-            data["components"] = obj["Data"]["components"];
+            nlohmann::json data = obj["Data"];
             std::string parentName = obj.value("Parent", "");
             entities.push_back({obj["Name"].get<std::string>(), parentName, data.dump()});
         }
@@ -143,7 +180,7 @@ namespace RTGDEngine
         std::vector<Entity> created = {};
         created.reserve(entities.size());
 
-        for (auto& entity : entities)
+        for (auto& entity: entities)
             created.push_back(m_world->entity());
 
         for (size_t i = 0; i < entities.size(); ++i)

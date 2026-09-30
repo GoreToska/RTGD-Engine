@@ -24,6 +24,7 @@ namespace RTGDEngine {
         CtrlLeft,
         ReloadGameModule,
         TogglePlayMode,
+        SaveScene,
 
         Count
     };
