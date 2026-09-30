@@ -47,7 +47,9 @@ jobs:
 
       - name: FMOD SDK
         shell: bash
-        run: cp -r fmod-sdk/linux fmod-sdk/windows ThirdParty/FMOD/
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then P=windows; else P=linux; fi
+          cp -r fmod-sdk/$P ThirdParty/FMOD/
 
       - name: Linux deps
         if: runner.os == 'Linux'
