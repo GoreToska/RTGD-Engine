@@ -105,3 +105,5 @@ appsettings.*.local.json
 # !*.dll  
 # !*.lib
 /.idea/
+/ThirdParty/FMOD/linux/
+/ThirdParty/FMOD/windows/
