@@ -13,17 +13,19 @@
 #include "Tools/Alias.h"
 #include "Tools/RTGDMacros.h"
 
-namespace RTGDEngine {
+namespace RTGDEngine
+{
     class IInjectableButton;
     class IPlatformWindow;
 
-    class ENGINE_API InputSystem {
+    class ENGINE_API InputSystem
+    {
         DECLARE_SINGLETON(InputSystem);
 
     public:
-        void AddWindowHandle(IPlatformWindow *window);
+        void AddWindowHandle(IPlatformWindow* window);
 
-        void HandleNativeEvent(const NativeWindowEvent &event);
+        void HandleNativeEvent(const NativeWindowEvent& event);
 
         void Update();
 
@@ -65,7 +67,7 @@ namespace RTGDEngine {
 
         void SetCursorVisible(bool visible) const;
 
-        ActionID RegisterAction(const std::string &name);
+        ActionID RegisterAction(const std::string& name);
 
         void BindKey(ActionID action, gainput::Key key) const;
 
@@ -78,7 +80,7 @@ namespace RTGDEngine {
 
         void CreateInputMapping();
 
-        void InitializeInputForWindow(IPlatformWindow *handle);
+        void InitializeInputForWindow(IPlatformWindow* handle);
 
         gainput::InputManager m_manager = {};
         std::unique_ptr<gainput::InputMap> m_map = nullptr;
@@ -88,10 +90,10 @@ namespace RTGDEngine {
         gainput::DeviceId m_keyboard = gainput::InvalidDeviceId;
         gainput::DeviceId m_mouse = gainput::InvalidDeviceId;
 
-        IInjectableButton *m_injectKeyboard = nullptr;
-        IInjectableButton *m_injectMouseButton = nullptr;
+        IInjectableButton* m_injectKeyboard = nullptr;
+        IInjectableButton* m_injectMouseButton = nullptr;
 
-        IPlatformWindow *m_platformWindow = nullptr;
+        IPlatformWindow* m_platformWindow = nullptr;
 
         bool m_mouseCaptured = false;
         float m_mouseDeltaX = 0.0f;

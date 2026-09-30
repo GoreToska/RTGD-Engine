@@ -8,10 +8,13 @@
 #include <X11/XKBlib.h>
 #include <X11/extensions/XInput2.h>
 
-namespace RTGDEngine {
-    bool LinuxPlatformWindow::Create(const WindowDesc &desc) {
+namespace RTGDEngine
+{
+    bool LinuxPlatformWindow::Create(const WindowDesc& desc)
+    {
         m_display = XOpenDisplay(nullptr);
-        if (!m_display) return false;
+        if (!m_display)
+            return false;
 
         int screen = DefaultScreen(m_display);
 
@@ -35,7 +38,8 @@ namespace RTGDEngine {
         int xiEvent;
         int xiError;
 
-        if (XQueryExtension(m_display, "XInputExtension", &m_xiOpcode, &xiEvent, &xiError)) {
+        if (XQueryExtension(m_display, "XInputExtension", &m_xiOpcode, &xiEvent, &xiError))
+        {
             int major = 2;
             int minor = 0;
             XIQueryVersion(m_display, &major, &minor);
@@ -54,20 +58,30 @@ namespace RTGDEngine {
         return true;
     }
 
-    bool LinuxPlatformWindow::PollEvents() {
-        while (XPending(m_display)) {
+    bool LinuxPlatformWindow::PollEvents()
+    {
+        while (XPending(m_display))
+        {
             XEvent e;
             XNextEvent(m_display, &e);
 
-            if (e.type == GenericEvent && e.xcookie.extension == m_xiOpcode) {
-                if (XGetEventData(m_display, &e.xcookie)) {
-                    if (e.xcookie.evtype == XI_RawMotion) {
-                        auto *re = static_cast<XIRawEvent *>(e.xcookie.data);
-                        const double *val = re->raw_values;
-                        for (int i = 0; i < re->valuators.mask_len * 8; ++i) {
-                            if (XIMaskIsSet(re->valuators.mask, i)) {
-                                if (i == 0) m_deltaX += static_cast<float>(*val);
-                                else if (i == 1) m_deltaY += static_cast<float>(*val);
+            if (e.type == GenericEvent && e.xcookie.extension == m_xiOpcode)
+            {
+                if (XGetEventData(m_display, &e.xcookie))
+                {
+                    if (e.xcookie.evtype == XI_RawMotion)
+                    {
+                        auto* re = static_cast<XIRawEvent*>(e.xcookie.data);
+                        const double* val = re->raw_values;
+                        for (int i = 0; i < re->valuators.mask_len * 8; ++i)
+                        {
+                            if (XIMaskIsSet(re->valuators.mask, i))
+                            {
+                                if (i == 0)
+                                    m_deltaX += static_cast<float>(*val);
+                                else
+                                    if (i == 1)
+                                        m_deltaY += static_cast<float>(*val);
                                 ++val;
                             }
                         }
@@ -77,16 +91,20 @@ namespace RTGDEngine {
                 continue;
             }
 
-            if (OnNativeEvent) {
+            if (OnNativeEvent)
+            {
                 NativeWindowEvent event{};
                 event.XEvent = &e;
                 OnNativeEvent(event);
             }
 
-            switch (e.type) {
+            switch (e.type)
+            {
                 case ClientMessage:
-                    if ((Atom) e.xclient.data.l[0] == m_deleteAtom) {
-                        if (OnClose) OnClose();
+                    if ((Atom) e.xclient.data.l[0] == m_deleteAtom)
+                    {
+                        if (OnClose)
+                            OnClose();
                         m_running = false;
                     }
                     break;
@@ -100,7 +118,8 @@ namespace RTGDEngine {
         return m_running;
     }
 
-    NativeWindowHandle LinuxPlatformWindow::GetHandle() const {
+    NativeWindowHandle LinuxPlatformWindow::GetHandle() const
+    {
         NativeWindowHandle handle;
         handle.display = m_display;
         handle.window = m_window;
@@ -110,47 +129,58 @@ namespace RTGDEngine {
         return handle;
     }
 
-    EInputSource LinuxPlatformWindow::GetInputSource() const {
+    EInputSource LinuxPlatformWindow::GetInputSource() const
+    {
         return EInputSource::NativeEvents;
     }
 
-    void LinuxPlatformWindow::Destroy() {
-        XFreeCursor(m_display, m_window);
-
-        if (m_window && m_display) {
+    void LinuxPlatformWindow::Destroy()
+    {
+        if (m_window && m_display)
+        {
             XDestroyWindow(m_display, m_window);
             m_window = 0;
         }
-        if (m_display) {
+        if (m_display)
+        {
             XCloseDisplay(m_display);
             m_display = nullptr;
         }
     }
 
-    void LinuxPlatformWindow::SetCursorVisible(const bool visible) {
-        if (visible) {
+    void LinuxPlatformWindow::SetCursorVisible(const bool visible)
+    {
+        if (visible)
+        {
             XFixesShowCursor(m_display, m_window);
-        } else {
+        }
+        else
+        {
             XFixesHideCursor(m_display, m_window);
         }
     }
 
-    void LinuxPlatformWindow::SetRelativeMouseMode(bool relative) {
-        if (relative) {
+    void LinuxPlatformWindow::SetRelativeMouseMode(bool relative)
+    {
+        if (relative)
+        {
             SetCursorVisible(false);
             XGrabPointer(m_display, m_window, True,
                          ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                          GrabModeAsync, GrabModeAsync, m_window, None, CurrentTime);
             m_deltaX = 0.0f;
             m_deltaY = 0.0f;
-        } else {
+        }
+        else
+        {
             XUngrabPointer(m_display, CurrentTime);
             SetCursorVisible(true);
         }
         XFlush(m_display);
     }
 
-    bool LinuxPlatformWindow::GetMouseDelta(float &dx, float &dy) {
+    bool LinuxPlatformWindow::GetMouseDelta(float& dx, float& dy)
+    {
         dx = m_deltaX;
         dy = m_deltaY;
         m_deltaX = 0.0f;
