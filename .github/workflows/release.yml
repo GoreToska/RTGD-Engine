@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -38,6 +39,16 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/checkout@v4
+        with:
+          repository: GoreToska/RTGD-FMOD-SDK
+          token: ${{ secrets.FMOD_SDK_TOKEN }}
+          path: fmod-sdk
+
+      - name: FMOD SDK
+        shell: bash
+        run: cp -r fmod-sdk/linux fmod-sdk/windows ThirdParty/FMOD/
+
       - name: Linux deps
         if: runner.os == 'Linux'
         run: |
@@ -50,7 +61,7 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then GEN="-G Ninja"; fi
-          cmake -B build $GEN -DCMAKE_BUILD_TYPE=Release -DRTGD_WITH_FMOD=OFF
+          cmake -B build $GEN -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --config Release -j4

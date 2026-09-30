@@ -122,7 +122,7 @@ Mixer buses, global parameters and snapshots are exposed to gameplay code.
 | CMake | 3.20+ | 3.20+ |
 | Graphics | Windows 10+ with D3D12 | Vulkan SDK |
 | Editor | .NET 10 SDK | .NET 10 SDK |
-| Audio | FMOD Engine 2.03 (in repository) | FMOD Engine 2.03 (in repository) |
+| Audio (optional) | FMOD Engine 2.03 | FMOD Engine 2.03 |
 
 ### Engine and standalone runtime
 ```bash
@@ -142,10 +142,15 @@ git submodule update --init --recursive
 The standalone runtime is written to `build/bin/`. Assets and shaders are synced there
 automatically as part of the build.
 
-The FMOD Engine SDK for both platforms is already in `ThirdParty/FMOD/`, so no separate
-download is needed. The FMOD Studio project lives in `FMOD/RTGD/`; built banks are
-committed to `Assets/Audio/Desktop/`, so FMOD Studio is only needed to change the sound
-content.
+### Audio (FMOD)
+The FMOD Engine SDK is not included in the repository. Download FMOD Engine 2.03 from
+https://www.fmod.com/download and copy its `api` folder to `ThirdParty/FMOD/windows/api`
+or `ThirdParty/FMOD/linux/api` before configuring. Without the SDK the engine builds and
+runs with audio disabled. Release builds already ship the FMOD runtime libraries, so
+running a release needs no extra setup.
+
+The FMOD Studio project lives in `FMOD/RTGD/`; built banks are committed to
+`Assets/Audio/Desktop/`, so FMOD Studio is only needed to change the sound content.
 
 ### Editor
 Build the engine first — the editor loads the native library from the CMake output
@@ -171,6 +176,8 @@ dotnet run -c Release
 | [stb](https://github.com/nothings/stb) | Image loading |
 | [nlohmann/json](https://github.com/nlohmann/json) | Scene serialization |
 | [Avalonia](https://avaloniaui.net/) | Editor UI |
+
+Audio: FMOD Studio by Firelight Technologies Pty Ltd.
  
 ---
 ## License

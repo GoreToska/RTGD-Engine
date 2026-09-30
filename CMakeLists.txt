@@ -109,6 +109,8 @@ install(TARGETS RTGD-Engine Engine Game ${RTGD_SHARED_THIRD_PARTY}
 
 install(RUNTIME_DEPENDENCY_SET RTGDRuntimeDeps
         DIRECTORIES $<TARGET_FILE_DIR:RTGD-Engine>
+        $<$<BOOL:${RTGD_WITH_FMOD}>:$<TARGET_FILE_DIR:fmod>>
+        $<$<BOOL:${RTGD_WITH_FMOD}>:$<TARGET_FILE_DIR:fmodstudio>>
         PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*"
         POST_EXCLUDE_REGEXES ".*[Ss]ystem32/.*" "^/lib/.*" "^/lib64/.*" "^/usr/lib/.*"
         DESTINATION . COMPONENT Runtime)
