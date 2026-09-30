@@ -155,6 +155,8 @@ add_library(Engine SHARED
         Include/Components/ConstraintComponent.h
         Include/Systems/AudioSystem.h
         Include/Components/AudioSourceComponent.h
+        Source/Systems/TransformSystem.cpp
+        Include/Systems/TransformSystem.h
 )
 
 if (RTGD_WITH_FMOD)

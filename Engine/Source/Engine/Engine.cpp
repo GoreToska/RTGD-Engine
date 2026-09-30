@@ -29,6 +29,7 @@
 #include "Event/EventBus.h"
 #include "Systems/AudioSystem.h"
 #include "Systems/GroundCheckSystem.h"
+#include "Systems/TransformSystem.h"
 #include "Systems/Physics/PhysicsSystem.h"
 
 namespace RTGDEngine
@@ -68,6 +69,16 @@ namespace RTGDEngine
         {
             LightSystem::Update(world);
         }, ESystemPhase::Update, 30);
+
+        AddSystem([](World& w, float)
+        {
+            TransformSystem::Update(w);
+        }, ESystemPhase::PreUpdate, 1000);
+
+        AddSystem([](World& w, float)
+        {
+            TransformSystem::Update(w);
+        }, ESystemPhase::PostUpdate, -100);
     }
 
     bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window)

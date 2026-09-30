@@ -26,16 +26,19 @@ namespace RTGDEngine
         Quaternion Rotation = QuaternionIdentity();
         Float3 Scale = {1.0f, 1.0f, 1.0f};
 
+        Matrix4 WorldMatrix = Matrix4::Identity();
+        Float3 WorldPosition = {0.0f, 0.0f, 0.0f};
+        Quaternion WorldRotation = QuaternionIdentity();
+        Float3 WorldScale = Float3{1.0f, 1.0f, 1.0f};
+
         static constexpr Float3 GlobalForward = {0.0f, 0.0f, 1.0f};
         static constexpr Float3 GlobalUp = {0.0f, 1.0f, 0.0f};
         static constexpr Float3 GlobalRight = {1.0f, 0.0f, 0.0f};
 
-        Matrix4 GetWorldMatrix()
+        Matrix4 GetLocalMatrix() const
         {
-            Rotation = Diligent::normalize(Rotation);
-
             return Diligent::float4x4::Scale(Scale)
-                   * Rotation.ToMatrix()
+                   * Diligent::normalize(Rotation).ToMatrix()
                    * Diligent::float4x4::Translation(Position);
         }
 
@@ -175,9 +178,9 @@ namespace RTGDEngine
         {
             if (!MetaAlreadyRegistered(world, flecs::component<TransformComponent>(world, "TransformComponent")))
                 flecs::component<TransformComponent>(world, "TransformComponent")
-                        .member<Float3>("Position")
-                        .member<Quaternion>("Rotation")
-                        .member<Float3>("Scale");
+                        .member("Position", &TransformComponent::Position)
+                        .member("Rotation", &TransformComponent::Rotation)
+                        .member("Scale", &TransformComponent::Scale);
         }
     };
 }
