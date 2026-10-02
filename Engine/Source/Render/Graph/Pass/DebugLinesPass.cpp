@@ -22,14 +22,14 @@ namespace RTGDEngine
             switch (collider.Shape)
             {
                 case EPhysicsShape::Box:
-                    GDebugDraw().DrawBox(transform.Position, collider.Extents, transform.Rotation, color);
+                    GDebugDraw().DrawBox(transform.WorldPosition, collider.Extents, transform.WorldRotation, color);
                     break;
                 case EPhysicsShape::Sphere:
-                    GDebugDraw().DrawSphere(transform.Position, collider.Extents.x, color);
+                    GDebugDraw().DrawSphere(transform.WorldPosition, collider.Extents.x, color);
                     break;
                 case EPhysicsShape::Capsule:
-                    GDebugDraw().DrawCapsule(transform.Position, collider.Extents.y, collider.Extents.x,
-                                           transform.Rotation, color);
+                    GDebugDraw().DrawCapsule(transform.WorldPosition, collider.Extents.y, collider.Extents.x,
+                                             transform.WorldRotation, color);
                     break;
                 case EPhysicsShape::Mesh:
                 case EPhysicsShape::ConvexHull:
@@ -38,11 +38,11 @@ namespace RTGDEngine
                         JPH::Float3 verts[128 * 3];
                         int n;
                         JPH::Vec3 comOffset = collider.NativeShape->GetCenterOfMass();
-                        JPH::RVec3 comPos = ToRVec3(transform.Position) + ToQuat(transform.Rotation) * comOffset;
+                        JPH::RVec3 comPos = ToRVec3(transform.WorldPosition) + ToQuat(transform.WorldRotation) * comOffset;
 
-                        JPH::Shape::GetTrianglesContext ctx;
+                        JPH::Shape::GetTrianglesContext ctx{};
                         collider.NativeShape->GetTrianglesStart(ctx, JPH::AABox::sBiggest(),
-                                                                comPos, ToQuat(transform.Rotation),
+                                                                comPos, ToQuat(transform.WorldRotation),
                                                                 JPH::Vec3::sReplicate(1.0f));
 
                         while ((n = collider.NativeShape->GetTrianglesNext(ctx, 128, verts)) > 0)

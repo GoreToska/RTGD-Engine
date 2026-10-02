@@ -174,6 +174,27 @@ namespace RTGDEngine
             return up;
         }
 
+        Float3 GetWorldForward() const
+        {
+            Float3 right, up, forward;
+            GetBasis(WorldRotation, right, up, forward);
+            return forward;
+        }
+
+        Float3 GetWorldUp() const
+        {
+            Float3 right, up, forward;
+            GetBasis(WorldRotation, right, up, forward);
+            return up;
+        }
+
+        Float3 GetWorldRight() const
+        {
+            Float3 right, up, forward;
+            GetBasis(WorldRotation, right, up, forward);
+            return right;
+        }
+
         static void RegisterMeta(const flecs::world& world)
         {
             if (!MetaAlreadyRegistered(world, flecs::component<TransformComponent>(world, "TransformComponent")))

@@ -63,12 +63,12 @@ namespace RTGDEngine
         }, ESystemPhase::Update, 0);
 
         AddSystem(MovementSystem::Update, ESystemPhase::Update, 0);
-        AddSystem(CameraSystem::Update, ESystemPhase::Update, 20);
+        AddSystem(CameraSystem::Update, ESystemPhase::PostUpdate, -50);
 
         AddSystem([](World& world, float)
         {
             LightSystem::Update(world);
-        }, ESystemPhase::Update, 30);
+        }, ESystemPhase::PostUpdate, -40);
 
         AddSystem([](World& w, float)
         {

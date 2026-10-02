@@ -56,7 +56,7 @@ namespace RTGDEngine
             if (!md.VertexBuffer)
                 return;
 
-            const Matrix4 worldMatrix = tc.GetLocalMatrix();
+            const Matrix4 worldMatrix = tc.WorldMatrix;
             const AABB box = md.LocalBounds.IsValid() ? TransformBounds(md.LocalBounds, worldMatrix) : AABB{};
             const uint8_t flags = static_cast<uint8_t>((rc.CastShadows ? 1 : 0) | (md.LocalBounds.IsValid() ? 0 : 2));
             Add(box, worldMatrix, mc.Mesh.Handle, mc.Material.Handle, flags, e);

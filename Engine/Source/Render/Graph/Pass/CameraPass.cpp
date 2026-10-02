@@ -26,9 +26,9 @@ namespace RTGDEngine {
             cb.Projection = cam->ProjectionMatrix;
             cb.CameraPosition =
             {
-                transform->Position.x,
-                transform->Position.y,
-                transform->Position.z, 1.0f
+                transform->WorldPosition.x,
+                transform->WorldPosition.y,
+                transform->WorldPosition.z, 1.0f
             };
 
             context.Frame.UpdateCamera(cb);
