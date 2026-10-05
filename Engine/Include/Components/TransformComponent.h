@@ -195,6 +195,19 @@ namespace RTGDEngine
             return right;
         }
 
+        void ApplyWorldPose(const TransformComponent* parent)
+        {
+            if (!parent)
+            {
+                Position = WorldPosition;
+                Rotation = WorldRotation;
+                return;
+            }
+
+            Position = WorldPosition * parent->WorldMatrix.Inverse();
+            Rotation = QuaternionConjugate(parent->WorldRotation) * WorldRotation;
+        }
+
         static void RegisterMeta(const flecs::world& world)
         {
             if (!MetaAlreadyRegistered(world, flecs::component<TransformComponent>(world, "TransformComponent")))
