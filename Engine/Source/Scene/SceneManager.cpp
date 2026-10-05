@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include "Components/TransformComponent.h"
 #include "Components/UUIDComponent.h"
 #include "Event/Events.h"
 #include "JobSystem/JobSystem.h"
@@ -231,7 +232,8 @@ namespace RTGDEngine
 
         auto entity = m_world.entity(name.c_str()).child_of(parent)
                 .add<UUIDComponent>()
-                .add<SceneEntity>();
+                .add<SceneEntity>()
+                .add<TransformComponent>();
 
         LogInfo("Entity created '{}'", name);
         return entity;
@@ -272,7 +274,31 @@ namespace RTGDEngine
         if (newParent == 0)
             return;
 
+        for (Entity p = newParent; p; p = p.parent())
+        {
+            if (p == e)
+                return;
+        }
+
+        const TransformComponent* oldParentT = TransformComponent::GetParentTransform(e);
+        const auto* newParentT = newParent.try_get<TransformComponent>();
+        Float3 oldParentScale = oldParentT ? oldParentT->WorldScale : Float3{1.0f, 1.0f, 1.0f};
+        Float3 newParentScale = newParentT ? newParentT->WorldScale : Float3{1.0f, 1.0f, 1.0f};
+
+        if (newParentScale.x == 0 || newParentScale.y == 0 || newParentScale.z == 0)
+        {
+            LogWarn("Can't reparent '{}': new parent has zero scale.", e.name().c_str());
+            return;
+        }
+
         e.child_of(newParent);
+
+        if (auto* t = e.try_get_mut<TransformComponent>())
+        {
+            t->ApplyWorldPose(newParent.try_get<TransformComponent>());
+            t->Scale = t->Scale * oldParentScale / newParentScale;
+        }
+
         GEventBus().Emit(Events::OnEntityReparented, {e.id(), oldParent.id(), newParent.id()}, {});
     }
 

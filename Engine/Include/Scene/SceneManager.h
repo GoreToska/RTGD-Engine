@@ -16,46 +16,50 @@
 #include "Tools/RTGDMacros.h"
 #include "Tools/Alias.h"
 
-namespace RTGDEngine {
+namespace RTGDEngine
+{
     class Scene;
 }
 
-namespace RTGDEngine {
-    class ENGINE_API SceneManager {
+namespace RTGDEngine
+{
+    class ENGINE_API SceneManager
+    {
         DECLARE_SINGLETON(SceneManager);
 
     public:
-        struct PendingSceneLoad {
+        struct PendingSceneLoad
+        {
             std::string name;
             std::vector<Scene::EntityData> entities{};
         };
 
         void Initialize();
 
-        std::shared_ptr<Scene> CreateScene(const std::string &name);
+        std::shared_ptr<Scene> CreateScene(const std::string& name);
 
-        void UnloadScene(const std::string &name);
+        void UnloadScene(const std::string& name);
 
         [[nodiscard]] std::shared_ptr<Scene> GetActiveScene() const;
 
-        void SetActiveScene(const std::string &name);
+        void SetActiveScene(const std::string& name);
 
-        [[nodiscard]] bool HasScene(const std::string &name) const;
+        [[nodiscard]] bool HasScene(const std::string& name) const;
 
-        std::shared_ptr<Scene> LoadSceneFromFile(const std::string &absolutePath);
+        std::shared_ptr<Scene> LoadSceneFromFile(const std::string& absolutePath);
 
         void ReloadAll();
 
-        void RequestActiveScene(const std::string &name);
+        void RequestActiveScene(const std::string& name);
 
-        void RequestUnloadScene(const std::string &name);
+        void RequestUnloadScene(const std::string& name);
 
         template<typename Func>
-        void Each(Func &&func) { m_world.each(std::forward<Func>(func)); }
+        void Each(Func&& func) { m_world.each(std::forward<Func>(func)); }
 
-        flecs::world &GetWorld();
+        flecs::world& GetWorld();
 
-        void RequestLoadScene(const std::string &absolutePath);
+        void RequestLoadScene(const std::string& absolutePath);
 
         void ApplyPendingSceneChanges();
 
@@ -74,22 +78,22 @@ namespace RTGDEngine {
         Entity Find(const std::string& name);
 
         // Parent ID here can be a scene ID too - if scene ID is passed, entity will be created as part of this scene (for additional scenes support)
-        flecs::entity CreateEntity(const std::string &name, flecs::entity parent = {});
+        Entity CreateEntity(const std::string& name, Entity parent = {});
 
-        flecs::entity GetGameRoot();
+        Entity GetGameRoot();
 
-        void DestroyEntity(flecs::entity e);
+        void DestroyEntity(Entity e);
 
-        void RenameEntity(flecs::entity e, const std::string &name);
+        void RenameEntity(Entity e, const std::string& name);
 
-        void ReparentEntity(flecs::entity e, flecs::entity parent = {});
+        void ReparentEntity(Entity e, Entity parent = {});
 
-        void EnqueueCommand(std::function<void(flecs::world &)> func);
+        void EnqueueCommand(std::function<void(flecs::world&)> func);
 
         void Shutdown();
 
     private:
-        std::unordered_map<std::string, std::shared_ptr<Scene> > m_scenes{};
+        std::unordered_map<std::string, std::shared_ptr<Scene>> m_scenes{};
         std::shared_ptr<Scene> m_activeScene = nullptr;
         std::string m_pendingActive = {};
         std::vector<std::string> m_pendingUnloads = {};
@@ -97,7 +101,7 @@ namespace RTGDEngine {
         flecs::world m_world = flecs::world();
 
         std::mutex m_commandsMutex{};
-        std::vector<std::function<void(flecs::world &)> > m_commands{};
+        std::vector<std::function<void(flecs::world&)>> m_commands{};
 
         std::mutex m_loadMutex = {};
         std::vector<PendingSceneLoad> m_completedLoads = {};

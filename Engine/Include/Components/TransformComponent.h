@@ -197,15 +197,26 @@ namespace RTGDEngine
 
         void ApplyWorldPose(const TransformComponent* parent)
         {
-            if (!parent)
-            {
-                Position = WorldPosition;
-                Rotation = WorldRotation;
-                return;
-            }
+            SetWorldPosition(WorldPosition, parent);
+            SetWorldRotation(WorldRotation, parent);
+        }
 
-            Position = WorldPosition * parent->WorldMatrix.Inverse();
-            Rotation = QuaternionConjugate(parent->WorldRotation) * WorldRotation;
+        static const TransformComponent* GetParentTransform(Entity e)
+        {
+            Entity parent = e.parent();
+            return parent ? parent.try_get<TransformComponent>() : nullptr;
+        }
+
+        void SetWorldPosition(const Float3& position, const TransformComponent* parent)
+        {
+            WorldPosition = position;
+            Position = parent ? position * parent->WorldMatrix.Inverse() : position;
+        }
+
+        void SetWorldRotation(const Quaternion& rotation, const TransformComponent* parent)
+        {
+            WorldRotation = rotation;
+            Rotation = parent ? QuaternionConjugate(parent->WorldRotation) * rotation : rotation;
         }
 
         static void RegisterMeta(const flecs::world& world)

@@ -1250,18 +1250,12 @@ namespace RTGDEngine
                 setWorldPose(transform, controller.Controller->GetPosition(), controller.Controller->GetRotation());
             });
 
-        auto toLocal = [](Entity e, TransformComponent& t)
-        {
-            Entity parent = e.parent();
-            t.ApplyWorldPose(parent ? parent.try_get<TransformComponent>() : nullptr);
-        };
-
         world.query<RigidbodyComponent, TransformComponent>().each(
             [&](Entity e, RigidbodyComponent& rb, TransformComponent& transform)
             {
                 if (rb.MotionType == EMotionType::Static || rb.BodyID.IsInvalid())
                     return;
-                toLocal(e, transform);
+                transform.ApplyWorldPose(TransformComponent::GetParentTransform(e));
             });
 
         world.query<CharacterControllerComponent, TransformComponent>().each(
@@ -1269,7 +1263,7 @@ namespace RTGDEngine
             {
                 if (!controller.Controller)
                     return;
-                toLocal(e, transform);
+                transform.ApplyWorldPose(TransformComponent::GetParentTransform(e));
             });
     }
 
