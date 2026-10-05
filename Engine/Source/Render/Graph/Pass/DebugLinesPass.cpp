@@ -35,17 +35,27 @@ namespace RTGDEngine
                 case EPhysicsShape::ConvexHull:
                     if (collider.NativeShape)
                     {
+                        const JPH::Shape* shape = collider.NativeShape.GetPtr();
+                        JPH::Vec3 scale = JPH::Vec3::sReplicate(1.0f);
+                        if (shape->GetSubType() == JPH::EShapeSubType::Scaled)
+                        {
+                            auto* scaled = static_cast<const JPH::ScaledShape*>(shape);
+                            scale = scaled->GetScale();
+                            shape = scaled->GetInnerShape();
+                        }
+
                         JPH::Float3 verts[128 * 3];
                         int n;
                         JPH::Vec3 comOffset = collider.NativeShape->GetCenterOfMass();
-                        JPH::RVec3 comPos = ToRVec3(transform.WorldPosition) + ToQuat(transform.WorldRotation) * comOffset;
+                        JPH::RVec3 comPos = ToRVec3(transform.WorldPosition) + ToQuat(transform.WorldRotation) *
+                                            comOffset;
 
                         JPH::Shape::GetTrianglesContext ctx{};
-                        collider.NativeShape->GetTrianglesStart(ctx, JPH::AABox::sBiggest(),
-                                                                comPos, ToQuat(transform.WorldRotation),
-                                                                JPH::Vec3::sReplicate(1.0f));
+                        shape->GetTrianglesStart(ctx, JPH::AABox::sBiggest(),
+                                                 comPos, ToQuat(transform.WorldRotation),
+                                                 scale);
 
-                        while ((n = collider.NativeShape->GetTrianglesNext(ctx, 128, verts)) > 0)
+                        while ((n = shape->GetTrianglesNext(ctx, 128, verts)) > 0)
                         {
                             for (int i = 0; i < n; ++i)
                             {

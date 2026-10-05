@@ -79,6 +79,11 @@ namespace RTGDEngine
         {
             TransformSystem::Update(w);
         }, ESystemPhase::PostUpdate, -100);
+
+        AddSystem([](World& w, float)
+        {
+            GPhysics().RebuildDirty(w);
+        }, ESystemPhase::PreUpdate, 1010);
     }
 
     bool Engine::Initialize(std::unique_ptr<IPlatformWindow> window)

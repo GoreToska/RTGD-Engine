@@ -630,6 +630,43 @@ namespace RTGDEngine
         return OverlapCapsule(GScene().GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask, ids);
     }
 
+    void PhysicsSystem::RebuildDirty(World& world)
+    {
+        world.query<ColliderComponent, const TransformComponent>().each(
+            [](Entity e, ColliderComponent& c, const TransformComponent& t)
+            {
+                if (!c.NeedsRebuild)
+                    return;
+
+                c.NeedsRebuild = false;
+                ColliderComponent::BuildShape(e);
+                if (auto* rb = e.try_get_mut<RigidbodyComponent>())
+                    rb->NeedsRebuild = true;
+                if (auto* cc = e.try_get_mut<CharacterControllerComponent>())
+                    cc->NeedsRebuild = true;
+            });
+
+        world.query<RigidbodyComponent, const ColliderComponent, const TransformComponent>().each(
+            [](Entity e, RigidbodyComponent& rb, const ColliderComponent&, const TransformComponent&)
+            {
+                if (!rb.NeedsRebuild)
+                    return;
+                rb.NeedsRebuild = false;
+                RigidbodyComponent::CreateBody(e);
+            });
+
+        world.query<CharacterControllerComponent, const ColliderComponent, const TransformComponent>()
+                .each([](Entity e, CharacterControllerComponent& cc, const ColliderComponent&,
+                         const TransformComponent&)
+                {
+                    if (!cc.NeedsRebuild)
+                        return;
+
+                    cc.NeedsRebuild = false;
+                    CharacterControllerComponent::CreateController(e);
+                });
+    }
+
     OverlapHit PhysicsSystem::MakeOverlapHit(World& world, const JPH::CollideShapeResult& result)
     {
         auto it = m_bodyInfo.find(result.mBodyID2);
