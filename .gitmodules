@@ -28,3 +28,9 @@
 [submodule "ThirdParty/meshoptimizer"]
 	path = ThirdParty/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer.git
+[submodule "ThirdParty/freetype"]
+	path = ThirdParty/freetype
+	url = https://github.com/freetype/freetype.git
+[submodule "ThirdParty/RmlUi"]
+	path = ThirdParty/RmlUi
+	url = https://github.com/mikke89/RmlUi.git

@@ -195,6 +195,8 @@ target_link_libraries(Engine PUBLIC
         meshoptimizer
 )
 
+target_link_libraries(Engine PRIVATE RmlUi::RmlUi)
+
 if (WIN32)
     target_link_libraries(Engine PUBLIC
             Diligent-GraphicsEngineD3D12-shared

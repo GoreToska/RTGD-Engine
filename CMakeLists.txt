@@ -28,6 +28,23 @@ if (RTGD_WITH_FMOD AND NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/FMOD/${RTGD_FM
     set(RTGD_WITH_FMOD OFF)
 endif ()
 
+set(BUILD_SHARED_LIBS OFF)
+set(FT_DISABLE_ZLIB ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BZIP2 ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_PNG ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BROTLI ON CACHE BOOL "" FORCE)
+add_subdirectory(ThirdParty/freetype)
+add_library(Freetype::Freetype ALIAS freetype)
+
+set(CMAKE_DISABLE_FIND_PACKAGE_Freetype ON)
+set(RMLUI_SAMPLES OFF CACHE BOOL "" FORCE)
+set(RMLUI_FONT_ENGINE "freetype" CACHE STRING "" FORCE)
+add_subdirectory(ThirdParty/RmlUi)
+
+unset(BUILD_SHARED_LIBS)
+unset(CMAKE_DISABLE_FIND_PACKAGE_Freetype)
+
 add_subdirectory(ThirdParty/flecs)
 
 if (TARGET flecs)
