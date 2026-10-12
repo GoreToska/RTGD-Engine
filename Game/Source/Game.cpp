@@ -109,7 +109,7 @@ void Game::OnStop()
     GInput().SetRelativeMouseMode(false);
 }
 
-void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
+void Game::PlayerMovementSystem(World& world, float deltaTime)
 {
     auto& transform = m_player.get_mut<TransformComponent>();
 
@@ -147,7 +147,7 @@ void Game::PlayerMovementSystem(flecs::world& world, float deltaTime)
         cc.Controller->Jump(m_jumpSpeed);
 }
 
-void Game::CameraUpdate(flecs::world& world, float deltaTime)
+void Game::CameraUpdate(World& world, float deltaTime)
 {
     auto& playerTransform = m_player.get_mut<TransformComponent>();
     auto& camTransform = m_playerCam.get_mut<TransformComponent>();
