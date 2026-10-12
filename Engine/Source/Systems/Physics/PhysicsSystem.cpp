@@ -630,6 +630,43 @@ namespace RTGDEngine
         return OverlapCapsule(GScene().GetWorld(), center, radius, halfHeight, rotation, hitTriggers, layerMask, ids);
     }
 
+    void PhysicsSystem::RebuildDirty(World& world)
+    {
+        world.query<ColliderComponent, const TransformComponent>().each(
+            [](Entity e, ColliderComponent& c, const TransformComponent& t)
+            {
+                if (!c.NeedsRebuild)
+                    return;
+
+                c.NeedsRebuild = false;
+                ColliderComponent::BuildShape(e);
+                if (auto* rb = e.try_get_mut<RigidbodyComponent>())
+                    rb->NeedsRebuild = true;
+                if (auto* cc = e.try_get_mut<CharacterControllerComponent>())
+                    cc->NeedsRebuild = true;
+            });
+
+        world.query<RigidbodyComponent, const ColliderComponent, const TransformComponent>().each(
+            [](Entity e, RigidbodyComponent& rb, const ColliderComponent&, const TransformComponent&)
+            {
+                if (!rb.NeedsRebuild)
+                    return;
+                rb.NeedsRebuild = false;
+                RigidbodyComponent::CreateBody(e);
+            });
+
+        world.query<CharacterControllerComponent, const ColliderComponent, const TransformComponent>()
+                .each([](Entity e, CharacterControllerComponent& cc, const ColliderComponent&,
+                         const TransformComponent&)
+                {
+                    if (!cc.NeedsRebuild)
+                        return;
+
+                    cc.NeedsRebuild = false;
+                    CharacterControllerComponent::CreateController(e);
+                });
+    }
+
     OverlapHit PhysicsSystem::MakeOverlapHit(World& world, const JPH::CollideShapeResult& result)
     {
         auto it = m_bodyInfo.find(result.mBodyID2);
@@ -1158,7 +1195,7 @@ namespace RTGDEngine
                                                    RotationDOFs)) == static_cast<uint8_t>(RotationDOFs);
 
                 if (!physicsOwnsRotation)
-                    bi.SetRotation(physics.BodyID, ToQuat(transform.Rotation), JPH::EActivation::DontActivate);
+                    bi.SetRotation(physics.BodyID, ToQuat(transform.WorldRotation), JPH::EActivation::DontActivate);
             });
 
         ApplyPendingForces();
@@ -1180,19 +1217,26 @@ namespace RTGDEngine
             EmitStay(world, c);
         }
 
-        world.query<RigidbodyComponent, TransformComponent>().each(
-            [&](RigidbodyComponent& physics, TransformComponent& transform)
-            {
-                if (physics.MotionType == EMotionType::Static || physics.BodyID.IsInvalid())
-                {
-                    return;
-                }
+        auto& bi = m_physicsSystem.GetBodyInterface();
 
-                auto& bi = m_physicsSystem.GetBodyInterface();
-                transform.Position = ToFloat3(bi.GetPosition(physics.BodyID));
-                transform.Rotation = ToQuaternion(bi.GetRotation(physics.BodyID));
-                physics.Velocity = ToFloat3(bi.GetLinearVelocity(physics.BodyID));
-                physics.AngularVelocity = ToFloat3(bi.GetAngularVelocity(physics.BodyID));
+        auto setWorldPose = [](TransformComponent& t, const Float3& pos, const Quaternion& rot)
+        {
+            t.WorldPosition = pos;
+            t.WorldRotation = rot;
+            t.WorldMatrix = Diligent::float4x4::Scale(t.WorldScale)
+                            * Diligent::normalize(rot).ToMatrix()
+                            * Diligent::float4x4::Translation(pos);
+        };
+
+        world.query<RigidbodyComponent, TransformComponent>().each(
+            [&](RigidbodyComponent& rg, TransformComponent& transform)
+            {
+                if (rg.MotionType == EMotionType::Static || rg.BodyID.IsInvalid())
+                    return;
+
+                setWorldPose(transform, ToFloat3(bi.GetPosition(rg.BodyID)), ToQuaternion(bi.GetRotation(rg.BodyID)));
+                rg.Velocity = ToFloat3(bi.GetLinearVelocity(rg.BodyID));
+                rg.AngularVelocity = ToFloat3(bi.GetAngularVelocity(rg.BodyID));
             });
 
         world.query<CharacterControllerComponent, TransformComponent>().each(
@@ -1201,10 +1245,25 @@ namespace RTGDEngine
                 if (!controller.Controller)
                     return;
 
-                controller.Controller->SetRotation(transform.Rotation);
+                controller.Controller->SetRotation(transform.WorldRotation);
                 controller.Controller->Update(deltaTime);
-                transform.Position = controller.Controller->GetPosition();
-                transform.Rotation = controller.Controller->GetRotation();
+                setWorldPose(transform, controller.Controller->GetPosition(), controller.Controller->GetRotation());
+            });
+
+        world.query<RigidbodyComponent, TransformComponent>().each(
+            [&](Entity e, RigidbodyComponent& rb, TransformComponent& transform)
+            {
+                if (rb.MotionType == EMotionType::Static || rb.BodyID.IsInvalid())
+                    return;
+                transform.ApplyWorldPose(TransformComponent::GetParentTransform(e));
+            });
+
+        world.query<CharacterControllerComponent, TransformComponent>().each(
+            [&](Entity e, CharacterControllerComponent& controller, TransformComponent& transform)
+            {
+                if (!controller.Controller)
+                    return;
+                transform.ApplyWorldPose(TransformComponent::GetParentTransform(e));
             });
     }
 

@@ -45,6 +45,7 @@ namespace RTGDEngine
 
         // Transient
         JPH::ShapeRefC NativeShape;
+        bool NeedsRebuild = true;
 
         static JPH::ShapeRefC MakeShape(EPhysicsShape shape, const Float3& extents)
         {
@@ -129,7 +130,7 @@ namespace RTGDEngine
             }
 
             JPH::ShapeRefC finalShape = result.Get();
-            if (scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f)
+            if (!ToVec3(scale).IsClose(JPH::Vec3::sReplicate(1.0f), 1.0e-6f))
             {
                 auto scaled = JPH::ScaledShapeSettings(finalShape, ToVec3(scale)).Create();
                 if (!scaled.IsValid())
@@ -149,6 +150,31 @@ namespace RTGDEngine
             JPH::MassProperties props = MakeShape(shape, extents)->GetMassProperties();
             props.ScaleToMass(mass);
             return props;
+        }
+
+        static void BuildShape(Entity e)
+        {
+            auto collider = e.get_ref<ColliderComponent>();
+            if (!collider)
+                return;
+
+            bool isMeshShape = collider->Shape == EPhysicsShape::Mesh || collider->Shape ==
+                               EPhysicsShape::ConvexHull;
+
+            if (isMeshShape)
+            {
+                auto transform = e.get_ref<TransformComponent>();
+                if (!transform)
+                    return;
+
+                collider->NativeShape = MakeMeshShape(collider->Shape, GetAbsolutePath(collider->CollisionMeshPath),
+                                                      transform->WorldScale, collider->ConvexHullPointTarget,
+                                                      collider->MeshTriangleTarget);
+            }
+            else
+            {
+                collider->NativeShape = MakeShape(collider->Shape, collider->Extents);
+            }
         }
 
         static void RegisterMeta(const World& world)
@@ -171,43 +197,10 @@ namespace RTGDEngine
                     .member<bool>("IsTrigger")
                     .member<uint8_t>("Layer");
 
-            auto buildShape = [](flecs::entity e)
-            {
-                auto collider = e.get_ref<ColliderComponent>();
-                if (!collider)
-                    return;
-
-                bool isMeshShape = collider->Shape == EPhysicsShape::Mesh || collider->Shape ==
-                                   EPhysicsShape::ConvexHull;
-
-                if (isMeshShape)
-                {
-                    auto transform = e.get_ref<TransformComponent>();
-                    if (!transform)
-                        return;
-
-                    collider->NativeShape = MakeMeshShape(collider->Shape, GetAbsolutePath(collider->CollisionMeshPath),
-                                                          transform->Scale, collider->ConvexHullPointTarget,
-                                                          collider->MeshTriangleTarget);
-                }
-                else
-                {
-                    collider->NativeShape = MakeShape(collider->Shape, collider->Extents);
-                }
-            };
-
             world.observer<ColliderComponent>().event(flecs::OnSet).each(
-                [buildShape](flecs::entity e, ColliderComponent&)
+                [](Entity e, ColliderComponent& c)
                 {
-                    buildShape(e);
-                });
-
-            world.observer<TransformComponent>().event(flecs::OnSet).each(
-                [buildShape](flecs::entity e, TransformComponent&)
-                {
-                    auto collider = e.get_ref<ColliderComponent>();
-                    if (collider && !collider->NativeShape)
-                        buildShape(e);
+                    c.NeedsRebuild = true;
                 });
         }
     };

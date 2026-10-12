@@ -11,10 +11,9 @@ namespace RTGDEngine {
     void CameraSystem::Update(const flecs::world &world, float deltaTime) {
         world.each([&](CameraComponent &cam,
                        const TransformComponent &transform) {
-            const auto right = transform.GetRight();
-            const auto up = transform.GetUp();
-            const auto forward = transform.GetForward();
-            const auto pos = transform.Position;
+            Float3 right, up, forward;
+            GetBasis(transform.WorldRotation, right, up, forward);
+            const auto pos = transform.WorldPosition;
 
             auto view = Matrix4::ViewFromBasis(right, up, forward);
             view.m30 = -Diligent::dot(right, pos);

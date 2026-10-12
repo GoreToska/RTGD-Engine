@@ -26,16 +26,19 @@ namespace RTGDEngine
         Quaternion Rotation = QuaternionIdentity();
         Float3 Scale = {1.0f, 1.0f, 1.0f};
 
+        Matrix4 WorldMatrix = Matrix4::Identity();
+        Float3 WorldPosition = {0.0f, 0.0f, 0.0f};
+        Quaternion WorldRotation = QuaternionIdentity();
+        Float3 WorldScale = Float3{1.0f, 1.0f, 1.0f};
+
         static constexpr Float3 GlobalForward = {0.0f, 0.0f, 1.0f};
         static constexpr Float3 GlobalUp = {0.0f, 1.0f, 0.0f};
         static constexpr Float3 GlobalRight = {1.0f, 0.0f, 0.0f};
 
-        Matrix4 GetWorldMatrix()
+        Matrix4 GetLocalMatrix() const
         {
-            Rotation = Diligent::normalize(Rotation);
-
             return Diligent::float4x4::Scale(Scale)
-                   * Rotation.ToMatrix()
+                   * Diligent::normalize(Rotation).ToMatrix()
                    * Diligent::float4x4::Translation(Position);
         }
 
@@ -171,13 +174,58 @@ namespace RTGDEngine
             return up;
         }
 
+        Float3 GetWorldForward() const
+        {
+            Float3 right, up, forward;
+            GetBasis(WorldRotation, right, up, forward);
+            return forward;
+        }
+
+        Float3 GetWorldUp() const
+        {
+            Float3 right, up, forward;
+            GetBasis(WorldRotation, right, up, forward);
+            return up;
+        }
+
+        Float3 GetWorldRight() const
+        {
+            Float3 right, up, forward;
+            GetBasis(WorldRotation, right, up, forward);
+            return right;
+        }
+
+        void ApplyWorldPose(const TransformComponent* parent)
+        {
+            SetWorldPosition(WorldPosition, parent);
+            SetWorldRotation(WorldRotation, parent);
+        }
+
+        static const TransformComponent* GetParentTransform(Entity e)
+        {
+            Entity parent = e.parent();
+            return parent ? parent.try_get<TransformComponent>() : nullptr;
+        }
+
+        void SetWorldPosition(const Float3& position, const TransformComponent* parent)
+        {
+            WorldPosition = position;
+            Position = parent ? position * parent->WorldMatrix.Inverse() : position;
+        }
+
+        void SetWorldRotation(const Quaternion& rotation, const TransformComponent* parent)
+        {
+            WorldRotation = rotation;
+            Rotation = parent ? QuaternionConjugate(parent->WorldRotation) * rotation : rotation;
+        }
+
         static void RegisterMeta(const flecs::world& world)
         {
             if (!MetaAlreadyRegistered(world, flecs::component<TransformComponent>(world, "TransformComponent")))
                 flecs::component<TransformComponent>(world, "TransformComponent")
-                        .member<Float3>("Position")
-                        .member<Quaternion>("Rotation")
-                        .member<Float3>("Scale");
+                        .member("Position", &TransformComponent::Position)
+                        .member("Rotation", &TransformComponent::Rotation)
+                        .member("Scale", &TransformComponent::Scale);
         }
     };
 }

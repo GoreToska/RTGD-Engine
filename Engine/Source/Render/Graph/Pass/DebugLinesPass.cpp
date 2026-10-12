@@ -22,30 +22,40 @@ namespace RTGDEngine
             switch (collider.Shape)
             {
                 case EPhysicsShape::Box:
-                    GDebugDraw().DrawBox(transform.Position, collider.Extents, transform.Rotation, color);
+                    GDebugDraw().DrawBox(transform.WorldPosition, collider.Extents, transform.WorldRotation, color);
                     break;
                 case EPhysicsShape::Sphere:
-                    GDebugDraw().DrawSphere(transform.Position, collider.Extents.x, color);
+                    GDebugDraw().DrawSphere(transform.WorldPosition, collider.Extents.x, color);
                     break;
                 case EPhysicsShape::Capsule:
-                    GDebugDraw().DrawCapsule(transform.Position, collider.Extents.y, collider.Extents.x,
-                                           transform.Rotation, color);
+                    GDebugDraw().DrawCapsule(transform.WorldPosition, collider.Extents.y, collider.Extents.x,
+                                             transform.WorldRotation, color);
                     break;
                 case EPhysicsShape::Mesh:
                 case EPhysicsShape::ConvexHull:
                     if (collider.NativeShape)
                     {
+                        const JPH::Shape* shape = collider.NativeShape.GetPtr();
+                        JPH::Vec3 scale = JPH::Vec3::sReplicate(1.0f);
+                        if (shape->GetSubType() == JPH::EShapeSubType::Scaled)
+                        {
+                            auto* scaled = static_cast<const JPH::ScaledShape*>(shape);
+                            scale = scaled->GetScale();
+                            shape = scaled->GetInnerShape();
+                        }
+
                         JPH::Float3 verts[128 * 3];
                         int n;
                         JPH::Vec3 comOffset = collider.NativeShape->GetCenterOfMass();
-                        JPH::RVec3 comPos = ToRVec3(transform.Position) + ToQuat(transform.Rotation) * comOffset;
+                        JPH::RVec3 comPos = ToRVec3(transform.WorldPosition) + ToQuat(transform.WorldRotation) *
+                                            comOffset;
 
-                        JPH::Shape::GetTrianglesContext ctx;
-                        collider.NativeShape->GetTrianglesStart(ctx, JPH::AABox::sBiggest(),
-                                                                comPos, ToQuat(transform.Rotation),
-                                                                JPH::Vec3::sReplicate(1.0f));
+                        JPH::Shape::GetTrianglesContext ctx{};
+                        shape->GetTrianglesStart(ctx, JPH::AABox::sBiggest(),
+                                                 comPos, ToQuat(transform.WorldRotation),
+                                                 scale);
 
-                        while ((n = collider.NativeShape->GetTrianglesNext(ctx, 128, verts)) > 0)
+                        while ((n = shape->GetTrianglesNext(ctx, 128, verts)) > 0)
                         {
                             for (int i = 0; i < n; ++i)
                             {

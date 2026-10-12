@@ -1,0 +1,630 @@
+[
+  {
+    "Name": "ParentRig",
+    "Data": {
+      "components": {
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        },
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": 1,
+            "z": 6
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0.3826834323650898,
+            "z": 0,
+            "w": 0.9238795325112867
+          },
+          "Scale": {
+            "x": 1.5,
+            "y": 1.5,
+            "z": 1.5
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    }
+  },
+  {
+    "Data": {
+      "components": {
+        "DirectionalLightComponent": {
+          "Color": {
+            "x": 1,
+            "y": 0.9499999881,
+            "z": 0.8000000119
+          },
+          "Direction": {
+            "x": -0.5,
+            "y": -1,
+            "z": -0.3000000119
+          },
+          "Intensity": 0.5
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    },
+    "Name": "Sun"
+  },
+  {
+    "Data": {
+      "components": {
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Floor.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/Floor/scene.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        },
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": -2,
+            "z": 0
+          },
+          "Rotation": {
+            "w": 0.7071068287,
+            "x": 0.7071068287,
+            "y": 0,
+            "z": 0
+          },
+          "Scale": {
+            "x": 3,
+            "y": 3,
+            "z": 1
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    },
+    "Name": "Floor"
+  },
+  {
+    "Data": {
+      "components": {
+        "ColliderComponent": {
+          "CollisionMeshPath": "",
+          "ConvexHullPointTarget": 50,
+          "Extents": {
+            "x": 15,
+            "y": 1,
+            "z": 15
+          },
+          "Friction": 0.200000003,
+          "IsTrigger": false,
+          "Layer": 0,
+          "MeshTriangleTarget": 500,
+          "Restitution": 0,
+          "Shape": "Box"
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        },
+        "RigidbodyComponent": {
+          "Allowed DOFs": "All",
+          "AngularDamping": 0.0500000007,
+          "GravityFactor": 1,
+          "LinearDamping": 0.0500000007,
+          "Mass": 1,
+          "MotionType": "Static"
+        },
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": -2,
+            "z": 0
+          },
+          "Rotation": {
+            "w": 1,
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "Scale": {
+            "x": 15,
+            "y": 1,
+            "z": 15
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    },
+    "Name": "Physics Floor"
+  },
+  {
+    "Name": "RigCamera",
+    "Data": {
+      "components": {
+        "CameraComponent": {
+          "FOVDegrees": 60,
+          "AspectRatio": 1.7777778,
+          "NearPlane": 0.1,
+          "FarPlane": 1000,
+          "Priority": -1
+        },
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": 1,
+            "z": -4
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    },
+    "Parent": "ParentRig"
+  },
+  {
+    "Name": "RigPointLight",
+    "Data": {
+      "components": {
+        "PointLightComponent": {
+          "Color": {
+            "x": 1,
+            "y": 0.1,
+            "z": 0.1
+          },
+          "Intensity": 8,
+          "Radius": 4
+        },
+        "TransformComponent": {
+          "Position": {
+            "x": 1.5,
+            "y": -0.3,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    },
+    "Parent": "ParentRig"
+  },
+  {
+    "Name": "RigSpotLight",
+    "Data": {
+      "components": {
+        "SpotLightComponent": {
+          "Direction": {
+            "x": 0,
+            "y": -0.6,
+            "z": 0.8
+          },
+          "Color": {
+            "x": 0.1,
+            "y": 1,
+            "z": 0.1
+          },
+          "Intensity": 15,
+          "InnerAngle": 15,
+          "OuterAngle": 25,
+          "Radius": 20
+        },
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": 1.5,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    },
+    "Parent": "ParentRig.RigCamera"
+  },
+  {
+    "Name": "RigSpeaker",
+    "Data": {
+      "components": {
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        },
+        "AudioSourceComponent": {
+          "Bank": {
+            "Path": "Assets/Audio/Desktop/Music.bank"
+          },
+          "Event": "MusicLoop",
+          "PlayOnStart": true,
+          "MaxDopplerSpeed": 200
+        },
+        "TransformComponent": {
+          "Position": {
+            "x": -1.5,
+            "y": 0,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 0.3,
+            "y": 0.3,
+            "z": 0.3
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        }
+      }
+    },
+    "Parent": "ParentRig"
+  },
+  {
+    "Name": "Orrery",
+    "Data": {
+      "components": {
+        "TransformComponent": {
+          "Position": {
+            "x": -4,
+            "y": 1.5,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        }
+      }
+    }
+  },
+  {
+    "Name": "Planet",
+    "Data": {
+      "components": {
+        "TransformComponent": {
+          "Position": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 0.6,
+            "y": 0.6,
+            "z": 0.6
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        }
+      }
+    },
+    "Parent": "Orrery"
+  },
+  {
+    "Name": "Moon",
+    "Data": {
+      "components": {
+        "TransformComponent": {
+          "Position": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 0.5,
+            "y": 0.5,
+            "z": 0.5
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        },
+        "PointLightComponent": {
+          "Color": {
+            "x": 0.2,
+            "y": 0.4,
+            "z": 1
+          },
+          "Intensity": 6,
+          "Radius": 3
+        }
+      }
+    },
+    "Parent": "Orrery.Planet"
+  },
+  {
+    "Name": "MoonTip",
+    "Data": {
+      "components": {
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": 2,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 0.4,
+            "y": 0.4,
+            "z": 0.4
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        }
+      }
+    },
+    "Parent": "Orrery.Planet.Moon"
+  },
+  {
+    "Name": "Shuttle",
+    "Data": {
+      "components": {
+        "TransformComponent": {
+          "Position": {
+            "x": 4,
+            "y": 0.8,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 1,
+            "y": 0.4,
+            "z": 1
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        }
+      }
+    }
+  },
+  {
+    "Name": "Turret",
+    "Data": {
+      "components": {
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": 1.5,
+            "z": 0
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 0.5,
+            "y": 1.5,
+            "z": 0.5
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        }
+      }
+    },
+    "Parent": "Shuttle"
+  },
+  {
+    "Name": "Barrel",
+    "Data": {
+      "components": {
+        "TransformComponent": {
+          "Position": {
+            "x": 0,
+            "y": 0,
+            "z": 1.5
+          },
+          "Rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 1
+          },
+          "Scale": {
+            "x": 0.3,
+            "y": 0.3,
+            "z": 2
+          }
+        },
+        "UUIDComponent": {
+          "ID": 0
+        },
+        "MeshComponent": {
+          "Material": {
+            "Path": "Assets/Materials/Cube.mat"
+          },
+          "Mesh": {
+            "Path": "Assets/BoxTextured.gltf"
+          }
+        },
+        "RenderComponent": {
+          "CastShadows": true,
+          "IsVisible": true
+        }
+      }
+    },
+    "Parent": "Shuttle.Turret"
+  }
+]

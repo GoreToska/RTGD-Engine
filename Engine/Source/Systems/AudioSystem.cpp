@@ -61,10 +61,13 @@ namespace RTGDEngine
 
     static FMOD_3D_ATTRIBUTES Make3DAttributes(const TransformComponent& transform, const Float3& velocity = {})
     {
+        Float3 right, up, forward;
+        GetBasis(transform.WorldRotation, right, up, forward);
+
         FMOD_3D_ATTRIBUTES attr{};
-        attr.position = {transform.Position.x, transform.Position.y, transform.Position.z};
-        attr.forward = {transform.GetForward().x, transform.GetForward().y, transform.GetForward().z};
-        attr.up = {transform.GetUp().x, transform.GetUp().y, transform.GetUp().z};
+        attr.position = {transform.WorldPosition.x, transform.WorldPosition.y, transform.WorldPosition.z};
+        attr.forward = {forward.x, forward.y, forward.z};
+        attr.up = {up.x, up.y, up.z};
         attr.velocity = {velocity.x, velocity.y, velocity.z};
         return attr;
     }
@@ -204,7 +207,7 @@ namespace RTGDEngine
                 return;
             }
 
-            auto v = ComputeVelocity(t.Position, listener.PrevPosition, listener.HasPrevPosition, deltaTime,
+            auto v = ComputeVelocity(t.WorldPosition, listener.PrevPosition, listener.HasPrevPosition, deltaTime,
                                      listener.MaxDopplerSpeed);
             auto a = Make3DAttributes(t, v);
             m_studioSystem->setListenerAttributes(0, &a);
@@ -221,13 +224,13 @@ namespace RTGDEngine
 
             if (source.PlayOnStart && !source.Started)
             {
-                source.Play(t.Position);
+                source.Play(t.WorldPosition);
                 source.Started = true;
             }
 
-            auto v = ComputeVelocity(t.Position, source.PrevPosition, source.HasPrevPosition, deltaTime,
+            auto v = ComputeVelocity(t.WorldPosition, source.PrevPosition, source.HasPrevPosition, deltaTime,
                                      source.MaxDopplerSpeed);
-            source.Playing.SetPosition(t.Position, v);
+            source.Playing.SetPosition(t.WorldPosition, v);
         });
 
         std::erase_if(m_attachedEvents, [deltaTime](AttachedEvent& e)
@@ -238,8 +241,8 @@ namespace RTGDEngine
             if (const auto* t = e.entity.try_get<TransformComponent>())
             {
                 bool hasPrev = true;
-                auto v = ComputeVelocity(t->Position, e.prevPosition, hasPrev, deltaTime, e.maxDopplerSpeed);
-                e.event.SetPosition(t->Position, v);
+                auto v = ComputeVelocity(t->WorldPosition, e.prevPosition, hasPrev, deltaTime, e.maxDopplerSpeed);
+                e.event.SetPosition(t->WorldPosition, v);
             }
 
             return false;
@@ -388,9 +391,9 @@ namespace RTGDEngine
             return;
         }
 
-        AudioEvent instance = Play(event, transform->Position);
+        AudioEvent instance = Play(event, transform->WorldPosition);
         if (instance.IsValid())
-            m_attachedEvents.push_back({instance, entity, transform->Position, maxDopplerSpeed});
+            m_attachedEvents.push_back({instance, entity, transform->WorldPosition, maxDopplerSpeed});
     }
 
     void AudioSystem::SetPlaying(bool playing)

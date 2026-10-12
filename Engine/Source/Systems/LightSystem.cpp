@@ -53,7 +53,7 @@ namespace RTGDEngine
                 return;
 
             auto& dst = m_lightCB.PointLights[m_lightCB.PointCount++];
-            dst.Position = transform.Position;
+            dst.Position = transform.WorldPosition;
             dst.Color = light.Color;
             dst.Intensity = light.Intensity;
             dst.Radius = light.Radius;
@@ -69,8 +69,8 @@ namespace RTGDEngine
                 return;
 
             auto& dst = m_lightCB.SpotLights[m_lightCB.SpotCount++];
-            dst.Position = transform.Position;
-            dst.Direction = Diligent::normalize(light.Direction);
+            dst.Position = transform.WorldPosition;
+            dst.Direction = Diligent::normalize(transform.WorldRotation.RotateVector(light.Direction));
             dst.Color = light.Color;
             dst.Intensity = light.Intensity;
             dst.Radius = light.Radius;

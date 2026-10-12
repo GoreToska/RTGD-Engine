@@ -85,7 +85,8 @@ namespace RTGDEngine
 
                 obj["Data"] = std::move(full);
                 json.push_back(std::move(obj));
-                collect(child, child.name().c_str());
+                const std::string name = child.name().c_str();
+                collect(child, parentName.empty() ? name : parentName + "." + name);
             });
         };
 
@@ -180,24 +181,32 @@ namespace RTGDEngine
         std::vector<Entity> created = {};
         created.reserve(entities.size());
 
+        std::unordered_map<std::string, Entity> byPath = {};
+        byPath.reserve(entities.size());
+
         for (auto& entity: entities)
-            created.push_back(m_world->entity());
+        {
+            Entity e = m_world->entity();
+            created.push_back(e);
+            byPath.emplace(entity.parentName.empty() ? entity.name : entity.parentName + "." + entity.name, e);
+        }
 
         for (size_t i = 0; i < entities.size(); ++i)
             created[i].from_json(entities[i].data.c_str());
 
         for (size_t i = 0; i < created.size(); ++i)
-        {
             created[i].set_name(entities[i].name.c_str()).add<SceneEntity>();
-        }
 
         for (size_t i = 0; i < created.size(); ++i)
         {
-            Entity parent = entities[i].parentName.empty() ? m_root : m_root.lookup(entities[i].parentName.c_str());
-            if (!parent.is_valid())
+            Entity parent = m_root;
+            if (!entities[i].parentName.empty())
             {
-                LogError("Parent '{}' not found for {}", entities[i].parentName.c_str(), entities[i].name);
-                parent = m_root;
+                auto it = byPath.find(entities[i].parentName);
+                if (it != byPath.end())
+                    parent = it->second;
+                else
+                    LogError("Parent '{}' not found for {}", entities[i].parentName, entities[i].name);
             }
 
             created[i].child_of(parent);

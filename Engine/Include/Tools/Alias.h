@@ -22,3 +22,8 @@ constexpr Quaternion QuaternionIdentity()
 {
     return {0.0f, 0.0f, 0.0f, 1.0f};
 }
+
+constexpr Quaternion QuaternionConjugate(const Quaternion& q)
+{
+    return {-q.q.x, -q.q.y, -q.q.z, q.q.w};
+}

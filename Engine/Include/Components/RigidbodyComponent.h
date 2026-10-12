@@ -60,6 +60,7 @@ namespace RTGDEngine
         Delegate<PhysicsSystem, const Events::TriggerEnterEvent &> OnTriggerEnter;
         Delegate<PhysicsSystem, const Events::TriggerStayEvent &> OnTriggerStay;
         Delegate<PhysicsSystem, const Events::TriggerExitEvent &> OnTriggerExit;
+        bool NeedsRebuild = true;
 
         void AddForce(const Float3& force) const
         {
@@ -91,6 +92,77 @@ namespace RTGDEngine
             GPhysics().AddAngularImpulse(BodyID, impulse);
         }
 
+        static void CreateBody(Entity e)
+        {
+            auto collider = e.get_ref<ColliderComponent>();
+            auto rb = e.get_ref<RigidbodyComponent>();
+            auto xf = e.get_ref<TransformComponent>();
+
+            if (!rb || !xf || !collider)
+                return;
+
+            bool isMeshShape = collider->Shape == EPhysicsShape::Mesh || collider->Shape ==
+                               EPhysicsShape::ConvexHull;
+
+            if (collider->Shape == EPhysicsShape::Mesh && rb->MotionType != EMotionType::Static)
+            {
+                LogError("Mesh collider requires static motion type, entity: {} ID: {}.", e.name().c_str(), e.id());
+                return;
+            }
+
+            auto& bi = GPhysics().GetBodyInterface();
+            if (!rb->BodyID.IsInvalid())
+            {
+                GPhysics().UnregisterBody(rb->BodyID);
+                bi.RemoveBody(rb->BodyID);
+                bi.DestroyBody(rb->BodyID);
+            }
+
+            JPH::ShapeRefC shape = collider->NativeShape;
+            if (!shape)
+            {
+                LogError("Shape is not valid, entity: {}, id: {}", e.name().c_str(), e.id());
+                return;
+            }
+
+            JPH::EMotionType motion = rb->MotionType == EMotionType::Static
+                                          ? JPH::EMotionType::Static
+                                          : rb->MotionType == EMotionType::Kinematic
+                                                ? JPH::EMotionType::Kinematic
+                                                : JPH::EMotionType::Dynamic;
+            bool isMoving = rb->MotionType != EMotionType::Static;
+            JPH::ObjectLayer layer = Layers::Encode(collider->Layer, isMoving);
+
+            JPH::BodyCreationSettings settings(shape, ToRVec3(xf->WorldPosition), ToQuat(xf->WorldRotation), motion, layer);
+            settings.mIsSensor = collider->IsTrigger;
+            settings.mAllowedDOFs = static_cast<JPH::EAllowedDOFs>(rb->AllowedDOFs);
+            settings.mLinearDamping = rb->LinearDamping;
+            settings.mAngularDamping = rb->AngularDamping;
+            settings.mGravityFactor = rb->GravityFactor;
+            settings.mFriction = collider->Friction;
+            settings.mRestitution = collider->Restitution;
+
+            if (rb->MotionType != EMotionType::Static)
+            {
+                settings.mOverrideMassProperties = JPH::EOverrideMassProperties::MassAndInertiaProvided;
+                JPH::MassProperties props = isMeshShape
+                                                ? shape->GetMassProperties()
+                                                : ColliderComponent::ComputeMassProperties(
+                                                    collider->Shape, collider->Extents, rb->Mass);
+                if (isMeshShape)
+                    props.ScaleToMass(rb->Mass);
+
+                settings.mMassPropertiesOverride = props;
+            }
+
+            rb->BodyID = bi.CreateAndAddBody(settings,
+                                             rb->MotionType == EMotionType::Static
+                                                 ? JPH::EActivation::DontActivate
+                                                 : JPH::EActivation::Activate);
+            GPhysics().RegisterBody(rb->BodyID, e.id(), collider->IsTrigger);
+            LogInfo("Create physics body for '{}' registered, BodyID valid", e.name().c_str());
+        };
+
         static void RegisterMeta(const flecs::world& world)
         {
             world.component<EPhysicsDOF>()
@@ -115,92 +187,11 @@ namespace RTGDEngine
                     .member<float>("GravityFactor")
                     .member<EPhysicsDOF>("Allowed DOFs");
 
-            auto createBody = [](flecs::entity e)
-            {
-                auto collider = e.get_ref<ColliderComponent>();
-                auto rb = e.get_ref<RigidbodyComponent>();
-                auto xf = e.get_ref<TransformComponent>();
-
-                if (!rb || !xf || !collider)
-                    return;
-
-                bool isMeshShape = collider->Shape == EPhysicsShape::Mesh || collider->Shape ==
-                                   EPhysicsShape::ConvexHull;
-
-                if (collider->Shape == EPhysicsShape::Mesh && rb->MotionType != EMotionType::Static)
-                {
-                    LogError("Mesh collider requires static motion type, entity: {} ID: {}.", e.name().c_str(), e.id());
-                    return;
-                }
-
-                auto& bi = GPhysics().GetBodyInterface();
-                if (!rb->BodyID.IsInvalid())
-                {
-                    GPhysics().UnregisterBody(rb->BodyID);
-                    bi.RemoveBody(rb->BodyID);
-                    bi.DestroyBody(rb->BodyID);
-                }
-
-                JPH::ShapeRefC shape = collider->NativeShape;
-                if (!shape)
-                {
-                    LogError("Shape is not valid, entity: {}, id: {}", e.name().c_str(), e.id());
-                    return;
-                }
-
-                JPH::EMotionType motion = rb->MotionType == EMotionType::Static
-                                              ? JPH::EMotionType::Static
-                                              : rb->MotionType == EMotionType::Kinematic
-                                                    ? JPH::EMotionType::Kinematic
-                                                    : JPH::EMotionType::Dynamic;
-                bool isMoving = rb->MotionType != EMotionType::Static;
-                JPH::ObjectLayer layer = Layers::Encode(collider->Layer, isMoving);
-
-                JPH::BodyCreationSettings settings(shape, ToRVec3(xf->Position), ToQuat(xf->Rotation), motion, layer);
-                settings.mIsSensor = collider->IsTrigger;
-                settings.mAllowedDOFs = static_cast<JPH::EAllowedDOFs>(rb->AllowedDOFs);
-                settings.mLinearDamping = rb->LinearDamping;
-                settings.mAngularDamping = rb->AngularDamping;
-                settings.mGravityFactor = rb->GravityFactor;
-                settings.mFriction = collider->Friction;
-                settings.mRestitution = collider->Restitution;
-
-                if (rb->MotionType != EMotionType::Static)
-                {
-                    settings.mOverrideMassProperties = JPH::EOverrideMassProperties::MassAndInertiaProvided;
-                    JPH::MassProperties props = isMeshShape
-                                                    ? shape->GetMassProperties()
-                                                    : ColliderComponent::ComputeMassProperties(
-                                                        collider->Shape, collider->Extents, rb->Mass);
-                    if (isMeshShape)
-                        props.ScaleToMass(rb->Mass);
-
-                    settings.mMassPropertiesOverride = props;
-                }
-
-                rb->BodyID = bi.CreateAndAddBody(settings,
-                                                 rb->MotionType == EMotionType::Static
-                                                     ? JPH::EActivation::DontActivate
-                                                     : JPH::EActivation::Activate);
-                GPhysics().RegisterBody(rb->BodyID, e.id(), collider->IsTrigger);
-                LogInfo("Create physics body for '{}' registered, BodyID valid", e.name().c_str());
-            };
-
             world.observer<RigidbodyComponent>().event(flecs::OnSet).each(
-                [createBody](flecs::entity e, RigidbodyComponent&) { createBody(e); });
-
-            world.observer<TransformComponent>().event(flecs::OnSet).each(
-                [createBody](flecs::entity e, TransformComponent&)
-                {
-                    auto phys = e.get_ref<RigidbodyComponent>();
-                    if (phys && phys->BodyID.IsInvalid())
-                    {
-                        createBody(e);
-                    }
-                });
+                [](Entity e, RigidbodyComponent& c) { c.NeedsRebuild = true; });
 
             world.observer<RigidbodyComponent>().event(flecs::OnRemove).each(
-                [](flecs::entity e, RigidbodyComponent& c)
+                [](Entity e, RigidbodyComponent& c)
                 {
                     if (c.BodyID.IsInvalid())
                         return;

@@ -21,8 +21,10 @@ namespace RTGDEngine {
 
     CascadeFit BuildCascadeMatrix(const CameraComponent &camera, const TransformComponent &transform,
                                   const Float3 &lightDirection, float sliceNear, float sliceFar, uint32_t resolution) {
+        Float3 camRight, camUp, camForward;
+        GetBasis(transform.WorldRotation, camRight, camUp, camForward);
         const CameraFrustum slice = CameraFrustum::FromPerspective(
-            transform.Position, transform.GetRight(), transform.GetUp(), transform.GetForward(),
+            transform.WorldPosition, camRight, camUp, camForward,
             camera.FOVDegrees * Diligent::PI_F / 180.0f, camera.AspectRatio, sliceNear, sliceFar);
 
         const BoundingSphere bounds = slice.GetBoundingSphere();

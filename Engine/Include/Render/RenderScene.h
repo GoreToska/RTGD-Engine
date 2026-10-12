@@ -5,33 +5,35 @@
 #pragma once
 #include <flecs.h>
 
-#include "../AssetLoader/AssetHandle.h"
+#include "AssetLoader/AssetHandle.h"
 #include "Tools/Visibility.h"
 
-namespace RTGDEngine {
-    class RenderScene {
+namespace RTGDEngine
+{
+    class RenderScene
+    {
     public:
-        void Gather(flecs::world &world);
+        void Gather(flecs::world& world);
 
-        void Add(const AABB &box, const Matrix4 &world, MeshHandle mesh, MaterialHandle material, uint8_t flags,
+        void Add(const AABB& box, const Matrix4& world, MeshHandle mesh, MaterialHandle material, uint8_t flags,
                  flecs::entity entity);
 
         [[nodiscard]] BoundsView Bounds() const;
 
         [[nodiscard]] uint32_t Count() const;
 
-        [[nodiscard]] const Matrix4 *World() const;
+        [[nodiscard]] const Matrix4* World() const;
 
-        [[nodiscard]] const MeshHandle *Mesh() const;
+        [[nodiscard]] const MeshHandle* Mesh() const;
 
-        [[nodiscard]] const MaterialHandle *Material() const;
+        [[nodiscard]] const MaterialHandle* Material() const;
 
-        [[nodiscard]] const VisibilityMask &ShadowCasters() const;
+        [[nodiscard]] const VisibilityMask& ShadowCasters() const;
 
-        [[nodiscard]] const VisibilityMask &AlwaysVisible() const;
+        [[nodiscard]] const VisibilityMask& AlwaysVisible() const;
 
 #ifdef RTGD_EDITOR
-        [[nodiscard]] const std::vector<flecs::entity> &Entities() const;
+        [[nodiscard]] const std::vector<flecs::entity>& Entities() const;
 #endif
 
     private:

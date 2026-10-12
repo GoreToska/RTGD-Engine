@@ -25,9 +25,9 @@ public:
 private:
     void SetupInput();
 
-    void PlayerMovementSystem(flecs::world& world, float deltaTime);
+    void PlayerMovementSystem(World& world, float deltaTime);
 
-    void CameraUpdate(flecs::world& world, float deltaTime);
+    void CameraUpdate(World& world, float deltaTime);
 
     bool m_isInitialized = false;
 

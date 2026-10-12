@@ -52,6 +52,7 @@ namespace RTGDEngine
         bool Reload();
 
         static std::vector<EntityData> ParseScene(const std::string& json); // thread safe for async scene loading
+
         void ApplyEntities(const std::vector<EntityData>& entities);
 
         template<typename Func>
