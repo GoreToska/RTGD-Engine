@@ -31,6 +31,7 @@
 #include "Systems/GroundCheckSystem.h"
 #include "Systems/TransformSystem.h"
 #include "Systems/Physics/PhysicsSystem.h"
+#include "UI/UISystem.h"
 
 namespace RTGDEngine
 {
@@ -111,6 +112,8 @@ namespace RTGDEngine
                                       GRenderSystem().GetContext());
 
         GInput().AddWindowHandle(m_platformWindow.get());
+
+        GUI().Initialize(m_platformWindow->GetWidth(), m_platformWindow->GetHeight());
 
         m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
         m_platformWindow->OnClose = []() { Instance().OnClose(); };
@@ -199,6 +202,7 @@ namespace RTGDEngine
 
     void Engine::Shutdown()
     {
+        GUI().Shutdown();
         GEventBus().Process();
         UnloadGameModule();
         GRenderResources().Shutdown();
@@ -253,6 +257,9 @@ namespace RTGDEngine
 
     void Engine::Update(const float deltaTime)
     {
+        m_deltaTime = deltaTime;
+        m_time += deltaTime;
+
         GJobSystem().Flush(MAX_JOBS_TO_REMOVE);
         GScene().ApplyPendingSceneChanges();
         GScene().ApplyPendingEntityCommands();
@@ -299,6 +306,8 @@ namespace RTGDEngine
 #ifdef RTGD_EDITOR
         GEditorBridge().PublishSnapshot();
 #endif
+
+        GUI().Update();
 
         Render();
     }
@@ -386,6 +395,16 @@ namespace RTGDEngine
         }
     }
 
+    double Engine::GetTime() const
+    {
+        return m_time;
+    }
+
+    float Engine::GetDeltaTime() const
+    {
+        return m_deltaTime;
+    }
+
     void Engine::RunPhase(ESystemPhase phase, World& world, float deltaTime)
     {
         for (auto& entry: m_systems[static_cast<size_t>(phase)])
@@ -441,6 +460,7 @@ namespace RTGDEngine
 
         GRenderSystem().Resize(w, h);
         GInput().Resize(w, h);
+        GUI().Resize(w, h);
         m_platformWindow->SetSize(w, h);
         GEventBus().Emit(Events::OnWindowResized, {w, h}, {});
     }

@@ -8,6 +8,7 @@
 #include "Render/RenderResourceManager.h"
 #include "Render/RenderSystem.h"
 #include "Render/Vertex.h"
+#include "RmlUi/Core/Vertex.h"
 #include "Tools/Logger.h"
 
 namespace RTGDEngine
@@ -697,6 +698,108 @@ namespace RTGDEngine
         BindStandardConstantBuffers(*data.SRB);
 
         return GRenderResources().RegisterMaterial("debug_lines", std::move(data));
+    }
+
+    MaterialHandle PipelineFactory::CreateUIPipeline(Diligent::IRenderDevice& device, Diligent::ISwapChain& swapChain,
+                                                     const std::string& absolutePath)
+    {
+        using namespace Diligent;
+
+        RefCntAutoPtr<IShaderSourceInputStreamFactory> pShaderFactory;
+        GRenderSystem().GetFactory().CreateDefaultShaderSourceStreamFactory(absolutePath.c_str(), &pShaderFactory);
+
+        ShaderCreateInfo shaderCI;
+        shaderCI.SourceLanguage = SHADER_SOURCE_LANGUAGE_HLSL;
+        shaderCI.pShaderSourceStreamFactory = pShaderFactory;
+        shaderCI.Desc.UseCombinedTextureSamplers = false;
+
+        RefCntAutoPtr<IShader> pVS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_VERTEX;
+        shaderCI.Desc.Name = "UIVS";
+        shaderCI.FilePath = "UIVS.hlsl";
+        device.CreateShader(shaderCI, &pVS);
+        if (!pVS)
+        {
+            LogError("Failed to create UI VS");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        RefCntAutoPtr<IShader> pPS;
+        shaderCI.Desc.ShaderType = SHADER_TYPE_PIXEL;
+        shaderCI.Desc.Name = "UIPS";
+        shaderCI.FilePath = "UIPS.hlsl";
+        device.CreateShader(shaderCI, &pPS);
+        if (!pPS)
+        {
+            LogError("Failed to create UI PS");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        GraphicsPipelineStateCreateInfo psoCI;
+        psoCI.PSODesc.Name = "UI PSO";
+        psoCI.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
+        psoCI.pVS = pVS;
+        psoCI.pPS = pPS;
+
+        std::vector<LayoutElement> layout = {
+            {0, 0, 2, VT_FLOAT32, false, offsetof(Rml::Vertex, position), sizeof(Rml::Vertex)},
+            {1, 0, 4, VT_UINT8, true, offsetof(Rml::Vertex, colour), sizeof(Rml::Vertex)},
+            {2, 0, 2, VT_FLOAT32, false, offsetof(Rml::Vertex, tex_coord), sizeof(Rml::Vertex)}
+        };
+        psoCI.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
+        psoCI.GraphicsPipeline.InputLayout.NumElements = static_cast<uint32_t>(layout.size());
+
+        psoCI.GraphicsPipeline.NumRenderTargets = 1;
+        psoCI.GraphicsPipeline.RTVFormats[0] = swapChain.GetDesc().ColorBufferFormat;
+        psoCI.GraphicsPipeline.DSVFormat = TEX_FORMAT_UNKNOWN;
+
+        psoCI.GraphicsPipeline.PrimitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        psoCI.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_NONE;
+        psoCI.GraphicsPipeline.DepthStencilDesc.DepthEnable = False;
+
+        psoCI.GraphicsPipeline.RasterizerDesc.ScissorEnable = True;
+
+        ShaderResourceVariableDesc vars[] =
+        {
+            {SHADER_TYPE_VERTEX, "UIConstants", SHADER_RESOURCE_VARIABLE_TYPE_STATIC},
+            {SHADER_TYPE_PIXEL, "g_Texture", SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE}
+        };
+
+        psoCI.PSODesc.ResourceLayout.Variables = vars;
+        psoCI.PSODesc.ResourceLayout.NumVariables = std::size(vars);
+
+        SamplerDesc samDesc;
+        samDesc.MinFilter = FILTER_TYPE_LINEAR;
+        samDesc.MagFilter = FILTER_TYPE_LINEAR;
+        samDesc.MipFilter = FILTER_TYPE_LINEAR;
+        samDesc.AddressU = TEXTURE_ADDRESS_CLAMP;
+        samDesc.AddressV = TEXTURE_ADDRESS_CLAMP;
+        samDesc.AddressW = TEXTURE_ADDRESS_CLAMP;
+        ImmutableSamplerDesc immSamplers[] = {
+            {SHADER_TYPE_PIXEL, "g_Sampler", samDesc},
+        };
+
+        psoCI.PSODesc.ResourceLayout.ImmutableSamplers = immSamplers;
+        psoCI.PSODesc.ResourceLayout.NumImmutableSamplers = std::size(immSamplers);
+
+        auto& rt0 = psoCI.GraphicsPipeline.BlendDesc.RenderTargets[0];
+        rt0.BlendEnable = True;
+        rt0.SrcBlend = BLEND_FACTOR_ONE;
+        rt0.DestBlend = BLEND_FACTOR_INV_SRC_ALPHA;
+        rt0.BlendOp = BLEND_OPERATION_ADD;
+        rt0.SrcBlendAlpha = BLEND_FACTOR_ONE;
+        rt0.DestBlendAlpha = BLEND_FACTOR_INV_SRC_ALPHA;
+        rt0.BlendOpAlpha = BLEND_OPERATION_ADD;
+
+        MaterialData data;
+        device.CreateGraphicsPipelineState(psoCI, &data.PSO);
+        if (!data.PSO)
+        {
+            LogError("Failed to create UI PSO");
+            return INVALID_MATERIAL_HANDLE;
+        }
+
+        return GRenderResources().RegisterMaterial("ui", std::move(data));
     }
 
     void PipelineFactory::BindStandardConstantBuffers(Diligent::IShaderResourceBinding& srb)

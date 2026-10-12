@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "RenderDevice.h"
-#include "../AssetLoader/AssetHandle.h"
+#include "AssetLoader/AssetHandle.h"
 #include "Engine/EngineExport.h"
 
 
@@ -49,6 +49,11 @@ namespace RTGDEngine
             const std::string& absolutePath);
 
         static MaterialHandle CreateDebugLinesPipeline(
+            Diligent::IRenderDevice& device,
+            Diligent::ISwapChain& swapChain,
+            const std::string& absolutePath);
+
+        static MaterialHandle CreateUIPipeline(
             Diligent::IRenderDevice& device,
             Diligent::ISwapChain& swapChain,
             const std::string& absolutePath);

@@ -157,6 +157,11 @@ add_library(Engine SHARED
         Include/Components/AudioSourceComponent.h
         Source/Systems/TransformSystem.cpp
         Include/Systems/TransformSystem.h
+        Source/Engine/UiSystemInterface.cpp
+        Include/Engine/UI/UiSystemInterface.h
+        Include/Engine/UI/UiRenderInterfaceStub.h
+        Include/UI/UISystem.cpp
+        Include/UI/UISystem.h
 )
 
 if (RTGD_WITH_FMOD)

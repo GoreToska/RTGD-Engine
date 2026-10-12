@@ -80,6 +80,9 @@ namespace RTGDEngine
 
         void ClearSystems(ESystemGroup group);
 
+        double GetTime() const;
+        float GetDeltaTime() const;
+
     private:
         struct PickRequest
         {
@@ -136,6 +139,8 @@ namespace RTGDEngine
         std::array<std::vector<SystemEntry>, 4> m_systems = {};
         float m_fixedTimeStep = 1.0f / 60.0f;
         float m_fixedAccumulator = 0.0f;
+        double m_time = 0.0;
+        float m_deltaTime = 0.0f;
     };
 
     DECLARE_GLOBAL_SINGLETON(Engine, GEngine)
