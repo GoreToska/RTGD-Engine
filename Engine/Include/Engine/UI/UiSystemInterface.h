@@ -6,9 +6,12 @@
 
 #include <RmlUi/Core/SystemInterface.h>
 
+#include "DefineGlobalFuncHelperMacros.h"
+#include "DeviceContext.h"
+
 namespace RTGDEngine
 {
-    class UiSystemInterface : public Rml::SystemInterface
+    class UiSystemInterface final : public Rml::SystemInterface
     {
     public:
         bool LogMessage(Rml::Log::Type type, const Rml::String& message) override;

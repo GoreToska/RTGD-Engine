@@ -12,6 +12,11 @@ namespace Rml
     class Context;
 }
 
+namespace Diligent
+{
+    struct IDeviceContext;
+}
+
 namespace RTGDEngine
 {
     class UiSystemInterface;
@@ -31,6 +36,8 @@ namespace RTGDEngine
         void Update();
 
         void Resize(int width, int height) const;
+
+        void Render(Diligent::IDeviceContext& context);
 
     private:
         Rml::Context* m_context = nullptr;

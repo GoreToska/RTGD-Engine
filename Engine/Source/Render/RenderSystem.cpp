@@ -22,6 +22,7 @@
 #include "Render/Graph/Pass/GBufferPass.h"
 #include "Render/Graph/Pass/LightPass.h"
 #include "Render/Graph/Pass/ShadowPass.h"
+#include "Render/Graph/Pass/UIPass.h"
 #include "Render/ShadowMap/ShadowCascades.h"
 #include "Systems/CameraSystem.h"
 #include "Tools/Logger.h"
@@ -111,6 +112,7 @@ namespace RTGDEngine
         m_graph.AddPass(std::move(debug));
         m_graph.AddPass(std::make_unique<CompositePass>());
         m_graph.AddPass(std::make_unique<DebugLinesPass>());
+        m_graph.AddPass(std::make_unique<UIPass>());
 
         m_graph.Initialize(*m_device, *m_swapChain);
 

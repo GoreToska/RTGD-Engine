@@ -4,18 +4,20 @@
 
 #pragma once
 #include "IRenderPass.h"
-#include "../../../AssetLoader/AssetHandle.h"
+#include "AssetLoader/AssetHandle.h"
 
-namespace RTGDEngine {
-    class ShadowPass : public IRenderPass {
+namespace RTGDEngine
+{
+    class ShadowPass : public IRenderPass
+    {
     public:
-        void Execute(RenderContext &context) override;
+        void Execute(RenderContext& context) override;
 
-        void Initialize(Diligent::IRenderDevice &device, Diligent::ISwapChain &swapChain) override;
+        void Initialize(Diligent::IRenderDevice& device, Diligent::ISwapChain& swapChain) override;
 
-        const char *Name() const override;
+        const char* Name() const override;
 
-        void Setup(RGBuilder &builder) override;
+        void Setup(RGBuilder& builder) override;
 
     private:
         RGHandle m_shadowMap;

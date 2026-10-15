@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "../../../AssetLoader/AssetHandle.h"
+#include "AssetLoader/AssetHandle.h"
 #include "IRenderPass.h"
 
 namespace RTGDEngine {
