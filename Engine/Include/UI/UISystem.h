@@ -17,8 +17,11 @@ namespace Diligent
     struct IDeviceContext;
 }
 
+struct NativeWindowEvent;
+
 namespace RTGDEngine
 {
+    struct InputEvent;
     class UiSystemInterface;
     class UiRenderInterfaceStub;
 
@@ -38,6 +41,8 @@ namespace RTGDEngine
         void Resize(int width, int height) const;
 
         void Render(Diligent::IDeviceContext& context);
+
+        void ProcessInput(const InputEvent& event);
 
     private:
         Rml::Context* m_context = nullptr;

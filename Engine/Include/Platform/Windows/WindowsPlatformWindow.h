@@ -29,11 +29,14 @@ namespace RTGDEngine {
     private:
         static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
+        bool DispatchInputEvent(const MSG &msg);
+
         HWND m_hwnd = nullptr;
         HINSTANCE m_hinstance = nullptr;
         bool m_running = true;
         float m_deltaX = 0.0f;
         float m_deltaY = 0.0f;
+        wchar_t m_highSurrogate = 0;
     };
 } // RTGDEngine
 

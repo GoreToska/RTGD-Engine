@@ -4,9 +4,12 @@
 
 #include "Platform/Linux/LinuxPlatformWindow.h"
 #if defined(__linux__)
+#include <clocale>
 #include <X11/extensions/Xfixes.h>
 #include <X11/XKBlib.h>
 #include <X11/extensions/XInput2.h>
+
+#include "Input/PhysicalKeyMap.h"
 
 namespace RTGDEngine
 {
@@ -33,7 +36,7 @@ namespace RTGDEngine
         XSetWMProtocols(m_display, m_window, &m_deleteAtom, 1);
         XSelectInput(m_display, m_window,
                      ExposureMask | KeyPressMask | StructureNotifyMask | KeyReleaseMask | ButtonPressMask |
-                     ButtonReleaseMask | PointerMotionMask);
+                     ButtonReleaseMask | PointerMotionMask | LeaveWindowMask | FocusChangeMask);
 
         int xiEvent;
         int xiError;
@@ -51,6 +54,12 @@ namespace RTGDEngine
         }
 
         XMapWindow(m_display, m_window);
+        setlocale(LC_CTYPE, "");
+        XSetLocaleModifiers("");
+        m_xim = XOpenIM(m_display, nullptr, nullptr, nullptr);
+        if (m_xim)
+            m_xic = XCreateIC(m_xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+                              XNClientWindow, m_window, XNFocusWindow, m_window, nullptr);
 
         Bool supported;
         XkbSetDetectableAutoRepeat(m_display, True, &supported);
@@ -79,9 +88,8 @@ namespace RTGDEngine
                             {
                                 if (i == 0)
                                     m_deltaX += static_cast<float>(*val);
-                                else
-                                    if (i == 1)
-                                        m_deltaY += static_cast<float>(*val);
+                                else if (i == 1)
+                                    m_deltaY += static_cast<float>(*val);
                                 ++val;
                             }
                         }
@@ -91,7 +99,7 @@ namespace RTGDEngine
                 continue;
             }
 
-            if (OnNativeEvent)
+            if (!DispatchInputEvent(e) && OnNativeEvent)
             {
                 NativeWindowEvent event{};
                 event.XEvent = &e;
@@ -186,6 +194,78 @@ namespace RTGDEngine
         m_deltaX = 0.0f;
         m_deltaY = 0.0f;
         return true;
+    }
+
+    bool LinuxPlatformWindow::DispatchInputEvent(XEvent& e)
+    {
+        if (!OnInputEvent)
+            return false;
+
+        InputEvent ev{};
+        auto mods = [&ev](unsigned state)
+        {
+            ev.Shift = state & ShiftMask;
+            ev.Ctrl = state & ControlMask;
+            ev.Alt = state & Mod1Mask;
+        };
+
+        switch (e.type)
+        {
+            case MotionNotify:
+                ev.Type = EInputEventType::MouseMove;
+                ev.X = e.xmotion.x;
+                ev.Y = e.xmotion.y;
+                mods(e.xmotion.state);
+                return OnInputEvent(ev);
+            case LeaveNotify:
+                ev.Type = EInputEventType::MouseLeave;
+                return OnInputEvent(ev);
+            case FocusOut:
+                if (e.xfocus.mode != NotifyNormal)
+                    return false;
+                ev.Type = EInputEventType::FocusLost;
+                return OnInputEvent(ev);
+            case ButtonPress:
+            case ButtonRelease:
+                mods(e.xbutton.state);
+                if (e.xbutton.button >= Button4 && e.xbutton.button <= 7)
+                {
+                    if (e.type == ButtonRelease || e.xbutton.button > Button5)
+                        return false;
+                    ev.Type = EInputEventType::MouseWheel;
+                    ev.Wheel = e.xbutton.button == Button4 ? 1.0f : -1.0f;
+                    return OnInputEvent(ev);
+                }
+                ev.Type = EInputEventType::MouseButton;
+                ev.Down = e.type == ButtonPress;
+                ev.Button = static_cast<gainput::MouseButton>(e.xbutton.button - 1);
+                return OnInputEvent(ev);
+            case KeyPress:
+            case KeyRelease:
+            {
+                mods(e.xkey.state);
+                bool consumed = false;
+                if (PhysicalToGainput(static_cast<int>(e.xkey.keycode) - 8, ev.Key))
+                {
+                    ev.Type = EInputEventType::Key;
+                    ev.Down = e.type == KeyPress;
+                    consumed = OnInputEvent(ev);
+                }
+                if (e.type == KeyPress && m_xic && !ev.Ctrl)
+                {
+                    InputEvent text{};
+                    text.Type = EInputEventType::Text;
+                    KeySym keysym;
+                    Status status;
+                    const int n = Xutf8LookupString(m_xic, &e.xkey, text.Text, sizeof(text.Text) - 1, &keysym, &status);
+                    if (n > 0 && static_cast<unsigned char>(text.Text[0]) >= 0x20 && text.Text[0] != 0x7F)
+                        consumed |= OnInputEvent(text);
+                }
+                return consumed;
+            }
+        }
+
+        return false;
     }
 } // RTGDEngine
 #endif

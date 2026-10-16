@@ -165,6 +165,7 @@ add_library(Engine SHARED
         Include/UI/UiRenderInterface.h
         Source/Render/Graph/Pass/UIPass.cpp
         Include/Render/Graph/Pass/UIPass.h
+        Include/Platform/InputEvent.h
 )
 
 if (RTGD_WITH_FMOD)
@@ -189,6 +190,12 @@ target_include_directories(Engine PUBLIC
         ${CMAKE_SOURCE_DIR}/ThirdParty/stb
         ${CMAKE_SOURCE_DIR}/ThirdParty/JoltPhysics
 )
+
+target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/ThirdParty/RmlUi/Backends)
+
+if (UNIX AND NOT APPLE)
+    target_sources(Engine PRIVATE ${CMAKE_SOURCE_DIR}/ThirdParty/RmlUi/Backends/RmlUi_Platform_X11.cpp)
+endif ()
 
 target_link_libraries(Engine PUBLIC
         Diligent-Common

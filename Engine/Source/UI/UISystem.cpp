@@ -96,4 +96,9 @@ namespace RTGDEngine
         s_renderInterface->BeginFrame(context, dimensions.x, dimensions.y);
         m_context->Render();
     }
+
+    void UISystem::ProcessInput(const InputEvent& event)
+    {
+
+    }
 } // RTGDEngine

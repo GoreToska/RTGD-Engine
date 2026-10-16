@@ -4,6 +4,9 @@
 
 #include "Platform/Windows/WindowsPlatformWindow.h"
 #if defined(_WIN32)
+#include <windowsx.h>
+
+#include "Input/PhysicalKeyMap.h"
 
 namespace RTGDEngine {
     constexpr const char *kWindowClassName = "RTGDEngineWindow";
@@ -61,7 +64,7 @@ namespace RTGDEngine {
                 break;
             }
 
-            if (OnNativeEvent) {
+            if (!DispatchInputEvent(msg) && OnNativeEvent) {
                 NativeWindowEvent event{};
                 event.Hwnd = m_hwnd;
                 event.Msg = msg;
@@ -72,6 +75,78 @@ namespace RTGDEngine {
             DispatchMessageA(&msg);
         }
         return m_running;
+    }
+
+    bool WindowsPlatformWindow::DispatchInputEvent(const MSG &msg) {
+        if (!OnInputEvent)
+            return false;
+
+        InputEvent ev{};
+        ev.Shift = GetKeyState(VK_SHIFT) < 0;
+        ev.Ctrl = GetKeyState(VK_CONTROL) < 0;
+        ev.Alt = GetKeyState(VK_MENU) < 0;
+
+        switch (msg.message) {
+            case WM_MOUSEMOVE:
+                ev.Type = EInputEventType::MouseMove;
+                ev.X = GET_X_LPARAM(msg.lParam);
+                ev.Y = GET_Y_LPARAM(msg.lParam);
+                return OnInputEvent(ev);
+            case WM_MOUSEWHEEL:
+                ev.Type = EInputEventType::MouseWheel;
+                ev.Wheel = GET_WHEEL_DELTA_WPARAM(msg.wParam) / static_cast<float>(WHEEL_DELTA);
+                return OnInputEvent(ev);
+            case WM_LBUTTONDOWN:
+            case WM_LBUTTONUP:
+                ev.Button = gainput::MouseButtonLeft;
+                break;
+            case WM_RBUTTONDOWN:
+            case WM_RBUTTONUP:
+                ev.Button = gainput::MouseButtonRight;
+                break;
+            case WM_MBUTTONDOWN:
+            case WM_MBUTTONUP:
+                ev.Button = gainput::MouseButtonMiddle;
+                break;
+            case WM_KEYDOWN:
+            case WM_SYSKEYDOWN:
+            case WM_KEYUP:
+            case WM_SYSKEYUP: {
+                const unsigned sc = (msg.lParam >> 16) & 0xFF;
+                const bool ext = (msg.lParam >> 24) & 1;
+                if (!PhysicalToGainput(sc, ext, ev.Key))
+                    return false;
+                ev.Type = EInputEventType::Key;
+                ev.Down = msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN;
+                return OnInputEvent(ev);
+            }
+            case WM_CHAR: {
+                const auto c = static_cast<wchar_t>(msg.wParam);
+                if (IS_HIGH_SURROGATE(c)) {
+                    m_highSurrogate = c;
+                    return false;
+                }
+                wchar_t utf16[2] = {c, 0};
+                int length = 1;
+                if (IS_LOW_SURROGATE(c) && m_highSurrogate) {
+                    utf16[0] = m_highSurrogate;
+                    utf16[1] = c;
+                    length = 2;
+                }
+                m_highSurrogate = 0;
+                if (c < 0x20 || c == 0x7F || ev.Ctrl)
+                    return false;
+                ev.Type = EInputEventType::Text;
+                WideCharToMultiByte(CP_UTF8, 0, utf16, length, ev.Text, sizeof(ev.Text) - 1, nullptr, nullptr);
+                return OnInputEvent(ev);
+            }
+            default:
+                return false;
+        }
+
+        ev.Type = EInputEventType::MouseButton;
+        ev.Down = msg.message == WM_LBUTTONDOWN || msg.message == WM_RBUTTONDOWN || msg.message == WM_MBUTTONDOWN;
+        return OnInputEvent(ev);
     }
 
     NativeWindowHandle WindowsPlatformWindow::GetHandle() const {
@@ -167,6 +242,10 @@ namespace RTGDEngine {
                 }
                 break;
             }
+            case WM_KILLFOCUS:
+                if (self->OnInputEvent)
+                    self->OnInputEvent(InputEvent{EInputEventType::FocusLost});
+                break;
             case WM_CLOSE:
                 if (self->OnClose)
                     self->OnClose();

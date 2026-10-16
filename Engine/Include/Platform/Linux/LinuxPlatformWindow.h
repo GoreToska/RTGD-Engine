@@ -7,12 +7,14 @@
 #include "Platform/IPlatformWindow.h"
 #include <X11/Xlib.h>
 
-namespace RTGDEngine {
-    class LinuxPlatformWindow : public IPlatformWindow {
+namespace RTGDEngine
+{
+    class LinuxPlatformWindow : public IPlatformWindow
+    {
     public:
         ~LinuxPlatformWindow() override = default;
 
-        bool Create(const WindowDesc &desc) override;
+        bool Create(const WindowDesc& desc) override;
 
         bool PollEvents() override;
 
@@ -26,15 +28,19 @@ namespace RTGDEngine {
 
         void SetRelativeMouseMode(bool relative) override;
 
-        bool GetMouseDelta(float &dx, float &dy) override;
+        bool GetMouseDelta(float& dx, float& dy) override;
 
     private:
-        Display *m_display = nullptr;
+        bool DispatchInputEvent(XEvent& e);
+
+        Display* m_display = nullptr;
         Window m_window = 0;
         Atom m_deleteAtom = 0;
         bool m_running = true;
 
         int m_xiOpcode = -1;
+        XIM m_xim;
+        XIC m_xic;
     };
 } // RTGDEngine
 #endif
