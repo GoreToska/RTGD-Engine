@@ -21,18 +21,19 @@
 
 #include <cstdint>
 
-typedef void (RTGD_CALLBACK*EntityCallback)(const char *name, uint64_t id, uint64_t parentID);
+typedef void (RTGD_CALLBACK*EntityCallback)(const char* name, uint64_t id, uint64_t parentID);
 
 typedef void (RTGD_CALLBACK*EntityDestroyedCallback)(uint64_t id);
 
-typedef void (RTGD_CALLBACK*EntityCreatedCallback)(const char *name, uint64_t id, uint64_t parentID);
+typedef void (RTGD_CALLBACK*EntityCreatedCallback)(const char* name, uint64_t id, uint64_t parentID);
 
-typedef void (RTGD_CALLBACK*EntityRenamedCallback)(const char *newName, uint64_t id);
+typedef void (RTGD_CALLBACK*EntityRenamedCallback)(const char* newName, uint64_t id);
 
 typedef void (RTGD_CALLBACK*EntityReparentedCallback)(uint64_t id, uint64_t oldParentID, uint64_t newParentID);
 
-extern "C" {
-ENGINE_API bool Engine_Initialize(void *nativeWindow, int width, int height);
+extern "C"
+{
+ENGINE_API bool Engine_Initialize(void* nativeWindow, int width, int height);
 
 ENGINE_API void Engine_InjectKey(int key, bool down);
 
@@ -50,9 +51,9 @@ ENGINE_API void Engine_Shutdown();
 
 ENGINE_API uint64_t Engine_PickEntity(int x, int y);
 
-ENGINE_API void Engine_RenameEntity(uint64_t id, const char *name);
+ENGINE_API void Engine_RenameEntity(uint64_t id, const char* name);
 
-ENGINE_API void Engine_CreateEntity(const char *name);
+ENGINE_API void Engine_CreateEntity(const char* name, uint64_t parentID);
 
 ENGINE_API void Engine_DeleteEntity(uint64_t id);
 
@@ -70,12 +71,12 @@ ENGINE_API uint32_t Editor_GetSelectedVersion(void);
 
 ENGINE_API uint32_t Editor_GetHierarchyVersion(void);
 
-ENGINE_API int Editor_GetSelectedEntityJson(char *buf, int cap);
+ENGINE_API int Editor_GetSelectedEntityJson(char* buf, int cap);
 
-ENGINE_API int Editor_GetHierarchyJson(char *buf, int cap);
+ENGINE_API int Editor_GetHierarchyJson(char* buf, int cap);
 
 ENGINE_API void Editor_SetSelectedEntity(uint64_t id);
 
-ENGINE_API void Editor_SetFieldValue(uint64_t entityID, const char *component, const char *fieldPath,
-                                     const char *value);
+ENGINE_API void Editor_SetFieldValue(uint64_t entityID, const char* component, const char* fieldPath,
+                                     const char* value);
 }

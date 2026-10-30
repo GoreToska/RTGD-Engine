@@ -20,19 +20,22 @@
 #include "Platform/PlatformFactory.h"
 
 
-namespace RTGDEngine::Events {
+namespace RTGDEngine::Events
+{
     struct EntityCreatedEvent;
 }
 
 using namespace RTGDEngine;
 
-extern "C" {
+extern "C"
+{
 static EntityCreatedCallback g_onCreated = nullptr;
 static EntityDestroyedCallback g_onDestroyed = nullptr;
 static EntityRenamedCallback g_onRenamed = nullptr;
 static EntityReparentedCallback g_onReparented = nullptr;
 
-bool Engine_Initialize(void *nativeWindow, int width, int height) {
+bool Engine_Initialize(void* nativeWindow, int width, int height)
+{
     GLogger().Initialize();
 
     std::unique_ptr<IPlatformWindow> platform;
@@ -49,26 +52,30 @@ bool Engine_Initialize(void *nativeWindow, int width, int height) {
 #endif
 
     // TODO: just for test, move somewhere this later
-    GEventBus().Subscribe(Events::OnEntityCreated, [](const Events::EntityCreatedEvent &e) {
+    GEventBus().Subscribe(Events::OnEntityCreated, [](const Events::EntityCreatedEvent& e)
+    {
         if (!g_onCreated)
             return;
         auto ent = GScene().GetWorld().entity(e.entity);
         g_onCreated(ent.name().c_str(), e.entity, ent.parent().id());
     });
 
-    GEventBus().Subscribe(Events::OnEntityDestroyed, [](const Events::EntityDestroyedEvent &e) {
+    GEventBus().Subscribe(Events::OnEntityDestroyed, [](const Events::EntityDestroyedEvent& e)
+    {
         if (g_onDestroyed)
             g_onDestroyed(e.entity);
     });
 
-    GEventBus().Subscribe(Events::OnEntityRenamed, [](const Events::EntityRenamedEvent &e) {
+    GEventBus().Subscribe(Events::OnEntityRenamed, [](const Events::EntityRenamedEvent& e)
+    {
         if (!g_onRenamed)
             return;
         auto ent = GScene().GetWorld().entity(e.entity);
         g_onRenamed(ent.name().c_str(), e.entity);
     });
 
-    GEventBus().Subscribe(Events::OnEntityReparented, [](const Events::EntityReparentedEvent &e) {
+    GEventBus().Subscribe(Events::OnEntityReparented, [](const Events::EntityReparentedEvent& e)
+    {
         if (g_onReparented)
             g_onReparented(e.entity, e.oldParent, e.newParent);
     });
@@ -77,35 +84,43 @@ bool Engine_Initialize(void *nativeWindow, int width, int height) {
     return GEngine().Start(std::move(platform));
 }
 
-void Engine_InjectKey(int key, bool down) {
+void Engine_InjectKey(int key, bool down)
+{
     GInput().InjectKey(static_cast<gainput::Key>(key), down);
 }
 
-void Engine_InjectMouseButton(int button, bool down) {
+void Engine_InjectMouseButton(int button, bool down)
+{
     GInput().InjectMouseButton(static_cast<gainput::MouseButton>(button), down);
 }
 
-void Engine_InjectMouseMove(float dx, float dy) {
+void Engine_InjectMouseMove(float dx, float dy)
+{
     GInput().InjectMouseMove(dx, dy);
 }
 
-void Engine_WarpCursorToCenter() {
+void Engine_WarpCursorToCenter()
+{
     GInput().WarpCursorToCenter();
 }
 
-void Engine_SetCursorVisible(bool visible) {
+void Engine_SetCursorVisible(bool visible)
+{
     GInput().SetCursorVisible(visible);
 }
 
-void Engine_Resize(int w, int h) {
+void Engine_Resize(int w, int h)
+{
     GEngine().Resize(w, h);
 }
 
-void Engine_Shutdown() {
+void Engine_Shutdown()
+{
     GEngine().Stop();
 }
 
-uint64_t Engine_PickEntity(int x, int y) {
+uint64_t Engine_PickEntity(int x, int y)
+{
 #ifdef RTGD_EDITOR
     if (x < 0 || y < 0)
         return 0;
@@ -116,92 +131,116 @@ uint64_t Engine_PickEntity(int x, int y) {
 #endif
 }
 
-void Engine_RenameEntity(uint64_t id, const char *name) {
-    GScene().EnqueueRenameEntity(id, name);
+void Engine_RenameEntity(uint64_t id, const char* name)
+{
+    if (name)
+        GScene().EnqueueRenameEntity(id, name);
 }
 
-void Engine_CreateEntity(const char *name) {
-    GScene().EnqueueCreateEntity(name);
+void Engine_CreateEntity(const char* name, uint64_t parentID)
+{
+    GScene().EnqueueCreateEntity(name ? name : "", parentID);
 }
 
-void Engine_DeleteEntity(uint64_t id) {
+void Engine_DeleteEntity(uint64_t id)
+{
     GScene().EnqueueDestroyEntity(id);
 }
 
-void Engine_ReparentEntity(uint64_t id, uint64_t parentID) {
+void Engine_ReparentEntity(uint64_t id, uint64_t parentID)
+{
     GScene().EnqueueReparentEntity(id, parentID);
 }
 
-void Engine_SetEntityCreatedCallback(EntityCreatedCallback cb) {
+void Engine_SetEntityCreatedCallback(EntityCreatedCallback cb)
+{
     g_onCreated = cb;
 }
 
-void Engine_SetEntityDestroyedCallback(EntityDestroyedCallback cb) {
+void Engine_SetEntityDestroyedCallback(EntityDestroyedCallback cb)
+{
     g_onDestroyed = cb;
 }
 
-void Engine_SetEntityRenamedCallback(EntityRenamedCallback cb) {
+void Engine_SetEntityRenamedCallback(EntityRenamedCallback cb)
+{
     g_onRenamed = cb;
 }
 
-void Engine_SetEntityReparentedCallback(EntityReparentedCallback cb) {
+void Engine_SetEntityReparentedCallback(EntityReparentedCallback cb)
+{
     g_onReparented = cb;
 }
 
-void Editor_SetFieldValue(uint64_t entityID, const char *component, const char *fieldPath, const char *value) {
-    if (!component || !fieldPath || !value) return;
+void Editor_SetFieldValue(uint64_t entityID, const char* component, const char* fieldPath, const char* value)
+{
+    if (!component || !fieldPath || !value)
+        return;
 
     GScene().EnqueueCommand(
         [entityID, comp = std::string(component), path = std::string(fieldPath), val = std::string(value)](
-    flecs::world &world) {
+    flecs::world& world)
+        {
             const flecs::entity e = world.entity(entityID);
-            if (!e.is_alive()) return;
+            if (!e.is_alive())
+                return;
 
             const ecs_entity_t compId = ecs_lookup(world, comp.c_str());
-            if (!compId || !e.has(compId)) return;
+            if (!compId || !e.has(compId))
+                return;
 
-            void *ptr = ecs_get_mut_id(world, e, compId);
-            if (!ptr) return;
+            void* ptr = ecs_get_mut_id(world, e, compId);
+            if (!ptr)
+                return;
 
             ecs_meta_cursor_t cur = ecs_meta_cursor(world, compId, ptr);
-            if (!cur.valid) return;
-            if (ecs_meta_push(&cur) != 0) return;
-            if (ecs_meta_try_dotmember(&cur, path.c_str()) != 0) return;
-            if (ecs_meta_set_string(&cur, val.c_str()) != 0) return;
+            if (!cur.valid)
+                return;
+            if (ecs_meta_push(&cur) != 0)
+                return;
+            if (ecs_meta_try_dotmember(&cur, path.c_str()) != 0)
+                return;
+            if (ecs_meta_set_string(&cur, val.c_str()) != 0)
+                return;
 
             ecs_modified_id(world, e, compId);
         });
 }
 
-uint32_t Editor_GetSelectedVersion() {
+uint32_t Editor_GetSelectedVersion()
+{
 #ifdef RTGD_EDITOR
     return GEditorBridge().SelectedVersion();
 #endif
     return 0;
 }
 
-uint32_t Editor_GetHierarchyVersion() {
+uint32_t Editor_GetHierarchyVersion()
+{
 #ifdef RTGD_EDITOR
     return GEditorBridge().HierarchyVersion();
 #endif
     return 0;
 }
 
-int Editor_GetSelectedEntityJson(char *buf, int cap) {
+int Editor_GetSelectedEntityJson(char* buf, int cap)
+{
 #ifdef RTGD_EDITOR
     return GEditorBridge().CopySelectedJson(buf, cap);
 #endif
     return -1;
 }
 
-int Editor_GetHierarchyJson(char *buf, int cap) {
+int Editor_GetHierarchyJson(char* buf, int cap)
+{
 #ifdef RTGD_EDITOR
     return GEditorBridge().CopyHierarchyJson(buf, cap);
 #endif
     return -1;
 }
 
-void Editor_SetSelectedEntity(uint64_t id) {
+void Editor_SetSelectedEntity(uint64_t id)
+{
 #ifdef RTGD_EDITOR
     GEditorBridge().SetSelected(id);
 #endif

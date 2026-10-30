@@ -19,10 +19,10 @@
 
 namespace RTGDEngine
 {
-    Scene::Scene(flecs::world& world, const std::string& name)
+    Scene::Scene(World& world, const std::string& name)
         : m_name(name), m_world(&world)
     {
-        m_root = m_world->entity(name.c_str());
+        m_root = m_world->entity(name.c_str()).add<SceneRoot>();
         LogInfo("Scene created: '{}'", m_name);
     }
 

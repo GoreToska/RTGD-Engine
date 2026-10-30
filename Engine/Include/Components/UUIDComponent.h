@@ -17,4 +17,9 @@ namespace RTGDEngine {
 
     struct SceneEntity {
     };
+
+    struct SceneRoot
+    {
+        
+    };
 }
