@@ -346,4 +346,8 @@ namespace RTGDEngine
 
         return false;
     }
+
+    void UISystem::Close(UIView* view)
+    {
+    }
 } // RTGDEngine

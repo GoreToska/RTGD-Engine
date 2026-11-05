@@ -165,6 +165,10 @@ add_library(Engine SHARED
         Source/Render/Graph/Pass/UIPass.cpp
         Include/Render/Graph/Pass/UIPass.h
         Include/Platform/InputEvent.h
+        Source/Engine/UI/GUIEventListener.cpp
+        Include/Engine/UI/GUIEventListener.h
+        Source/Engine/UI/UIView.cpp
+        Include/Engine/UI/UIView.h
 )
 
 if (RTGD_WITH_FMOD)

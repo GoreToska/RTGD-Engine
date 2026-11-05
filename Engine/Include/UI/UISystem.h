@@ -19,6 +19,7 @@ namespace Diligent
 
 namespace RTGDEngine
 {
+    class UIView;
     struct InputEvent;
     class UiSystemInterface;
     class UiRenderInterfaceStub;
@@ -41,6 +42,13 @@ namespace RTGDEngine
         void Render(Diligent::IDeviceContext& context);
 
         bool ProcessInput(const InputEvent& event);
+
+        template<typename T, typename... Args>
+        T* Open(Args&&... args)
+        {
+        }
+
+        void Close(UIView* view);
 
     private:
         Rml::Context* m_context = nullptr;
