@@ -56,7 +56,11 @@ bool Engine_Initialize(void* nativeWindow, int width, int height)
     {
         if (!g_onCreated)
             return;
+
         auto ent = GScene().GetWorld().entity(e.entity);
+        if (!ent.is_alive())
+            return;
+
         g_onCreated(ent.name().c_str(), e.entity, ent.parent().id());
     });
 
@@ -71,6 +75,10 @@ bool Engine_Initialize(void* nativeWindow, int width, int height)
         if (!g_onRenamed)
             return;
         auto ent = GScene().GetWorld().entity(e.entity);
+
+        if (!ent.is_alive())
+            return;
+
         g_onRenamed(ent.name().c_str(), e.entity);
     });
 
