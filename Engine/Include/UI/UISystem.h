@@ -17,8 +17,6 @@ namespace Diligent
     struct IDeviceContext;
 }
 
-struct NativeWindowEvent;
-
 namespace RTGDEngine
 {
     struct InputEvent;
@@ -42,7 +40,7 @@ namespace RTGDEngine
 
         void Render(Diligent::IDeviceContext& context);
 
-        void ProcessInput(const InputEvent& event);
+        bool ProcessInput(const InputEvent& event);
 
     private:
         Rml::Context* m_context = nullptr;

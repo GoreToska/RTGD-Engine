@@ -62,7 +62,6 @@ add_library(Engine SHARED
         Include/Platform/Windows/WindowsPlatformWindow.h
         Source/Platform/Windows/WindowsPlatformWindow.cpp
         Include/Platform/WindowHandle.h
-        Include/Platform/WindowEvent.h
         Source/Platform/Linux/EmbeddedLinuxWindow.cpp
         Include/Platform/Linux/EmbeddedLinuxWindow.h
         Source/Input/KeyboardDevice.cpp

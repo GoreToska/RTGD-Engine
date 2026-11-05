@@ -44,10 +44,6 @@ namespace RTGDEngine {
         return {GetWidth(), GetHeight(), m_hwnd, m_hinstance};
     }
 
-    EInputSource EmbeddedWindowsWindow::GetInputSource() const {
-        return EInputSource::Injected;
-    }
-
     void EmbeddedWindowsWindow::Destroy() {
         if (m_subclassed && m_hwnd) {
             RemoveWindowSubclass(m_hwnd, &SubclassProc, kSubclassId);

@@ -64,12 +64,7 @@ namespace RTGDEngine {
                 break;
             }
 
-            if (!DispatchInputEvent(msg) && OnNativeEvent) {
-                NativeWindowEvent event{};
-                event.Hwnd = m_hwnd;
-                event.Msg = msg;
-                OnNativeEvent(event);
-            }
+            DispatchInputEvent(msg);
 
             TranslateMessage(&msg);
             DispatchMessageA(&msg);
@@ -156,10 +151,6 @@ namespace RTGDEngine {
         handle.width = m_width;
         handle.height = m_height;
         return handle;
-    }
-
-    EInputSource WindowsPlatformWindow::GetInputSource() const {
-        return EInputSource::NativeEvents;
     }
 
     void WindowsPlatformWindow::Destroy() {

@@ -6,7 +6,6 @@
 #include <functional>
 
 #include "InputEvent.h"
-#include "WindowEvent.h"
 #include "Platform/WindowHandle.h"
 
 namespace RTGDEngine
@@ -30,8 +29,6 @@ namespace RTGDEngine
         virtual bool PollEvents() = 0; // false is exit
 
         [[nodiscard]] virtual NativeWindowHandle GetHandle() const = 0;
-
-        [[nodiscard]] virtual EInputSource GetInputSource() const = 0;
 
         virtual void SetCursorVisible(bool visible) = 0;
 
@@ -58,7 +55,6 @@ namespace RTGDEngine
 
         std::function<void(int width, int height)> OnResize;
         std::function<void()> OnClose;
-        std::function<void(const NativeWindowEvent&)> OnNativeEvent;
         std::function<bool(const InputEvent&)> OnInputEvent;
 
     protected:

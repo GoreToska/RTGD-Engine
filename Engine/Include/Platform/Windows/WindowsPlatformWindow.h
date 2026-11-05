@@ -18,8 +18,6 @@ namespace RTGDEngine {
 
         NativeWindowHandle GetHandle() const override;
 
-        [[nodiscard]] EInputSource GetInputSource() const override;
-
         void SetCursorVisible(bool visible) override;
 
         void SetRelativeMouseMode(bool relative) override;

@@ -9,7 +9,7 @@
 
 #include "EInputAction.h"
 #include "Engine/EngineExport.h"
-#include "Platform/WindowEvent.h"
+#include "Platform/InputEvent.h"
 #include "Tools/Alias.h"
 #include "Tools/RTGDMacros.h"
 
@@ -25,7 +25,7 @@ namespace RTGDEngine
     public:
         void AddWindowHandle(IPlatformWindow* window);
 
-        void HandleNativeEvent(const NativeWindowEvent& event);
+        void HandleInputEvent(const InputEvent& event);
 
         void Update();
 
@@ -76,7 +76,7 @@ namespace RTGDEngine
     private:
         void CreateKeyboardDevice();
 
-        void CreateMouseDevice(EInputSource source);
+        void CreateMouseDevice();
 
         void CreateInputMapping();
 

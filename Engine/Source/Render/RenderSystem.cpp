@@ -3,6 +3,10 @@
 
 #include "Render/ShaderLoader.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 #include <GraphicsTypes.h>
 #include <RenderDevice.h>
 #include <DeviceContext.h>

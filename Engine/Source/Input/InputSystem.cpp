@@ -6,16 +6,8 @@
 
 #include "Input/KeyboardDevice.h"
 #include "Input/MouseDevice.h"
-#include "Input/PhysicalKeyMap.h"
 #include "Platform/IPlatformWindow.h"
 #include "Tools/Logger.h"
-
-#ifdef _WIN32
-#include <Windows.h>
-#include <vector>
-#elif defined(__linux__)
-#include <X11/Xlib.h>
-#endif
 
 namespace RTGDEngine
 {
@@ -39,8 +31,6 @@ namespace RTGDEngine
         m_map->MapBool(ID(A::SaveScene), m_keyboard, KeyS);
 
         m_map->MapBool(ID(A::MouseRight), m_mouse, MouseButtonRight);
-        m_map->MapFloat(ID(A::LookX), m_mouse, MouseAxisX);
-        m_map->MapFloat(ID(A::LookY), m_mouse, MouseAxisY);
     }
 
     // TODO: need to initialize once and just switch focus of windows
@@ -49,7 +39,7 @@ namespace RTGDEngine
         m_manager.SetDisplaySize(handle->GetHandle().width, handle->GetHandle().height);
 
         CreateKeyboardDevice();
-        CreateMouseDevice(handle->GetInputSource());
+        CreateMouseDevice();
 
         CreateInputMapping();
 
@@ -62,51 +52,34 @@ namespace RTGDEngine
 
         m_platformWindow = window;
 
-        window->OnNativeEvent = [this](const NativeWindowEvent& event)
-        {
-            this->HandleNativeEvent(event);
-        };
-
         InitializeInputForWindow(window);
     }
 
-    void InputSystem::HandleNativeEvent(const NativeWindowEvent& event)
+    void InputSystem::HandleInputEvent(const InputEvent& event)
     {
-#ifdef _WIN32
-        switch (event.Msg.message)
+        switch (event.Type)
         {
-            case WM_KEYDOWN:
-            case WM_SYSKEYDOWN:
-            case WM_KEYUP:
-            case WM_SYSKEYUP:
-            {
-                const bool down = (event.Msg.message == WM_KEYDOWN || event.Msg.message == WM_SYSKEYDOWN);
-                const unsigned sc = (event.Msg.lParam >> 16) & 0xFF;
-                const bool ext = (event.Msg.lParam >> 24) & 1;
-                Key key;
-                if (PhysicalToGainput(sc, ext, key))
-                    InjectKey(key, down);
-
+            case EInputEventType::MouseButton:
+                InjectMouseButton(event.Button, event.Down);
                 break;
-            }
+            case EInputEventType::Key:
+                InjectKey(event.Key, event.Down);
+                break;
+            case EInputEventType::FocusLost:
+                for (int i = 0; i < KeyCount_; i++)
+                {
+                    InjectKey(static_cast<Key>(i), false);
+                }
+
+                for (int i = 0; i < MouseButtonCount_; i++)
+                {
+                    InjectMouseButton(static_cast<MouseButton>(i), false);
+                }
+                break;
+
+            default:
+                break;
         }
-
-        m_manager.HandleMessage(event.Msg);
-
-#elif defined(__linux__)
-        auto* xe = static_cast<XEvent*>(event.XEvent);
-        if (xe->type == KeyPress || xe->type == KeyRelease)
-        {
-            const bool down = (xe->type == KeyPress);
-            const int evdev = static_cast<int>(xe->xkey.keycode) - 8;
-
-            if (Key key; PhysicalToGainput(evdev, key))
-                InjectKey(key, down);
-
-            return;
-        }
-        m_manager.HandleEvent(*xe);
-#endif
     }
 
     void InputSystem::Update()
@@ -175,12 +148,12 @@ namespace RTGDEngine
         return id;
     }
 
-    void InputSystem::BindKey(ActionID action, gainput::Key key) const
+    void InputSystem::BindKey(ActionID action, Key key) const
     {
         m_map->MapBool(action, m_keyboard, key);
     }
 
-    void InputSystem::BindMouseButton(ActionID action, gainput::MouseButton button) const
+    void InputSystem::BindMouseButton(ActionID action, MouseButton button) const
     {
         m_map->MapBool(action, m_mouse, button);
     }
@@ -260,17 +233,9 @@ namespace RTGDEngine
         m_injectKeyboard = dynamic_cast<IInjectableButton*>(m_manager.GetDevice(m_keyboard));
     }
 
-    void InputSystem::CreateMouseDevice(EInputSource source)
+    void InputSystem::CreateMouseDevice()
     {
-        switch (source)
-        {
-            case EInputSource::NativeEvents:
-                m_mouse = m_manager.CreateDevice<InputDeviceMouse>();
-                break;
-            case EInputSource::Injected:
-                m_mouse = m_manager.CreateDevice<MouseDevice>();
-                m_injectMouseButton = dynamic_cast<IInjectableButton*>(m_manager.GetDevice(m_mouse));
-                break;
-        }
+        m_mouse = m_manager.CreateDevice<MouseDevice>();
+        m_injectMouseButton = dynamic_cast<IInjectableButton*>(m_manager.GetDevice(m_mouse));
     }
 }

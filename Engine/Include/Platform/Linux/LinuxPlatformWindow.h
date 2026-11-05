@@ -20,8 +20,6 @@ namespace RTGDEngine
 
         [[nodiscard]] NativeWindowHandle GetHandle() const override;
 
-        [[nodiscard]] EInputSource GetInputSource() const override;
-
         void Destroy() override;
 
         void SetCursorVisible(bool visible) override;

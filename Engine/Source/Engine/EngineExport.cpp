@@ -5,6 +5,9 @@
 #include "Engine/EngineExport.h"
 
 #include <cstdint>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 #include "Components/UUIDComponent.h"
 #include "Engine/EditorBridge.h"

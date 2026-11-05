@@ -99,12 +99,7 @@ namespace RTGDEngine
                 continue;
             }
 
-            if (!DispatchInputEvent(e) && OnNativeEvent)
-            {
-                NativeWindowEvent event{};
-                event.XEvent = &e;
-                OnNativeEvent(event);
-            }
+            DispatchInputEvent(e);
 
             switch (e.type)
             {
@@ -135,11 +130,6 @@ namespace RTGDEngine
         handle.height = m_height;
 
         return handle;
-    }
-
-    EInputSource LinuxPlatformWindow::GetInputSource() const
-    {
-        return EInputSource::NativeEvents;
     }
 
     void LinuxPlatformWindow::Destroy()

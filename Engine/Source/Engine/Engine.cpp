@@ -115,6 +115,21 @@ namespace RTGDEngine
 
         GUI().Initialize(m_platformWindow->GetWidth(), m_platformWindow->GetHeight());
 
+        m_platformWindow->OnInputEvent = [](const InputEvent& event) -> bool
+        {
+            const bool isMouse = event.Type == EInputEventType::MouseMove ||
+                                 event.Type == EInputEventType::MouseButton ||
+                                 event.Type == EInputEventType::MouseWheel;
+            bool consumedByGUI = !(isMouse && GInput().IsMouseCaptured()) && GUI().ProcessInput(event);
+            const bool isRelease = (event.Type == EInputEventType::Key || event.Type == EInputEventType::MouseButton) &&
+                                   !event.Down;
+
+            if (!consumedByGUI || isRelease)
+                GInput().HandleInputEvent(event);
+
+            return true;
+        };
+
         m_platformWindow->OnResize = [](int w, int h) { Instance().Resize(w, h); };
         m_platformWindow->OnClose = []() { Instance().OnClose(); };
 
