@@ -15,6 +15,51 @@
 #include "Tools/Logger.h"
 #include "Tools/MetaTypes.h"
 
+namespace
+{
+    bool IsValidEntityName(std::string_view name)
+    {
+        return !name.empty() && name.front() != '#' && name.find_first_of(".:") == std::string::npos;
+    }
+
+    std::string MakeUniqueName(Entity parent, const std::string& base, Entity self = {})
+    {
+        auto taken = [&](const std::string& name)
+        {
+            const Entity found = parent.lookup(name.c_str());
+            return found && found != self;
+        };
+
+        if (!taken(base))
+            return base;
+
+        for (int i = 1; ; ++i)
+        {
+            std::string newName = base + " (" + std::to_string(i) + ")";
+            if (!taken(newName))
+                return newName;
+        }
+    }
+
+    bool IsEditable(World& w, uint64_t id)
+    {
+        if (!id)
+            return false;
+
+        const Entity e = w.entity(id);
+        return e.is_alive() && e.has<RTGDEngine::SceneEntity>();
+    }
+
+    bool IsValidParent(World& w, uint64_t id)
+    {
+        if (!id)
+            return true;
+
+        const Entity p = w.entity(id);
+        return p.is_alive() && (p.has<RTGDEngine::SceneEntity>() || p.has<RTGDEngine::SceneRoot>());
+    }
+}
+
 namespace RTGDEngine
 {
     void SceneManager::Initialize()
@@ -158,42 +203,52 @@ namespace RTGDEngine
     void SceneManager::EnqueueCreateEntity(std::string name, uint64_t parent)
     {
         std::lock_guard lock(m_commandsMutex);
-        m_commands.emplace_back([this, n = std::move(name), parent](flecs::world& w)
+
+        m_commands.emplace_back([this, n = std::move(name), parent](World& w)
         {
-            CreateEntity(n, GetEntity(parent));
+            if (IsValidParent(w, parent))
+                CreateEntity(n, GetEntity(parent));
         });
     }
 
     void SceneManager::EnqueueDestroyEntity(uint64_t id)
     {
         std::lock_guard lock(m_commandsMutex);
-        m_commands.emplace_back([this, id](flecs::world& w)
+
+
+        m_commands.emplace_back([this, id](World& w)
         {
-            DestroyEntity(w.entity(id));
+            if (IsEditable(w, id))
+                DestroyEntity(w.entity(id));
         });
     }
 
     void SceneManager::EnqueueRenameEntity(uint64_t id, std::string name)
     {
         std::lock_guard lock(m_commandsMutex);
-        m_commands.emplace_back([this, id, n = std::move(name)](flecs::world& w)
+
+
+        m_commands.emplace_back([this, id, n = std::move(name)](World& w)
         {
-            RenameEntity(GetEntity(id), n);
+            if (IsEditable(w, id))
+                RenameEntity(GetEntity(id), n);
         });
     }
 
     void SceneManager::EnqueueReparentEntity(uint64_t id, uint64_t parentId)
     {
         std::lock_guard lock(m_commandsMutex);
-        m_commands.emplace_back([this, id, parentId](flecs::world& w)
+
+        m_commands.emplace_back([this, id, parentId](World& w)
         {
-            ReparentEntity(GetEntity(id), GetEntity(parentId));
+            if (IsValidParent(w, parentId) && IsEditable(w, id))
+                ReparentEntity(GetEntity(id), GetEntity(parentId));
         });
     }
 
     void SceneManager::ApplyPendingEntityCommands()
     {
-        std::vector<std::function<void(flecs::world&)>> commands{}; {
+        std::vector<std::function<void(World&)>> commands{}; {
             std::lock_guard lock(m_commandsMutex);
             commands.swap(m_commands);
         }
@@ -227,10 +282,13 @@ namespace RTGDEngine
 
     Entity SceneManager::CreateEntity(const std::string& name, Entity parent)
     {
-        if (parent == Entity::null())
+        if (!parent)
             parent = m_activeScene->GetRoot();
 
-        auto entity = m_world.entity(name.c_str()).child_of(parent)
+        const std::string base = IsValidEntityName(name) ? name : "Entity";
+
+        auto entity = m_world.entity().child_of(parent)
+                .set_name(MakeUniqueName(parent, base).c_str())
                 .add<UUIDComponent>()
                 .add<SceneEntity>()
                 .add<TransformComponent>();
@@ -258,7 +316,16 @@ namespace RTGDEngine
         if (!e.is_alive())
             return;
 
-        e.set_name(name.c_str());
+        if (!IsValidEntityName(name))
+        {
+            LogWarn("Invalid entity name '{}'", name.c_str());
+            return;
+        }
+
+        if (name == e.name().c_str())
+            return;
+
+        e.set_name(MakeUniqueName(e.parent(), name, e).c_str());
         LogInfo("Rename entity '{}'", name.c_str());
     }
 
@@ -271,6 +338,10 @@ namespace RTGDEngine
         Entity newParent = parent != Entity::null()
                                ? parent
                                : (m_activeScene ? m_activeScene->GetRoot() : Entity::null());
+
+        if (oldParent == newParent)
+            return;
+
         if (newParent == 0)
             return;
 
@@ -291,6 +362,12 @@ namespace RTGDEngine
             return;
         }
 
+        const std::string oldName = e.name().c_str();
+        const std::string newName = oldName.empty() ? oldName : MakeUniqueName(newParent, oldName);
+
+        if (newName != oldName)
+            e.set_name(nullptr);
+
         e.child_of(newParent);
 
         if (auto* t = e.try_get_mut<TransformComponent>())
@@ -299,10 +376,13 @@ namespace RTGDEngine
             t->Scale = t->Scale * oldParentScale / newParentScale;
         }
 
+        if (newName != oldName)
+            e.set_name(newName.c_str());
+
         GEventBus().Emit(Events::OnEntityReparented, {e.id(), oldParent.id(), newParent.id()}, {});
     }
 
-    void SceneManager::EnqueueCommand(std::function<void(flecs::world&)> func)
+    void SceneManager::EnqueueCommand(std::function<void(World&)> func)
     {
         std::lock_guard lock(m_commandsMutex);
         m_commands.emplace_back(std::move(func));
@@ -316,7 +396,7 @@ namespace RTGDEngine
         }
     }
 
-    flecs::world& SceneManager::GetWorld()
+    World& SceneManager::GetWorld()
     {
         return m_world;
     }
