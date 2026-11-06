@@ -169,6 +169,7 @@ add_library(Engine SHARED
         Include/Engine/UI/GUIEventListener.h
         Source/Engine/UI/UIView.cpp
         Include/Engine/UI/UIView.h
+        Include/UI/Views/TestView.h
 )
 
 if (RTGD_WITH_FMOD)

@@ -32,6 +32,7 @@
 #include "Systems/TransformSystem.h"
 #include "Systems/Physics/PhysicsSystem.h"
 #include "UI/UISystem.h"
+#include "UI/Views/TestView.h"
 
 namespace RTGDEngine
 {
@@ -127,6 +128,7 @@ namespace RTGDEngine
             if (!consumedByGUI || isRelease)
                 GInput().HandleInputEvent(event);
 
+
             return true;
         };
 
@@ -140,6 +142,8 @@ namespace RTGDEngine
 #endif
 
         RegisterBaseSystems();
+
+        GUI().Open<TestView>();
 
         return true;
     }
@@ -322,7 +326,7 @@ namespace RTGDEngine
         GEditorBridge().PublishSnapshot();
 #endif
 
-        GUI().Update();
+        GUI().Update(deltaTime);
 
         Render();
     }

@@ -77,6 +77,6 @@ namespace RTGDEngine
 
         std::string m_documentPath;
         Rml::ElementDocument* m_document = nullptr;
-        std::vector<Registration> m_listeners = {};
+        std::vector<Registration> m_listeners;
     };
 } // RTGDEditor

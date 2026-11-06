@@ -9,6 +9,7 @@
 
 #include "AssetLoader/PathResolve.h"
 #include "Engine/UI/UiSystemInterface.h"
+#include "Engine/UI/UIView.h"
 #include "Platform/InputEvent.h"
 #include "UI/UiRenderInterface.h"
 #include "Tools/Logger.h"
@@ -252,32 +253,32 @@ namespace RTGDEngine
 
         Rml::Debugger::SetVisible(true);
 
-        if (auto* doc = m_context->LoadDocumentFromMemory(R"(
-            <rml><head><style>
-            body, div { display: block; }
-            body { font-family: LatoLatin; font-size: 48dp; color: white; }
-            div { width: 200dp; height: 100dp; }
-            </style></head>
-            <body>
-            Hello
-            <div style="background-color: #ff000080;"></div>
-            <div style="background-color: #808080;"></div>
-            </body></rml>)"))
-            doc->Show();
-
         return true;
     }
 
     void UISystem::Shutdown()
     {
+        for (auto& view: m_views)
+            view->Destroy();
+
+        m_views.clear();
+        m_pendingCloseViews.clear();
+
         Rml::Shutdown();
         m_context = nullptr;
         s_systemInterface.reset();
         s_renderInterface.reset();
     }
 
-    void UISystem::Update()
+    void UISystem::Update(float deltaTime)
     {
+        for (size_t i = 0; i < m_views.size(); i++)
+        {
+            m_views[i]->OnUpdate(deltaTime);
+        }
+
+        DestroyPendingViews();
+
         if (m_context)
             m_context->Update();
     }
@@ -349,5 +350,41 @@ namespace RTGDEngine
 
     void UISystem::Close(UIView* view)
     {
+        if (!view)
+            return;
+
+        if (std::ranges::find(m_pendingCloseViews, view) != m_pendingCloseViews.end())
+            return;
+
+        m_pendingCloseViews.push_back(view);
+    }
+
+    bool UISystem::AddView(std::unique_ptr<UIView> view)
+    {
+        if (!m_context)
+            return false;
+
+        if (!view->Load(*m_context))
+            return false;
+
+        m_views.push_back(std::move(view));
+        return true;
+    }
+
+    void UISystem::DestroyPendingViews()
+    {
+        auto pending = std::move(m_pendingCloseViews);
+        m_pendingCloseViews.clear();
+
+        for (auto& view: pending)
+        {
+            view->Destroy();
+            std::erase_if(m_views, [view](std::unique_ptr<UIView>& v)
+            {
+                return view == v.get();
+            });
+        }
+
+        pending.clear();
     }
 } // RTGDEngine
