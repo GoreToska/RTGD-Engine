@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "Tools/RTGDMacros.h"
-#include "Engine/UI/UIView.h"
+#include "Views/UIView.h"
 
 namespace Rml
 {
@@ -21,6 +21,7 @@ namespace Diligent
 
 namespace RTGDEngine
 {
+    class UIFileInterface;
     class UIView;
     struct InputEvent;
     class UiSystemInterface;

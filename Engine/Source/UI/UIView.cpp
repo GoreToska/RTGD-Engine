@@ -2,14 +2,14 @@
 // Created by ivan on 11/5/26.
 //
 
-#include "Engine/UI/UIView.h"
+#include "../../Include/UI/Views/UIView.h"
 
 #include <RmlUi/Core.h>
 
 #include <utility>
 
 #include "AssetLoader/PathResolve.h"
-#include "Engine/UI/GUIEventListener.h"
+#include "../../Include/UI/GUIEventListener.h"
 #include "Tools/Logger.h"
 #include "UI/UISystem.h"
 
@@ -59,7 +59,7 @@ namespace RTGDEngine
 
     bool UIView::Load(Rml::Context& context)
     {
-        m_document = context.LoadDocument(GetAbsolutePath(m_documentPath));
+        m_document = context.LoadDocument(m_documentPath);
 
         if (!m_document)
         {

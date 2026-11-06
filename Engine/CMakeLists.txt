@@ -157,7 +157,7 @@ add_library(Engine SHARED
         Source/Systems/TransformSystem.cpp
         Include/Systems/TransformSystem.h
         Source/Engine/UiSystemInterface.cpp
-        Include/Engine/UI/UiSystemInterface.h
+        Include/UI/UiSystemInterface.h
         Source/UI/UISystem.cpp
         Include/UI/UISystem.h
         Source/UI/UiRenderInterface.cpp
@@ -165,11 +165,13 @@ add_library(Engine SHARED
         Source/Render/Graph/Pass/UIPass.cpp
         Include/Render/Graph/Pass/UIPass.h
         Include/Platform/InputEvent.h
-        Source/Engine/UI/GUIEventListener.cpp
-        Include/Engine/UI/GUIEventListener.h
-        Source/Engine/UI/UIView.cpp
-        Include/Engine/UI/UIView.h
+        Source/UI/GUIEventListener.cpp
+        Include/UI/GUIEventListener.h
+        Source/UI/UIView.cpp
+        Include/UI/Views/UIView.h
         Include/UI/Views/TestView.h
+        Source/UI/UIFileInterface.cpp
+        Include/UI/UIFileInterface.h
 )
 
 if (RTGD_WITH_FMOD)

@@ -7,12 +7,12 @@
 #include <RmlUi/Core.h>
 #include <RmlUi/Debugger.h>
 
-#include "AssetLoader/PathResolve.h"
-#include "Engine/UI/UiSystemInterface.h"
-#include "Engine/UI/UIView.h"
+#include "UI/UiSystemInterface.h"
+#include "UI/Views/UIView.h"
 #include "Platform/InputEvent.h"
 #include "UI/UiRenderInterface.h"
 #include "Tools/Logger.h"
+#include "UI/UIFileInterface.h"
 
 namespace RTGDEngine
 {
@@ -20,6 +20,7 @@ namespace RTGDEngine
     {
         std::unique_ptr<UiSystemInterface> s_systemInterface;
         std::unique_ptr<UiRenderInterface> s_renderInterface;
+        std::unique_ptr<UIFileInterface> s_fileInterface;
 
         int GetKeyModifier(const InputEvent& event)
         {
@@ -227,6 +228,7 @@ namespace RTGDEngine
     {
         s_systemInterface = std::make_unique<UiSystemInterface>();
         s_renderInterface = std::make_unique<UiRenderInterface>();
+        s_fileInterface = std::make_unique<UIFileInterface>();
 
         if (!s_renderInterface->Initialize())
         {
@@ -236,6 +238,7 @@ namespace RTGDEngine
 
         Rml::SetSystemInterface(s_systemInterface.get());
         Rml::SetRenderInterface(s_renderInterface.get());
+        Rml::SetFileInterface(s_fileInterface.get());
 
         if (!Rml::Initialise())
         {
@@ -245,7 +248,7 @@ namespace RTGDEngine
 
         m_context = Rml::CreateContext("main", {width, height});
 
-        if (!Rml::LoadFontFace(GetAbsolutePath("Assets/Fonts/LatoLatin-Regular.ttf")))
+        if (!Rml::LoadFontFace("Assets/Fonts/LatoLatin-Regular.ttf"))
             LogError("Failed to load font {}.", "Assets/Fonts/LatoLatin-Regular.ttf");
 
         if (!Rml::Debugger::Initialise(m_context))
@@ -268,6 +271,7 @@ namespace RTGDEngine
         m_context = nullptr;
         s_systemInterface.reset();
         s_renderInterface.reset();
+        s_fileInterface.reset();
     }
 
     void UISystem::Update(float deltaTime)
