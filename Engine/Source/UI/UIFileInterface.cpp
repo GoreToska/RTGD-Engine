@@ -16,12 +16,12 @@ namespace RTGDEngine
     {
         auto filePath = std::filesystem::path(path);
         if (!filePath.is_absolute())
-            filePath = GetAbsolutePath(filePath.c_str());
+            filePath = GetAbsolutePath(filePath.string());
 
-        auto file = std::fopen(filePath.c_str(), "rb");
+        auto file = std::fopen(filePath.string().c_str(), "rb");
         if (!file)
         {
-            LogError("Failed to open file: {}", filePath.c_str());
+            LogError("Failed to open file: {}", filePath.string());
             return Rml::FileHandle();
         }
 

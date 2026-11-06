@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Engine/EngineExport.h"
+#include "UI/GUIEventListener.h"
 
 namespace Rml
 {
@@ -21,12 +22,18 @@ namespace Rml
 
 namespace RTGDEngine
 {
-    class GUIEventListener;
-
     class ENGINE_API UIView
     {
     public:
         explicit UIView(const std::string& relativeDocumentPath);
+
+        UIView(const UIView&) = delete;
+
+        UIView& operator=(const UIView&) = delete;
+
+        UIView(UIView&&) noexcept = default;
+
+        UIView& operator=(UIView&&) noexcept = default;
 
         virtual ~UIView();
 
@@ -73,6 +80,21 @@ namespace RTGDEngine
             Rml::Element* Element;
             std::string Event;
             std::unique_ptr<GUIEventListener> Listener;
+
+            Registration() = default;
+
+            Registration(Rml::Element* inElement, std::string inEvent, std::unique_ptr<GUIEventListener> inListener)
+                : Element(inElement), Event(std::move(inEvent)), Listener(std::move(inListener))
+            {
+            }
+
+            Registration(Registration&&) noexcept = default;
+
+            Registration& operator=(Registration&&) noexcept = default;
+
+            Registration(const Registration&) = delete;
+
+            Registration& operator=(const Registration&) = delete;
         };
 
         std::string m_documentPath;
