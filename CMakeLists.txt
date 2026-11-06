@@ -135,7 +135,6 @@ install(RUNTIME_DEPENDENCY_SET RTGDRuntimeDeps
 install(DIRECTORY Assets Shaders DESTINATION . COMPONENT Runtime)
 
 target_compile_definitions(RTGD-Engine PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
-target_compile_definitions(RTGD-Engine PRIVATE GAME_MODULE_NAME="$<TARGET_FILE_NAME:Game>")
 set_target_properties(RTGD-Engine PROPERTIES WIN32_EXECUTABLE FALSE)
 
 target_link_libraries(RTGD-Engine PRIVATE

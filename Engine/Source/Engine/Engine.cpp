@@ -145,6 +145,8 @@ namespace RTGDEngine
 
         GUI().Open<TestView>();
 
+        GEngine().LoadGameModule(GAME_MODULE_NAME);
+
         return true;
     }
 

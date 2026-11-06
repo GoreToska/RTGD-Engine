@@ -174,6 +174,8 @@ add_library(Engine SHARED
         Include/UI/UIFileInterface.h
 )
 
+target_compile_definitions(Engine PRIVATE GAME_MODULE_NAME="$<TARGET_FILE_NAME:Game>")
+
 if (RTGD_WITH_FMOD)
     target_sources(Engine PRIVATE Source/Systems/AudioSystem.cpp)
     target_link_libraries(Engine PUBLIC fmodstudio)
