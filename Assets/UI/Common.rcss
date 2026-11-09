@@ -1,0 +1,9 @@
+body { font-family: LatoLatin; font-size: 32dp; color: white; }
+button {
+    display: block;
+    width: 200dp; height: 50dp; margin: 8dp;
+    background-color: #444;
+    text-align: center; line-height: 50dp;
+}
+button:hover { background-color: #666; }
+button:active { background-color: #222; }

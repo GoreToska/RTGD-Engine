@@ -79,6 +79,7 @@ add_library(Engine SHARED
         Source/Systems/TimerSystem.cpp
         Include/Systems/TimerSystem.h
         Include/AssetLoader/PathResolve.h
+        Source/AssetLoader/PathResolve.cpp
         Include/Event/EventBus.h
         Source/Event/EventBus.cpp
         Include/Event/Events.h

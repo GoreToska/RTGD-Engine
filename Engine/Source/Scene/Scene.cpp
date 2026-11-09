@@ -130,11 +130,11 @@ namespace RTGDEngine
         SaveToFile(m_lastLoadedPath);
 
 #ifdef RTGD_SOURCE_DIR
-        const std::filesystem::path sourceDir = RTGD_SOURCE_DIR;
+        const std::filesystem::path sourceDir = PathFromUtf8(RTGD_SOURCE_DIR);
         if (std::filesystem::exists(sourceDir))
         {
-            const auto relative = std::filesystem::relative(m_lastLoadedPath, GetAbsolutePath(""));
-            SaveToFile((sourceDir / relative).generic_string());
+            const std::string relative = GetRelativePath(m_lastLoadedPath);
+            SaveToFile(PathToUtf8(sourceDir / PathFromUtf8(relative)));
         }
 #endif
 

@@ -177,8 +177,8 @@ namespace RTGDEngine
 
         nlohmann::json config = LoadAudioConfigJson(GetAbsolutePath("Assets/Config/Audio.json"));
 
-        const std::filesystem::path banksDir = GetAbsolutePath(
-            config.value("BanksDirectory", std::string("Assets/Audio/Desktop")));
+        const std::filesystem::path banksDir = PathFromUtf8(GetAbsolutePath(
+            config.value("BanksDirectory", std::string("Assets/Audio/Desktop"))));
 
         const auto bootstrap = config.value("Bootstrap",
                                             std::vector<std::string>{"Master.bank", "Master.strings.bank"});
@@ -186,7 +186,7 @@ namespace RTGDEngine
         for (const std::string& name: bootstrap)
         {
             BankRef ref;
-            ref.Resolve(GAssets().GetBank((banksDir / name).generic_string()));
+            ref.Resolve(GAssets().GetBank(PathToUtf8(banksDir / PathFromUtf8(name))));
             if (ref.IsResolved())
                 m_bootstrapBanks.push_back(std::move(ref));
         }

@@ -4,45 +4,30 @@
 #pragma once
 #include <filesystem>
 #include <string>
+#include <string_view>
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif
+#include "Engine/EngineExport.h"
 
-#ifdef __linux__
-#include <dlfcn.h>
-#endif
-
-namespace RTGDEngine {
-    inline const std::filesystem::path &ExecutableDir() {
-        static const std::filesystem::path dir = [] {
-#if defined(_WIN32)
-            HMODULE hmod = nullptr;
-            GetModuleHandleExW(
-                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                reinterpret_cast<LPCWSTR>(&ExecutableDir), &hmod);
-
-            wchar_t buf[MAX_PATH];
-            DWORD len = GetModuleFileNameW(hmod, buf, MAX_PATH);
-            if (len == 0 || len == MAX_PATH)
-                return std::filesystem::current_path();
-            return std::filesystem::path(buf).parent_path();
-#else
-            Dl_info info{};
-            if (dladdr(reinterpret_cast<void *>(&ExecutableDir), &info) && info.dli_fname)
-                return std::filesystem::canonical(info.dli_fname).parent_path();
-            return std::filesystem::current_path();
-#endif
-        }();
-        return dir;
+namespace RTGDEngine
+{
+    inline std::filesystem::path PathFromUtf8(std::string_view utf8)
+    {
+        return {std::u8string_view(reinterpret_cast<const char8_t*>(utf8.data()), utf8.size())};
     }
 
-    inline std::string GetAbsolutePath(const std::string &relativePath) {
-        return (ExecutableDir() / relativePath).generic_string();
+    inline std::string PathToUtf8(const std::filesystem::path& path)
+    {
+        const std::u8string u8 = path.generic_u8string();
+        return {reinterpret_cast<const char*>(u8.data()), u8.size()};
     }
 
-    inline std::string GetRelativePath(const std::string &absolutePath) {
-        return std::filesystem::relative(absolutePath, ExecutableDir()).generic_string();
-    }
+    ENGINE_API const std::filesystem::path& ExecutableDir();
+
+    ENGINE_API const std::filesystem::path& AssetRoot();
+
+    ENGINE_API void SetAssetRoot(const std::filesystem::path& root);
+
+    ENGINE_API std::string GetAbsolutePath(std::string_view relativePath);
+
+    ENGINE_API std::string GetRelativePath(std::string_view absolutePath);
 }

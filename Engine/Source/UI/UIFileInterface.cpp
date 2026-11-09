@@ -14,14 +14,12 @@ namespace RTGDEngine
 {
     Rml::FileHandle UIFileInterface::Open(const Rml::String& path)
     {
-        auto filePath = std::filesystem::path(path);
-        if (!filePath.is_absolute())
-            filePath = GetAbsolutePath(filePath.string());
+        const std::string resolved = GetAbsolutePath(path);
 
-        auto file = std::fopen(filePath.string().c_str(), "rb");
+        auto file = std::fopen(resolved.c_str(), "rb");
         if (!file)
         {
-            LogError("Failed to open file: {}", filePath.string());
+            LogError("Failed to open file: {}", resolved);
             return Rml::FileHandle();
         }
 
