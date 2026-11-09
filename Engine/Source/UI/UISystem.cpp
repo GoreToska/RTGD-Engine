@@ -254,7 +254,7 @@ namespace RTGDEngine
         if (!Rml::Debugger::Initialise(m_context))
             LogError("Failed to initialise RmlUi Debugger.");
 
-        Rml::Debugger::SetVisible(true);
+        Rml::Debugger::SetVisible(false);
 
         return true;
     }

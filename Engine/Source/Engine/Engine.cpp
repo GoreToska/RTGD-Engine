@@ -32,6 +32,7 @@
 #include "Systems/TransformSystem.h"
 #include "Systems/Physics/PhysicsSystem.h"
 #include "UI/UISystem.h"
+#include "UI/Views/HUDView.h"
 #include "UI/Views/TestView.h"
 
 namespace RTGDEngine
@@ -143,7 +144,8 @@ namespace RTGDEngine
 
         RegisterBaseSystems();
 
-        GUI().Open<TestView>();
+        //GUI().Open<TestView>();
+        GUI().Open<HUDView>();
 
         GEngine().LoadGameModule(GAME_MODULE_NAME);
 

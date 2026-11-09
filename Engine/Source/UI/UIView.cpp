@@ -2,25 +2,123 @@
 // Created by ivan on 11/5/26.
 //
 
-#include "../../Include/UI/Views/UIView.h"
+#include "UI/Views/UIView.h"
 
 #include <RmlUi/Core.h>
 
 #include <utility>
 
 #include "AssetLoader/PathResolve.h"
-#include "../../Include/UI/GUIEventListener.h"
+#include "UI/GUIEventListener.h"
 #include "Tools/Logger.h"
 #include "UI/UISystem.h"
 
 namespace RTGDEngine
 {
-    UIView::UIView(const std::string& relativeDocumentPath)
-        : m_documentPath(relativeDocumentPath)
+    UIView::UIView(const std::string& relativeDocumentPath, std::string modelName)
+        : m_documentPath(relativeDocumentPath),
+          m_modelName(std::move(modelName))
     {
     }
 
     UIView::~UIView() = default;
+
+    template <typename T>
+    bool UIView::BindProperty(const std::string& name, UIProperty<T>& property)
+    {
+        if (!m_context)
+        {
+            LogError("No context on '{}', can't bind data '{}'.", m_documentPath, name);
+            return false;
+        }
+
+        auto model = m_context->GetDataModel(m_modelName);
+        if (!model)
+        {
+            LogError("No such model '{}' on document '{}'.", m_modelName, m_documentPath);
+            return false;
+        }
+
+        if (!model.Bind(name, &property.m_value))
+        {
+            LogError("Failed to bind data '{}' in '{}'.", name, m_documentPath);
+            return false;
+        }
+
+        property.m_onChanged = [this, name] { Dirty(name); };
+        m_unbinders.push_back([&property] { property.m_onChanged = nullptr; });
+        return true;
+    }
+
+    bool UIView::BindData(const std::string& name, UIProperty<int>& property)
+    {
+        return BindProperty(name, property);
+    }
+
+    bool UIView::BindData(const std::string& name, UIProperty<float>& property)
+    {
+        return BindProperty(name, property);
+    }
+
+    bool UIView::BindData(const std::string& name, UIProperty<bool>& property)
+    {
+        return BindProperty(name, property);
+    }
+
+    bool UIView::BindData(const std::string& name, UIProperty<std::string>& property)
+    {
+        return BindProperty(name, property);
+    }
+
+    void UIView::Dirty(const std::string& name)
+    {
+        if (!m_context)
+        {
+            LogError("No context on '{}', can't set dirty '{}'.", m_documentPath, name);
+            return;
+        }
+
+        auto model = m_context->GetDataModel(m_modelName);
+        if (!model)
+        {
+            LogError("No such model '{}' on document '{}'.", m_modelName, m_documentPath);
+            return;
+        }
+
+        auto handle = model.GetModelHandle();
+        if (!handle)
+        {
+            LogError("Failed to get handle on '{}', '{}'.", m_modelName, m_documentPath);
+            return;
+        }
+
+        handle.DirtyVariable(name);
+    }
+
+    void UIView::DirtyAll()
+    {
+        if (!m_context)
+        {
+            LogError("No context on '{}', can't set dirty all.", m_documentPath);
+            return;
+        }
+
+        auto model = m_context->GetDataModel(m_modelName);
+        if (!model)
+        {
+            LogError("No such model '{}' on document '{}'.", m_modelName, m_documentPath);
+            return;
+        }
+
+        auto handle = model.GetModelHandle();
+        if (!handle)
+        {
+            LogError("Failed to get handle on '{}', '{}'.", m_modelName, m_documentPath);
+            return;
+        }
+
+        handle.DirtyAllVariables();
+    }
 
     Rml::Element* UIView::Bind(const std::string& id)
     {
@@ -59,11 +157,27 @@ namespace RTGDEngine
 
     bool UIView::Load(Rml::Context& context)
     {
+        m_context = &context;
+
+        if (!m_modelName.empty())
+        {
+            if (m_context->CreateDataModel(m_modelName))
+            {
+                OnBindModel();
+            }
+            else
+            {
+                LogError("Failed to load model '{}' in document '{}'.", m_modelName, m_documentPath);
+                return false;
+            }
+        }
+
         m_document = context.LoadDocument(m_documentPath);
 
         if (!m_document)
         {
             LogError("Failed to load view document '{}'.", m_documentPath);
+            ReleaseModel();
             return false;
         }
 
@@ -91,6 +205,17 @@ namespace RTGDEngine
             m_document = nullptr;
         }
 
+        ReleaseModel();
         m_listeners.clear();
     }
-} // RTGDEditor
+
+    void UIView::ReleaseModel()
+    {
+        for (auto& unbind: m_unbinders)
+            unbind();
+        m_unbinders.clear();
+
+        if (m_context && !m_modelName.empty())
+            m_context->RemoveDataModel(m_modelName);
+    }
+} // RTGDEngine

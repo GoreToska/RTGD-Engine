@@ -1,0 +1,20 @@
+<rml>
+<head>
+    <link type="text/rcss" href="Common.rcss"/>
+    <style>
+        body { pointer-events: none; }          /* HUD never eats game input... */
+        #hud button { pointer-events: auto; }   /* ...except its own button */
+    </style>
+</head>
+<body>
+    <div id="hud" data-model="hud">
+        <p>FPS: {{ fps | format(0) }}</p>
+        <p>Frame: {{ frameMs | format(2) }} ms</p>
+        <progress data-attr-value="frameMs / 16.6"/>
+        <button id="toggle-details">Details</button>
+        <div data-if="showDetails">
+            <p>{{ status }}</p>
+        </div>
+    </div>
+</body>
+</rml>

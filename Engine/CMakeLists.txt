@@ -173,6 +173,9 @@ add_library(Engine SHARED
         Include/UI/Views/TestView.h
         Source/UI/UIFileInterface.cpp
         Include/UI/UIFileInterface.h
+        Include/UI/UIProperty.h
+        Source/UI/HUDView.cpp
+        Include/UI/Views/HUDView.h
 )
 
 target_compile_definitions(Engine PRIVATE GAME_MODULE_NAME="$<TARGET_FILE_NAME:Game>")

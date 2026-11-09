@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "Engine/EngineExport.h"
-#include "UI/GUIEventListener.h"
+#include "UI/UIProperty.h"
 
 namespace Rml
 {
@@ -22,22 +22,28 @@ namespace Rml
 
 namespace RTGDEngine
 {
+    class GUIEventListener;
+
     class ENGINE_API UIView
     {
     public:
-        explicit UIView(const std::string& relativeDocumentPath);
+        explicit UIView(const std::string& relativeDocumentPath, std::string modelName = {});
 
         UIView(const UIView&) = delete;
 
         UIView& operator=(const UIView&) = delete;
 
-        UIView(UIView&&) noexcept = default;
+        UIView(UIView&&) = delete;
 
-        UIView& operator=(UIView&&) noexcept = default;
+        UIView& operator=(UIView&&) = delete;
 
         virtual ~UIView();
 
     protected:
+        virtual void OnBindModel()
+        {
+        }
+
         virtual void OnInitialize()
         {
         }
@@ -58,6 +64,18 @@ namespace RTGDEngine
         {
         }
 
+        bool BindData(const std::string& name, UIProperty<int>& property);
+
+        bool BindData(const std::string& name, UIProperty<float>& property);
+
+        bool BindData(const std::string& name, UIProperty<bool>& property);
+
+        bool BindData(const std::string& name, UIProperty<std::string>& property);
+
+        void Dirty(const std::string& name);
+
+        void DirtyAll();
+
         Rml::Element* Bind(const std::string& id);
 
         void On(Rml::Element* element, const std::string& event, std::function<void(Rml::Event&)> callback);
@@ -75,30 +93,23 @@ namespace RTGDEngine
 
         void Destroy();
 
+        template <typename T>
+        bool BindProperty(const std::string& name, UIProperty<T>& property);
+
+        void ReleaseModel();
+
         struct Registration
         {
             Rml::Element* Element;
             std::string Event;
             std::unique_ptr<GUIEventListener> Listener;
-
-            Registration() = default;
-
-            Registration(Rml::Element* inElement, std::string inEvent, std::unique_ptr<GUIEventListener> inListener)
-                : Element(inElement), Event(std::move(inEvent)), Listener(std::move(inListener))
-            {
-            }
-
-            Registration(Registration&&) noexcept = default;
-
-            Registration& operator=(Registration&&) noexcept = default;
-
-            Registration(const Registration&) = delete;
-
-            Registration& operator=(const Registration&) = delete;
         };
 
         std::string m_documentPath;
+        std::string m_modelName;
         Rml::ElementDocument* m_document = nullptr;
+        Rml::Context* m_context = nullptr;
         std::vector<Registration> m_listeners;
+        std::vector<std::function<void()>> m_unbinders;
     };
-} // RTGDEditor
+} // RTGDEngine
