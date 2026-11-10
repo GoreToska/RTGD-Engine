@@ -144,7 +144,7 @@ namespace RTGDEngine
 
         RegisterBaseSystems();
 
-        //GUI().Open<TestView>();
+        GUI().Open<TestView>();
         GUI().Open<HUDView>();
 
         GEngine().LoadGameModule(GAME_MODULE_NAME);

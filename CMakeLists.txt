@@ -20,6 +20,10 @@ if (MSVC)
     add_compile_options(/wd5232 /Wv:17)
 endif ()
 
+if (NOT MSVC)
+    add_compile_options(-pipe)
+endif ()
+
 set(DILIGENT_NO_VULKAN OFF CACHE BOOL "" FORCE)
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" RTGD_FMOD_PLATFORM)

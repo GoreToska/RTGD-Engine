@@ -15,33 +15,49 @@
 
 namespace RTGDEngine
 {
-    UIView::UIView(const std::string& relativeDocumentPath, std::string modelName)
-        : m_documentPath(relativeDocumentPath),
-          m_modelName(std::move(modelName))
+    UIView::UIView(UIViewConfig config)
+        : m_config(std::move(config))
     {
     }
 
     UIView::~UIView() = default;
 
-    template <typename T>
+    UILayer UIView::GetLayer() const
+    {
+        return m_config.Layer;
+    }
+
+    void UIView::SetLayer(UILayer layer)
+    {
+        m_config.Layer = layer;
+        if (m_document)
+            m_document->SetProperty("z-index", std::to_string(m_config.Layer.Order));
+    }
+
+    EUIInputMode UIView::GetInputMode() const
+    {
+        return m_config.InputMode;
+    }
+
+    template<typename T>
     bool UIView::BindProperty(const std::string& name, UIProperty<T>& property)
     {
         if (!m_context)
         {
-            LogError("No context on '{}', can't bind data '{}'.", m_documentPath, name);
+            LogError("No context on '{}', can't bind data '{}'.", m_config.DocumentPath, name);
             return false;
         }
 
-        auto model = m_context->GetDataModel(m_modelName);
+        auto model = m_context->GetDataModel(m_config.ModelName);
         if (!model)
         {
-            LogError("No such model '{}' on document '{}'.", m_modelName, m_documentPath);
+            LogError("No such model '{}' on document '{}'.", m_config.ModelName, m_config.DocumentPath);
             return false;
         }
 
         if (!model.Bind(name, &property.m_value))
         {
-            LogError("Failed to bind data '{}' in '{}'.", name, m_documentPath);
+            LogError("Failed to bind data '{}' in '{}'.", name, m_config.DocumentPath);
             return false;
         }
 
@@ -74,21 +90,21 @@ namespace RTGDEngine
     {
         if (!m_context)
         {
-            LogError("No context on '{}', can't set dirty '{}'.", m_documentPath, name);
+            LogError("No context on '{}', can't set dirty '{}'.", m_config.DocumentPath, name);
             return;
         }
 
-        auto model = m_context->GetDataModel(m_modelName);
+        auto model = m_context->GetDataModel(m_config.ModelName);
         if (!model)
         {
-            LogError("No such model '{}' on document '{}'.", m_modelName, m_documentPath);
+            LogError("No such model '{}' on document '{}'.", m_config.ModelName, m_config.DocumentPath);
             return;
         }
 
         auto handle = model.GetModelHandle();
         if (!handle)
         {
-            LogError("Failed to get handle on '{}', '{}'.", m_modelName, m_documentPath);
+            LogError("Failed to get handle on '{}', '{}'.", m_config.ModelName, m_config.DocumentPath);
             return;
         }
 
@@ -99,21 +115,21 @@ namespace RTGDEngine
     {
         if (!m_context)
         {
-            LogError("No context on '{}', can't set dirty all.", m_documentPath);
+            LogError("No context on '{}', can't set dirty all.", m_config.DocumentPath);
             return;
         }
 
-        auto model = m_context->GetDataModel(m_modelName);
+        auto model = m_context->GetDataModel(m_config.ModelName);
         if (!model)
         {
-            LogError("No such model '{}' on document '{}'.", m_modelName, m_documentPath);
+            LogError("No such model '{}' on document '{}'.", m_config.ModelName, m_config.DocumentPath);
             return;
         }
 
         auto handle = model.GetModelHandle();
         if (!handle)
         {
-            LogError("Failed to get handle on '{}', '{}'.", m_modelName, m_documentPath);
+            LogError("Failed to get handle on '{}', '{}'.", m_config.ModelName, m_config.DocumentPath);
             return;
         }
 
@@ -125,7 +141,7 @@ namespace RTGDEngine
         Rml::Element* element = m_document ? m_document->GetElementById(id) : nullptr;
         if (!element)
         {
-            LogError("Failed to bind element '{}' to '{}'.", id, m_documentPath);
+            LogError("Failed to bind element '{}' to '{}'.", id, m_config.DocumentPath);
         }
         return element;
     }
@@ -159,30 +175,31 @@ namespace RTGDEngine
     {
         m_context = &context;
 
-        if (!m_modelName.empty())
+        if (!m_config.ModelName.empty())
         {
-            if (m_context->CreateDataModel(m_modelName))
+            if (m_context->CreateDataModel(m_config.ModelName))
             {
                 OnBindModel();
             }
             else
             {
-                LogError("Failed to load model '{}' in document '{}'.", m_modelName, m_documentPath);
+                LogError("Failed to load model '{}' in document '{}'.", m_config.ModelName, m_config.DocumentPath);
                 return false;
             }
         }
 
-        m_document = context.LoadDocument(m_documentPath);
+        m_document = context.LoadDocument(m_config.DocumentPath);
 
         if (!m_document)
         {
-            LogError("Failed to load view document '{}'.", m_documentPath);
+            LogError("Failed to load view document '{}'.", m_config.DocumentPath);
             ReleaseModel();
             return false;
         }
 
         OnInitialize();
 
+        m_document->SetProperty("z-index", std::to_string(m_config.Layer.Order));
         m_document->Show();
         OnShow();
         return true;
@@ -215,7 +232,7 @@ namespace RTGDEngine
             unbind();
         m_unbinders.clear();
 
-        if (m_context && !m_modelName.empty())
-            m_context->RemoveDataModel(m_modelName);
+        if (m_context && !m_config.ModelName.empty())
+            m_context->RemoveDataModel(m_config.ModelName);
     }
 } // RTGDEngine

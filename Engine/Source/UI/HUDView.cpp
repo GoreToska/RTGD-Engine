@@ -8,7 +8,7 @@
 
 namespace RTGDEngine
 {
-    HUDView::HUDView() : UIView("Assets/UI/HUD.rml", "hud")
+    HUDView::HUDView() : UIView(UIViewConfig("Assets/UI/HUD.rml", "hud", UILayers::HUD))
     {
     }
 

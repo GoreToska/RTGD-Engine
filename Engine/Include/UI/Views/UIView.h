@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Engine/EngineExport.h"
+#include "UI/UILayer.h"
 #include "UI/UIProperty.h"
 
 namespace Rml
@@ -24,10 +25,24 @@ namespace RTGDEngine
 {
     class GUIEventListener;
 
+    enum class EUIInputMode
+    {
+        Passthrough,
+        Modal,
+    };
+
+    struct UIViewConfig
+    {
+        std::string DocumentPath;
+        std::string ModelName;
+        UILayer Layer = UILayers::HUD;
+        EUIInputMode InputMode = EUIInputMode::Passthrough;
+    };
+
     class ENGINE_API UIView
     {
     public:
-        explicit UIView(const std::string& relativeDocumentPath, std::string modelName = {});
+        explicit UIView(UIViewConfig config);
 
         UIView(const UIView&) = delete;
 
@@ -38,6 +53,12 @@ namespace RTGDEngine
         UIView& operator=(UIView&&) = delete;
 
         virtual ~UIView();
+
+        UILayer GetLayer() const;
+
+        void SetLayer(UILayer layer);
+
+        EUIInputMode GetInputMode() const;
 
     protected:
         virtual void OnBindModel()
@@ -93,7 +114,7 @@ namespace RTGDEngine
 
         void Destroy();
 
-        template <typename T>
+        template<typename T>
         bool BindProperty(const std::string& name, UIProperty<T>& property);
 
         void ReleaseModel();
@@ -105,8 +126,7 @@ namespace RTGDEngine
             std::unique_ptr<GUIEventListener> Listener;
         };
 
-        std::string m_documentPath;
-        std::string m_modelName;
+        UIViewConfig m_config;
         Rml::ElementDocument* m_document = nullptr;
         Rml::Context* m_context = nullptr;
         std::vector<Registration> m_listeners;

@@ -11,7 +11,7 @@ namespace RTGDEngine
     class TestView : public UIView
     {
     public:
-        TestView() : UIView("Assets/UI/Test.rml")
+        TestView() : UIView(UIViewConfig("Assets/UI/Test.rml", "", UILayers::Menu))
         {
         }
 
