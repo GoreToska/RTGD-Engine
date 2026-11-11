@@ -1,0 +1,43 @@
+<rml>
+<head>
+    <title>Pause Menu</title>
+    <link type="text/rcss" href="Common.rcss"/>
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            background-color: #00000099;
+        }
+
+        #panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 320dp;
+            margin-left: -160dp;
+            margin-top: -140dp;
+            padding: 24dp 0;
+            background-color: #1e1e1ee6;
+            border-radius: 8dp;
+        }
+
+        #title {
+            display: block;
+            text-align: center;
+            font-size: 40dp;
+            margin-bottom: 16dp;
+        }
+
+        #panel button {
+            margin: 8dp auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="panel">
+        <span id="title">Paused</span>
+        <button id="resume-button">Resume</button>
+        <button id="quit-button">Quit</button>
+    </div>
+</body>
+</rml>

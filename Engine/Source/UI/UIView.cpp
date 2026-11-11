@@ -39,6 +39,23 @@ namespace RTGDEngine
         return m_config.InputMode;
     }
 
+    bool UIView::IsVisible() const
+    {
+        return m_document && m_document->IsVisible();
+    }
+
+    void UIView::Hide()
+    {
+        if (m_document)
+            m_document->Hide();
+    }
+
+    void UIView::Show()
+    {
+        if (m_document)
+            m_document->Show();
+    }
+
     template<typename T>
     bool UIView::BindProperty(const std::string& name, UIProperty<T>& property)
     {
@@ -64,6 +81,31 @@ namespace RTGDEngine
         property.m_onChanged = [this, name] { Dirty(name); };
         m_unbinders.push_back([&property] { property.m_onChanged = nullptr; });
         return true;
+    }
+
+    void UIView::OnKey(Key key, std::function<void()> callback)
+    {
+        if (!m_document)
+        {
+            LogError("No document loaded '{}'.", m_config.DocumentPath);
+            return;
+        }
+
+        const auto rmlKey = key.ToRml();
+        if (rmlKey == Rml::Input::KI_UNKNOWN)
+        {
+            LogError("OnKey has no RmlUi mapping for key '{}', {}.", m_config.DocumentPath, static_cast<int>(key.ToGainput()));
+            return;
+        }
+
+        On(m_document, "keydown", [rmlKey, callback = std::move(callback)](Rml::Event& event)
+        {
+            if (event.GetParameter<int>("key_identifier", Rml::Input::KI_UNKNOWN) != rmlKey)
+                return;
+
+            event.StopPropagation();
+            callback();
+        });
     }
 
     bool UIView::BindData(const std::string& name, UIProperty<int>& property)

@@ -116,6 +116,8 @@ namespace RTGDEngine
 
         void OnClose();
 
+        void OnQuitRequested();
+
         // TODO: Engine owns window for now, but need to refactor this in future
         std::unique_ptr<IPlatformWindow> m_platformWindow = nullptr;
 
@@ -127,6 +129,8 @@ namespace RTGDEngine
 
         std::thread m_renderThread = {};
         std::atomic<bool> m_isRunning = {false};
+        std::atomic<bool> m_quitRequested = {false};
+        bool m_hostedByEditor = false;
         std::mutex m_pickMutex = {};
         std::condition_variable m_pickCV = {};
         PickRequest m_pickRequest = {};

@@ -33,6 +33,7 @@
 #include "Systems/Physics/PhysicsSystem.h"
 #include "UI/UISystem.h"
 #include "UI/Views/HUDView.h"
+#include "UI/Views/PauseMenu.h"
 #include "UI/Views/TestView.h"
 
 namespace RTGDEngine
@@ -119,16 +120,19 @@ namespace RTGDEngine
 
         m_platformWindow->OnInputEvent = [](const InputEvent& event) -> bool
         {
+            const EInputMode mode = GInput().GetInputMode();
+
             const bool isMouse = event.Type == EInputEventType::MouseMove ||
                                  event.Type == EInputEventType::MouseButton ||
                                  event.Type == EInputEventType::MouseWheel;
-            bool consumedByGUI = !(isMouse && GInput().IsMouseCaptured()) && GUI().ProcessInput(event);
+            const bool uiAllowed = mode != EInputMode::GameOnly && !(isMouse && GInput().IsMouseCaptured());
+            bool consumedByGUI = uiAllowed && GUI().ProcessInput(event);
+            const bool gameAllowed = mode != EInputMode::UIOnly || event.Type == EInputEventType::FocusLost;
             const bool isRelease = (event.Type == EInputEventType::Key || event.Type == EInputEventType::MouseButton) &&
                                    !event.Down;
 
-            if (!consumedByGUI || isRelease)
+            if ((!consumedByGUI && gameAllowed) || isRelease)
                 GInput().HandleInputEvent(event);
-
 
             return true;
         };
@@ -144,6 +148,11 @@ namespace RTGDEngine
 
         RegisterBaseSystems();
 
+        GEventBus().Subscribe(Events::OnQuitRequested, [this](const Events::QuitRequestedEvent&)
+        {
+            OnQuitRequested();
+        });
+
         GUI().Open<TestView>();
         GUI().Open<HUDView>();
 
@@ -157,6 +166,7 @@ namespace RTGDEngine
         std::promise<bool> initPromise;
         auto initFuture = initPromise.get_future();
         m_isRunning = true;
+        m_hostedByEditor = true;
         m_renderThread = std::thread(
             [this, w = std::move(window), promise = std::move(initPromise)]() mutable
             {
@@ -275,6 +285,9 @@ namespace RTGDEngine
 
     bool Engine::PollEvents() const
     {
+        if (m_quitRequested)
+            return false;
+
         return m_platformWindow->PollEvents();
     }
 
@@ -289,6 +302,9 @@ namespace RTGDEngine
         GEventBus().Process();
 
         GInput().Update();
+
+        if (GInput().IsPressed(EInputAction::Escape) && GInput().GetInputMode() != EInputMode::UIOnly)
+            GUI().Open<PauseMenu>();
 
         if (GInput().IsDown(EInputAction::CtrlLeft) && GInput().IsPressed(
                 EInputAction::ReloadGameModule))
@@ -510,6 +526,17 @@ namespace RTGDEngine
         m_pickCV.notify_all();
     }
 #endif
+
+    void Engine::OnQuitRequested()
+    {
+        if (m_hostedByEditor)
+        {
+            LogInfo("Quit requested by the game; ignored while running inside the editor.");
+            return;
+        }
+
+        m_quitRequested = true;
+    }
 
     void Engine::OnClose()
     {

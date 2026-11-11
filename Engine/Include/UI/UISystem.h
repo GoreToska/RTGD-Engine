@@ -63,6 +63,7 @@ namespace RTGDEngine
         void DestroyPendingViews();
 
         Rml::Context* m_context = nullptr;
+        uint64_t m_inputModeSubscription = 0;
         std::vector<std::unique_ptr<UIView>> m_views;
         std::vector<UIView*> m_pendingCloseViews = {};
     };

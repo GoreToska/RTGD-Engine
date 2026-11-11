@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Engine/EngineExport.h"
+#include "Input/Key.h"
 #include "UI/UILayer.h"
 #include "UI/UIProperty.h"
 
@@ -60,6 +61,12 @@ namespace RTGDEngine
 
         EUIInputMode GetInputMode() const;
 
+        bool IsVisible() const;
+
+        void Hide();
+
+        void Show();
+
     protected:
         virtual void OnBindModel()
         {
@@ -84,6 +91,8 @@ namespace RTGDEngine
         virtual void OnDestroy()
         {
         }
+
+        void OnKey(Key key, std::function<void()> callback);
 
         bool BindData(const std::string& name, UIProperty<int>& property);
 

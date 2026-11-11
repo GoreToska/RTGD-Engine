@@ -6,139 +6,179 @@
 #include "EventBus.h"
 #include "Tools/Alias.h"
 
-namespace RTGDEngine {
+namespace RTGDEngine
+{
     class SceneManager;
     class Engine;
     class AssetManager;
     class RenderResourceManager;
     class PhysicsSystem;
+    class InputSystem;
 
     enum class EAssetType : uint8_t;
+    enum class EInputMode : uint8_t;
 
 
-    namespace Events {
-        struct EntityCreatedEvent {
+    namespace Events
+    {
+        struct EntityCreatedEvent
+        {
             uint64_t entity;
         };
 
-        struct EntityDestroyedEvent {
+        struct EntityDestroyedEvent
+        {
             uint64_t entity;
         };
 
-        struct EntityReparentedEvent {
+        struct EntityReparentedEvent
+        {
             uint64_t entity;
             uint64_t oldParent;
             uint64_t newParent;
         };
 
-        struct EntityRenamedEvent {
+        struct EntityRenamedEvent
+        {
             uint64_t entity;
         };
 
-        struct SceneLoadedEvent {
+        struct SceneLoadedEvent
+        {
             uint64_t sceneRoot;
         };
 
-        struct SceneUnloadedEvent {
+        struct SceneUnloadedEvent
+        {
             uint64_t sceneRoot;
         };
 
-        struct SceneCreatedEvent {
+        struct SceneCreatedEvent
+        {
             uint64_t sceneRoot;
         };
 
-        struct ActiveSceneChangedEvent {
+        struct ActiveSceneChangedEvent
+        {
             uint64_t previousRoot;
             uint64_t currentRoot;
         };
 
-        struct WindowResizeEvent {
+        struct WindowResizeEvent
+        {
             int width;
             int height;
         };
 
-        struct WindowFocusEvent {
+        struct WindowFocusEvent
+        {
             bool focus;
         };
 
-        struct WindowClosedEvent {
+        struct WindowClosedEvent
+        {
             // TODO: exit code?
         };
 
-        struct WindowMinimizedEvent {
+        struct WindowMinimizedEvent
+        {
         };
 
-        struct WindowMaximizedEvent {
+        struct WindowMaximizedEvent
+        {
         };
 
-        struct OnKeyEvent {
+        struct OnKeyEvent
+        {
             // TODO: KeyID? State?
         };
 
-        struct AssetLoadedEvent {
+        struct AssetLoadedEvent
+        {
             uint64_t ID;
             EAssetType Type;
         };
 
-        struct AssetUnloadedEvent {
+        struct AssetUnloadedEvent
+        {
             uint64_t ID;
             EAssetType Type;
         };
 
-        struct AssetReloadedEvent {
+        struct AssetReloadedEvent
+        {
             uint64_t ID;
             EAssetType Type;
         };
 
-        struct OnAssetImportedEvent {
+        struct OnAssetImportedEvent
+        {
             uint64_t ID;
             EAssetType Type;
         };
 
-        struct SelectionChangedEvent {
+        struct SelectionChangedEvent
+        {
             // This holds no info, selected entities should be accessed somewhere else
         };
 
-        struct GizmoModeChangedEvent {
+        struct GizmoModeChangedEvent
+        {
             // TODO: EGizmoMode?
         };
 
-        struct CollisionEnterEvent {
+        struct CollisionEnterEvent
+        {
             Entity Target;
             Entity Other;
             Float3 Point;
             Float3 Normal;
         };
 
-        struct CollisionStayEvent {
+        struct CollisionStayEvent
+        {
             Entity Target;
             Entity Other;
             Float3 Point;
             Float3 Normal;
         };
 
-        struct CollisionExitEvent {
+        struct CollisionExitEvent
+        {
             Entity Target;
             Entity Other;
         };
 
-        struct TriggerEnterEvent {
+        struct TriggerEnterEvent
+        {
             Entity Target;
             Entity Other;
             Float3 Point;
             Float3 Normal;
         };
 
-        struct TriggerStayEvent {
+        struct TriggerStayEvent
+        {
             Entity Target;
             Entity Other;
             Float3 Point;
             Float3 Normal;
         };
 
-        struct TriggerExitEvent {
+        struct TriggerExitEvent
+        {
             Entity Target;
             Entity Other;
+        };
+
+        struct QuitRequestedEvent
+        {
+        };
+
+        struct InputModeChangedEvent
+        {
+            EInputMode Previous;
+            EInputMode Current;
         };
 
         inline constexpr EventKey<EntityCreatedEvent, SceneManager> OnEntityCreated{"entity.created"};
@@ -171,5 +211,8 @@ namespace RTGDEngine {
         inline constexpr EventKey<TriggerEnterEvent, PhysicsSystem> OnTriggerEnter{"physics.trigger_enter"};
         inline constexpr EventKey<TriggerStayEvent, PhysicsSystem> OnTriggerStay{"physics.trigger_stay"};
         inline constexpr EventKey<TriggerExitEvent, PhysicsSystem> OnTriggerExit{"physics.trigger_exit"};
+
+        inline constexpr EventKey<InputModeChangedEvent, InputSystem> OnInputModeChanged{"input.mode_changed"};
+        inline constexpr EventKey<QuitRequestedEvent> OnQuitRequested{"app.quit_requested"};
     }
 }

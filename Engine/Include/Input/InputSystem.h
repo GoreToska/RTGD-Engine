@@ -18,6 +18,13 @@ namespace RTGDEngine
     class IInjectableButton;
     class IPlatformWindow;
 
+    enum class EInputMode : uint8_t
+    {
+        GameOnly,
+        GameAndUI,
+        UIOnly,
+    };
+
     class ENGINE_API InputSystem
     {
         DECLARE_SINGLETON(InputSystem);
@@ -73,7 +80,15 @@ namespace RTGDEngine
 
         void BindMouseButton(ActionID action, gainput::MouseButton button) const;
 
+        void SetInputMode(EInputMode mode);
+
+        EInputMode GetInputMode() const;
+
     private:
+        void SubscribeToInputModeChanges();
+
+        void ReleaseAllButtons() const;
+
         void CreateKeyboardDevice();
 
         void CreateMouseDevice();
@@ -98,6 +113,9 @@ namespace RTGDEngine
         bool m_mouseCaptured = false;
         float m_mouseDeltaX = 0.0f;
         float m_mouseDeltaY = 0.0f;
+
+        EInputMode m_inputMode = EInputMode::GameAndUI;
+        uint64_t m_inputModeSubscription = 0;
 
         // TODO: add vector of current windows
     };

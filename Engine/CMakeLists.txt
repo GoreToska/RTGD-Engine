@@ -176,7 +176,12 @@ add_library(Engine SHARED
         Include/UI/UIProperty.h
         Source/UI/HUDView.cpp
         Include/UI/Views/HUDView.h
+        Source/UI/PauseMenu.cpp
+        Include/UI/Views/PauseMenu.h
         Include/UI/UILayer.h
+        Source/UI/RmlKeymap.h
+        Include/Input/Key.h
+        Source/Input/Key.cpp
 )
 
 target_compile_definitions(Engine PRIVATE GAME_MODULE_NAME="$<TARGET_FILE_NAME:Game>")

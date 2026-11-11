@@ -4,6 +4,8 @@
 
 #include "Input/InputSystem.h"
 
+#include "Event/EventBus.h"
+#include "Event/Events.h"
 #include "Input/KeyboardDevice.h"
 #include "Input/MouseDevice.h"
 #include "Platform/IPlatformWindow.h"
@@ -42,6 +44,7 @@ namespace RTGDEngine
         CreateMouseDevice();
 
         CreateInputMapping();
+        SubscribeToInputModeChanges();
 
         LogInfo("InputSystem initialized ({}x{})", handle->GetHandle().width, handle->GetHandle().height);
     }
@@ -66,15 +69,7 @@ namespace RTGDEngine
                 InjectKey(event.Key, event.Down);
                 break;
             case EInputEventType::FocusLost:
-                for (int i = 0; i < KeyCount_; i++)
-                {
-                    InjectKey(static_cast<Key>(i), false);
-                }
-
-                for (int i = 0; i < MouseButtonCount_; i++)
-                {
-                    InjectMouseButton(static_cast<MouseButton>(i), false);
-                }
+                ReleaseAllButtons();
                 break;
 
             default:
@@ -86,7 +81,7 @@ namespace RTGDEngine
     {
         m_manager.Update();
 
-        if (IsPressed(EInputAction::MouseRight))
+        if (m_inputMode != EInputMode::UIOnly && IsPressed(EInputAction::MouseRight))
             SetRelativeMouseMode(true);
         if (IsReleased(EInputAction::MouseRight) || IsPressed(EInputAction::Escape))
             SetRelativeMouseMode(false);
@@ -156,6 +151,47 @@ namespace RTGDEngine
     void InputSystem::BindMouseButton(ActionID action, MouseButton button) const
     {
         m_map->MapBool(action, m_mouse, button);
+    }
+
+    void InputSystem::SetInputMode(EInputMode mode)
+    {
+        if (m_inputMode == mode)
+            return;
+
+        auto previousMode = m_inputMode;
+        m_inputMode = mode;
+
+        GEventBus().Emit(Events::OnInputModeChanged, {previousMode, mode}, {});
+    }
+
+    void InputSystem::SubscribeToInputModeChanges()
+    {
+        if (m_inputModeSubscription != 0)
+            return;
+
+        m_inputModeSubscription = GEventBus().Subscribe(Events::OnInputModeChanged,
+                                                        [this](const Events::InputModeChangedEvent& event)
+                                                        {
+                                                            if (event.Current != EInputMode::UIOnly)
+                                                                return;
+
+                                                            SetRelativeMouseMode(false);
+                                                            ReleaseAllButtons();
+                                                        });
+    }
+
+    void InputSystem::ReleaseAllButtons() const
+    {
+        for (int i = 0; i < KeyCount_; i++)
+            InjectKey(static_cast<Key>(i), false);
+
+        for (int i = 0; i < MouseButtonCount_; i++)
+            InjectMouseButton(static_cast<MouseButton>(i), false);
+    }
+
+    EInputMode InputSystem::GetInputMode() const
+    {
+        return m_inputMode;
     }
 
     bool InputSystem::IsPressed(const EInputAction action) const
